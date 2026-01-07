@@ -1,6 +1,3 @@
--- name: GetNextID :one
-SELECT nextval('urls_id_seq');
-
 -- name: CreateURL :exec
 INSERT INTO urls (
     id,
