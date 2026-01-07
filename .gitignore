@@ -1,5 +1,7 @@
-# Environment variables
+# Environment variables (keep examples)
 .env
+.env.*
+!.env.example
 .env.local
 
 # Go
@@ -16,6 +18,7 @@ vendor/
 # IDEs
 .idea/
 .vscode/
+.fleet/
 *.swp
 *.swo
 *~
@@ -28,10 +31,19 @@ Thumbs.db
 tmp/
 dist/
 build/
+bin/
+target/
+coverage/
+.cache/
 
 # Docker
 *.log
+**/docker-data/
+docker-compose.override.yml
 
 # Database
 *.db
 *.sqlite
+
+# Project-specific
+services/api/api
