@@ -42,7 +42,9 @@ func Load() (*Config, error) {
 
 	// Validate at least one allowed domain exists
 	if strings.TrimSpace(cfg.AllowedDomains) == "" {
-		return nil, fmt.Errorf("at least one allowed domain must be configured")
+		return nil, fmt.Errorf("at least one allowed domain must be configured\n" +
+			"  → Set ALLOWED_DOMAINS environment variable\n" +
+			"  → Example: ALLOWED_DOMAINS=short.link,mysite.com")
 	}
 
 	return cfg, nil
