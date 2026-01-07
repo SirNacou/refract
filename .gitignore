@@ -1,0 +1,37 @@
+# Environment variables
+.env
+.env.local
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+tmp/
+dist/
+build/
+
+# Docker
+*.log
+
+# Database
+*.db
+*.sqlite
