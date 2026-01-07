@@ -2,13 +2,21 @@
 default:
     @just --list
 
-# Start all services
+# Start all services (with build to pick up code changes)
 up:
+    docker-compose up -d --build
+
+# Start all services without building
+up-no-build:
     docker-compose up -d
 
 # Stop all services
 down:
     docker-compose down
+
+# Restart all services
+restart:
+    docker-compose restart
 
 # View logs from all services
 logs:
@@ -22,13 +30,22 @@ api-logs:
 migration-logs:
     docker-compose logs migrations
 
-# Rebuild and restart services
+# Rebuild and restart services (alias for up)
 rebuild:
     docker-compose up -d --build
+
+# Force rebuild from scratch (no cache)
+rebuild-fresh:
+    docker-compose build --no-cache
+    docker-compose up -d
 
 # Stop services and remove volumes (DESTRUCTIVE)
 clean:
     docker-compose down -v
+
+# Clean everything including images (VERY DESTRUCTIVE)
+clean-all:
+    docker-compose down -v --rmi all
 
 # Run database migrations manually
 migrate-up:
@@ -86,6 +103,18 @@ status:
 restart-api:
     docker-compose restart api
 
+# Restart Postgres service only
+restart-postgres:
+    docker-compose restart postgres
+
+# Restart Valkey service only
+restart-valkey:
+    docker-compose restart valkey
+
+# Rebuild and restart API only
+rebuild-api:
+    docker-compose up -d --build --no-deps api
+
 # View API service logs in real-time
 tail-api:
     docker-compose logs -f --tail=100 api
@@ -93,3 +122,26 @@ tail-api:
 # View Postgres logs
 postgres-logs:
     docker-compose logs -f postgres
+
+# ========================================
+# Development Workflow
+# ========================================
+
+# Full development cycle: rebuild, restart, show logs
+dev:
+    docker-compose up -d --build
+    @echo "\n✅ Services started. Showing API logs (Ctrl+C to exit):"
+    docker-compose logs -f api
+
+# Quick restart after code changes (API only)
+dev-quick:
+    docker-compose up -d --build --no-deps api
+    @echo "\n✅ API restarted. Showing logs (Ctrl+C to exit):"
+    docker-compose logs -f --tail=50 api
+
+# Reset everything and start fresh (DESTRUCTIVE)
+dev-reset:
+    docker-compose down -v
+    docker-compose up -d --build
+    @echo "\n✅ Fresh start complete. Showing API logs (Ctrl+C to exit):"
+    docker-compose logs -f api
