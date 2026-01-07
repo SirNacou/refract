@@ -46,6 +46,30 @@ services:
       - refract
     restart: "no"
 
+  # Valkey (Redis alternative)
+  valkey:
+    image: valkey/valkey:latest
+    container_name: refract-valkey
+    command: >
+      valkey-server
+      --requirepass ${VALKEY_PASSWORD:-valkey}
+      --maxmemory ${VALKEY_MAX_MEMORY:-256mb}
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+    ports:
+      - "${VALKEY_PORT:-6379}:6379"
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "--pass", "${VALKEY_PASSWORD:-valkey}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - refract
+    restart: unless-stopped
+
   # API Service
   api:
     container_name: refract-api
@@ -75,6 +99,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  valkey_data:
     driver: local
 
 networks:

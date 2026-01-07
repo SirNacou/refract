@@ -2,82 +2,106 @@
 default:
     @just --list
 
-# Start all services
+# ========================================
+# Docker Services
+# ========================================
+
+# Start all services (rebuilds to pick up code changes)
 up:
-    docker-compose up -d
+    docker-compose up -d --build
 
 # Stop all services
 down:
     docker-compose down
 
-# View logs from all services
+# Restart all services
+restart:
+    docker-compose restart
+
+# View all service logs
 logs:
     docker-compose logs -f
 
-# View API logs only
-api-logs:
-    docker-compose logs -f api
+# Show service status
+ps:
+    docker-compose ps
 
-# View migration logs
-migration-logs:
-    docker-compose logs migrations
-
-# Rebuild and restart services
-rebuild:
-    docker-compose up -d --build
-
-# Stop services and remove volumes (DESTRUCTIVE)
+# Stop and remove all data (DESTRUCTIVE)
 clean:
     docker-compose down -v
 
-# Run database migrations manually
-migrate-up:
+# ========================================
+# Development Workflow
+# ========================================
+
+# Quick rebuild and restart API with logs
+dev:
+    docker-compose up -d --build --no-deps api
+    @echo "✅ API restarted. Showing logs (Ctrl+C to exit):"
+    docker-compose logs -f --tail=50 api
+
+# Reset everything and start fresh (DESTRUCTIVE)
+reset:
+    docker-compose down -v
+    docker-compose up -d --build
+    @echo "✅ Fresh start complete."
+
+# ========================================
+# Database
+# ========================================
+
+# Run migrations
+migrate:
     docker-compose run --rm migrations
 
-# Create a new migration file
-migrate-create NAME:
+# Create new migration file
+migrate-new NAME:
     goose -dir migrations/postgres create {{NAME}} sql
 
-# Check migration status
-migrate-status:
-    docker-compose exec postgres psql -U postgres -d refract -c "SELECT * FROM goose_db_version;"
-
-# Connect to PostgreSQL
-db-shell:
+# Connect to database shell
+db:
     docker-compose exec postgres psql -U postgres -d refract
 
-# Run API tests (when you have them)
+# View database logs
+db-logs:
+    docker-compose logs -f postgres
+
+# ========================================
+# Valkey (Redis)
+# ========================================
+
+# Connect to Valkey CLI
+valkey:
+    docker-compose exec valkey valkey-cli -a "${VALKEY_PASSWORD:-valkey}"
+
+# Show Valkey info
+valkey-info:
+    docker-compose exec valkey valkey-cli -a "${VALKEY_PASSWORD:-valkey}" INFO
+
+# View Valkey logs
+valkey-logs:
+    docker-compose logs -f valkey
+
+# ========================================
+# Go Development
+# ========================================
+
+# Run tests
 test:
     cd services/api && go test ./...
 
-# Format Go code
+# Format code
 fmt:
     cd services/api && go fmt ./...
 
-# Run Go linter (requires golangci-lint)
+# Run linter
 lint:
     cd services/api && golangci-lint run
 
-# Install development dependencies
-install-deps:
-    go install github.com/pressly/goose/v3/cmd/goose@latest
-
-# Generate SQLc code from SQL queries
-sqlc-generate:
+# Generate SQLc code
+sqlc:
     docker run --rm -v "$(pwd):/src" -w /src/services/api sqlc/sqlc generate
 
-# Show service status
-status:
-    docker-compose ps
-
-# Restart API service only
-restart-api:
-    docker-compose restart api
-
-# View API service logs in real-time
-tail-api:
-    docker-compose logs -f --tail=100 api
-
-# View Postgres logs
-postgres-logs:
-    docker-compose logs -f postgres
+# Install dev dependencies
+deps:
+    go install github.com/pressly/goose/v3/cmd/goose@latest
