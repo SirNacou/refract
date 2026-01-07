@@ -62,6 +62,10 @@ lint:
 install-deps:
     go install github.com/pressly/goose/v3/cmd/goose@latest
 
+# Generate SQLc code from SQL queries
+sqlc-generate:
+    docker run --rm -v "$(pwd):/src" -w /src/services/api sqlc/sqlc generate
+
 # Show service status
 status:
     docker-compose ps
