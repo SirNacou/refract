@@ -1,0 +1,82 @@
+name: refract
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:18-alpine
+    container_name: refract-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-refract}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # For Postgres 18+, mount the parent directory so the image can manage
+      # version-specific subdirectories (e.g., /var/lib/postgresql/18/docker).
+      # See https://github.com/docker-library/postgres/pull/1259
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - refract
+
+  # Database Migrations (runs once, then exits)
+  migrations:
+    container_name: refract-migrations
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+      target: builder
+    command: >
+      sh -c "
+        echo 'Waiting for PostgreSQL...' &&
+        sleep 2 &&
+        goose -dir /migrations/postgres postgres 'host=postgres port=5432 user=${DB_USER:-postgres} password=${DB_PASSWORD:-postgres} dbname=${DB_NAME:-refract} sslmode=disable' up
+      "
+    volumes:
+      - ./migrations:/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - refract
+    restart: "no"
+
+  # API Service
+  api:
+    container_name: refract-api
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-refract}
+      DB_SSLMODE: disable
+      PORT: 8080
+      SQIDS_ALPHABET: ${SQIDS_ALPHABET:-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789}
+      SQIDS_MIN_LENGTH: ${SQIDS_MIN_LENGTH:-6}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - refract
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  refract:
+    driver: bridge
