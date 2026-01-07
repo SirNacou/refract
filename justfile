@@ -46,6 +46,18 @@ migrate-status:
 db-shell:
     docker-compose exec postgres psql -U postgres -d refract
 
+# Connect to Valkey CLI
+valkey-shell:
+    docker-compose exec valkey valkey-cli -a "${VALKEY_PASSWORD:-valkey}"
+
+# View Valkey logs
+valkey-logs:
+    docker-compose logs -f valkey
+
+# Show Valkey info and stats
+valkey-info:
+    docker-compose exec valkey valkey-cli -a "${VALKEY_PASSWORD:-valkey}" INFO
+
 # Run API tests (when you have them)
 test:
     cd services/api && go test ./...
