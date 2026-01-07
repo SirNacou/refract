@@ -15,6 +15,7 @@ import (
 	"github.com/SirNacou/refract/services/api/internal/config"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/http/handlers"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/http/router"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/idgen"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/persistence/postgres"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/shortcode"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/validation"
@@ -74,6 +75,17 @@ func main() {
 		slog.Any("allowed_domains", cfg.GetAllowedDomains()),
 	)
 
+	// Initialize Snowflake ID generator
+	logger.Info("Initializing Snowflake ID generator...")
+	snowflakeGen, err := idgen.GetInstance(cfg.SnowflakeNodeID)
+	if err != nil {
+		logger.Error("Failed to initialize Snowflake generator", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	logger.Info("Snowflake ID generator initialized",
+		slog.Int64("node_id", cfg.SnowflakeNodeID),
+	)
+
 	// Initialize repository
 	logger.Info("Initializing repository...")
 	repo := postgres.NewPostgresURLRepository(dbPool)
@@ -81,7 +93,7 @@ func main() {
 
 	// Initialize command handlers
 	logger.Info("Initializing command handlers...")
-	createURLHandler := commands.NewCreateURLHandler(repo, generator, domainValidator)
+	createURLHandler := commands.NewCreateURLHandler(repo, generator, domainValidator, snowflakeGen)
 	logger.Info("Command handlers initialized")
 
 	// Initialize query handlers
