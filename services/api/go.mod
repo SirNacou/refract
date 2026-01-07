@@ -5,6 +5,7 @@ go 1.25.5
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/jackc/pgx/v5 v5.5.1
+	github.com/sqids/sqids-go v0.4.1
 )
 
 require (
