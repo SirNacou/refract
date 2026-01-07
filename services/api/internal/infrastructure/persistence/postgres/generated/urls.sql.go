@@ -64,17 +64,6 @@ func (q *Queries) ExistsByShortCode(ctx context.Context, shortCode string) (bool
 	return exists, err
 }
 
-const getNextID = `-- name: GetNextID :one
-SELECT nextval('urls_id_seq')
-`
-
-func (q *Queries) GetNextID(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, getNextID)
-	var nextval int64
-	err := row.Scan(&nextval)
-	return nextval, err
-}
-
 const getURLByShortCode = `-- name: GetURLByShortCode :one
 SELECT 
     id,

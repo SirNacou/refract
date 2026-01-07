@@ -23,6 +23,9 @@ type Config struct {
 	SqidsAlphabet  string `env:"SQIDS_ALPHABET" envDefault:"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"`
 	SqidsMinLength int    `env:"SQIDS_MIN_LENGTH" envDefault:"6"`
 
+	// Snowflake ID Configuration
+	SnowflakeNodeID int64 `env:"SNOWFLAKE_NODE_ID" envDefault:"0"`
+
 	// Domain Configuration
 	AllowedDomains string `env:"ALLOWED_DOMAINS" envDefault:"short.link"`
 	DefaultDomain  string `env:"DEFAULT_DOMAIN" envDefault:"short.link"`

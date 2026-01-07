@@ -29,15 +29,6 @@ func NewPostgresURLRepository(pool *pgxpool.Pool) *PostgresURLRepository {
 	}
 }
 
-// NextID reserves and returns the next ID from the sequence
-func (r *PostgresURLRepository) NextID(ctx context.Context) (int64, error) {
-	id, err := r.queries.GetNextID(ctx)
-	if err != nil {
-		return 0, url.NewInternalError("DB_ERROR", "Failed to get next ID", err)
-	}
-	return id, nil
-}
-
 // Save persists a URL entity
 func (r *PostgresURLRepository) Save(ctx context.Context, urlEntity *url.URL) error {
 	// Marshal metadata to JSON

@@ -7,9 +7,6 @@ import (
 
 // Repository defines the interface for URL persistence
 type Repository interface {
-	// NextID reserves and returns the next ID from the sequence
-	NextID(ctx context.Context) (int64, error)
-
 	// Save persists a URL entity
 	Save(ctx context.Context, url *URL) error
 

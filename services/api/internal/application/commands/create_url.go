@@ -25,9 +25,10 @@ type CreateURLResult struct {
 
 // CreateURLHandler handles the CreateURL command
 type CreateURLHandler struct {
-	repo      url.Repository
-	generator url.ShortCodeGenerator
-	validator url.DomainValidator
+	repo        url.Repository
+	generator   url.ShortCodeGenerator
+	validator   url.DomainValidator
+	idGenerator url.IDGenerator
 }
 
 // NewCreateURLHandler creates a new CreateURLHandler
@@ -35,11 +36,13 @@ func NewCreateURLHandler(
 	repo url.Repository,
 	generator url.ShortCodeGenerator,
 	validator url.DomainValidator,
+	idGenerator url.IDGenerator,
 ) *CreateURLHandler {
 	return &CreateURLHandler{
-		repo:      repo,
-		generator: generator,
-		validator: validator,
+		repo:        repo,
+		generator:   generator,
+		validator:   validator,
+		idGenerator: idGenerator,
 	}
 }
 
@@ -66,11 +69,8 @@ func (h *CreateURLHandler) Handle(ctx context.Context, cmd CreateURLCommand) (*C
 		)
 	}
 
-	// Reserve ID from sequence
-	id, err := h.repo.NextID(ctx)
-	if err != nil {
-		return nil, url.NewInternalError("SEQUENCE_ERROR", "Failed to generate ID", err)
-	}
+	// Generate unique ID using Snowflake algorithm
+	id := h.idGenerator.Generate()
 
 	// Generate short code from ID
 	shortCode, err := h.generator.Generate(id)

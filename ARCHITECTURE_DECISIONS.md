@@ -147,16 +147,36 @@ Benefits:
 ✅ No reserved words: Can configure alphabet
 ```
 
+**ID Generation Strategy**: We use **Snowflake IDs** (not database sequences) for several reasons:
+
+1. **Distributed System Ready**: Multiple API instances can generate IDs without coordination
+2. **No Database Dependency**: Faster URL creation (no DB round-trip for ID)
+3. **Time-Ordered**: IDs contain timestamp (can extract creation time)
+4. **Same Size**: Still `int64`, compatible with Sqids encoding
+5. **High Throughput**: 4096 IDs per millisecond per node
+
+**Snowflake ID Format (64 bits)**:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ 1 bit │ 41 bits timestamp │ 10 bits node ID │ 12 bits sequence │
+│ (0)   │ (milliseconds)     │ (0-1023)        │ (0-4095)         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Configuration**:
+```env
+SNOWFLAKE_NODE_ID=0  # For single instance (0-1023 for multi-instance)
+```
+
 **Usage**:
 ```go
-// Create: Reserve ID from sequence → Encode with Sqids
-id := repo.NextID(ctx)              // Returns 1
+// Create: Generate Snowflake ID → Encode with Sqids
+id := idGenerator.Generate()        // Returns 1234567890123456
 shortCode := generator.Generate(id) // Returns "UkLWZg"
 url := NewURL(id, shortCode, ...)   // Save with both
 
-// Redirect: Decode short code → Lookup by ID (index is fast)
-id := generator.Decode("UkLWZg")    // Returns 1
-url := repo.FindByID(ctx, id)       // O(1) lookup
+// Redirect: Lookup by short code (index on short_code)
+url := repo.FindByShortCode(ctx, "UkLWZg")  // Fast lookup
 ```
 
 ---
@@ -339,9 +359,16 @@ urlEntity := url.NewURLWithActivityExpiration(id, shortCode, originalURL, domain
 ```go
 // Domain layer (NO database knowledge)
 type Repository interface {
-    NextID(ctx context.Context) (int64, error)
     Save(ctx context.Context, url *URL) error
     FindByShortCode(ctx context.Context, code ShortCode) (*URL, error)
+    ExistsByShortCode(ctx context.Context, code ShortCode) (bool, error)
+    UpdateExpiration(ctx context.Context, code ShortCode, expiresAt time.Time) error
+    IncrementClickCount(ctx context.Context, code ShortCode) error
+}
+
+// Domain layer (ID generation abstraction)
+type IDGenerator interface {
+    Generate() int64  // Implemented by SnowflakeGenerator
 }
 
 // Infrastructure layer (implements domain interface)
@@ -357,7 +384,8 @@ func (r *PostgresURLRepository) Save(ctx context.Context, url *URL) error {
 
 // Dependency injection
 repo := postgres.NewPostgresURLRepository(dbPool)
-handler := commands.NewCreateURLHandler(repo, generator, validator)
+snowflakeGen := idgen.GetInstance(nodeID)
+handler := commands.NewCreateURLHandler(repo, generator, validator, snowflakeGen)
 // Handler doesn't know it's PostgreSQL - just knows the interface
 ```
 
