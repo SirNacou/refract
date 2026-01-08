@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/SirNacou/refract/services/api/internal/config"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/cache"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,8 +15,9 @@ type Application struct {
 	logger *slog.Logger
 
 	// Infrastructure
-	dbPool *pgxpool.Pool
-	server *Server
+	dbPool      *pgxpool.Pool
+	valkeyCache cache.Cache
+	server      *Server
 }
 
 // New creates and initializes the application with all dependencies
@@ -34,6 +36,8 @@ func New(cfg *config.Config, logger *slog.Logger) (*Application, error) {
 	if err := app.initDatabase(context.Background()); err != nil {
 		return nil, err
 	}
+
+	app.initCache(context.Background())
 
 	if err := app.initServer(); err != nil {
 		app.cleanup() // Clean up partial initialization
@@ -60,6 +64,9 @@ func (a *Application) Shutdown(ctx context.Context) error {
 
 // cleanup releases resources (called on init failure)
 func (a *Application) cleanup() {
+	if a.valkeyCache != nil {
+		a.valkeyCache.Close()
+	}
 	if a.dbPool != nil {
 		a.dbPool.Close()
 	}

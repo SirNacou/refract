@@ -88,11 +88,17 @@ services:
       PORT: 8080
       SQIDS_ALPHABET: ${SQIDS_ALPHABET:-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789}
       SQIDS_MIN_LENGTH: ${SQIDS_MIN_LENGTH:-6}
+      VALKEY_HOST: valkey
+      VALKEY_PORT: 6379
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD:-valkey}
+      VALKEY_DB: 0
     depends_on:
       postgres:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
+      valkey:
+        condition: service_healthy
     networks:
       - refract
     restart: unless-stopped

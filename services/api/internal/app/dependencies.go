@@ -6,9 +6,11 @@ import (
 
 	"github.com/SirNacou/refract/services/api/internal/application/commands"
 	"github.com/SirNacou/refract/services/api/internal/application/queries"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/cache"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/http/handlers"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/http/router"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/idgen"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/persistence"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/persistence/postgres"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/shortcode"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/validation"
@@ -41,6 +43,33 @@ func (a *Application) initDatabase(ctx context.Context) error {
 	return nil
 }
 
+// initCache connects to Valkey with graceful fallback to NoopCache
+func (a *Application) initCache(ctx context.Context) {
+	valkeyCache, err := cache.NewValkeyCache(
+		a.cfg.ValkeyHost,
+		a.cfg.ValkeyPort,
+		a.cfg.ValkeyPassword,
+		a.cfg.ValkeyDB,
+		a.logger,
+	)
+	if err != nil {
+		a.logger.Warn("Failed to connect to Valkey, using NoopCache",
+			"error", err,
+			"host", a.cfg.ValkeyHost,
+			"port", a.cfg.ValkeyPort,
+		)
+		a.valkeyCache = cache.NewNoopCache()
+		return
+	}
+
+	a.logger.Info("Connected to Valkey",
+		"host", a.cfg.ValkeyHost,
+		"port", a.cfg.ValkeyPort,
+		"db", a.cfg.ValkeyDB,
+	)
+	a.valkeyCache = valkeyCache
+}
+
 // initServer builds the HTTP server with all dependencies
 func (a *Application) initServer() error {
 	// Initialize ID generator
@@ -69,8 +98,9 @@ func (a *Application) initServer() error {
 		a.cfg.GetAllowedDomains(),
 	)
 
-	// Initialize repository
-	repo := postgres.NewPostgresURLRepository(a.dbPool)
+	// Initialize repository with cache decorator
+	baseRepo := postgres.NewPostgresURLRepository(a.dbPool)
+	repo := persistence.NewCachedURLRepository(baseRepo, a.valkeyCache, a.logger)
 
 	// Initialize command/query handlers
 	createURLHandler := commands.NewCreateURLHandler(

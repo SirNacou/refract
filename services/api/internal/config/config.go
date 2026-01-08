@@ -32,6 +32,12 @@ type Config struct {
 
 	// CORS Configuration
 	CORSOrigins string `env:"CORS_ORIGINS" envDefault:"http://localhost:3000"`
+
+	// Valkey Configuration
+	ValkeyHost     string `env:"VALKEY_HOST" envDefault:"localhost"`
+	ValkeyPort     int    `env:"VALKEY_PORT" envDefault:"6379"`
+	ValkeyPassword string `env:"VALKEY_PASSWORD" envDefault:""`
+	ValkeyDB       int    `env:"VALKEY_DB" envDefault:"0"`
 }
 
 func Load() (*Config, error) {
