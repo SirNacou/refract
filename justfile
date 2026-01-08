@@ -105,3 +105,25 @@ sqlc:
 # Install dev dependencies
 deps:
     go install github.com/pressly/goose/v3/cmd/goose@latest
+
+# ========================================
+# Redirector Service
+# ========================================
+
+# View redirector logs
+redirector-logs:
+    docker-compose logs -f redirector
+
+# Restart redirector service
+restart-redirector:
+    docker-compose restart redirector
+
+# Rebuild and restart redirector (fast dev cycle)
+dev-redirector:
+    docker-compose up -d --build --no-deps redirector
+    @echo "✅ Redirector restarted. Showing logs (Ctrl+C to exit):"
+    docker-compose logs -f --tail=50 redirector
+
+# Check redirector health
+redirector-health:
+    curl -s http://localhost:8081/health | jq
