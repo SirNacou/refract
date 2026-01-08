@@ -458,16 +458,18 @@ func TestCanonicalizeErrors(t *testing.T) {
 			errorSubstr: "must have a host",
 		},
 		{
-			name:        "incomplete percent encoding at end",
+			name:        "incomplete percent encoding at end - treated as literal",
 			input:       "http://example.com/path%2",
-			expectError: true,
-			errorSubstr: "incomplete percent encoding",
+			expectError: false, // GSB spec: treat as literal and escape
+			// %2 is incomplete, gets treated as literal % and 2
+			// % becomes %25, 2 stays as 2
 		},
 		{
-			name:        "invalid percent encoding hex",
+			name:        "invalid percent encoding hex - treated as literal",
 			input:       "http://example.com/path%ZZ",
-			expectError: true,
-			errorSubstr: "invalid percent encoding",
+			expectError: false, // GSB spec: treat as literal and escape
+			// %ZZ is invalid, gets treated as literal %, Z, Z
+			// % becomes %25, Z stays as Z
 		},
 	}
 
@@ -555,7 +557,7 @@ func TestCanonicalizeComplex(t *testing.T) {
 		{
 			name:     "complex URL with all features",
 			input:    "HTTPS://EXAMPLE.COM:443/./path//%7Euser/../file.html?b=2&a=1#section",
-			expected: "https://example.com/path/~user/file.html?b=2&a=1",
+			expected: "https://example.com/path/file.html?b=2&a=1",
 		},
 		{
 			name:     "URL with multiple normalizations",
