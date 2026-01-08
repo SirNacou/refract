@@ -3,6 +3,7 @@ package idgen
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 )
@@ -22,7 +23,6 @@ import (
 // - No database dependency for ID generation
 type SnowflakeGenerator struct {
 	node *snowflake.Node
-	mu   sync.RWMutex
 }
 
 var (
@@ -33,10 +33,7 @@ var (
 // NewSnowflakeGenerator creates a new Snowflake ID generator
 // nodeID must be between 0 and 1023
 func NewSnowflakeGenerator(nodeID int64) (*SnowflakeGenerator, error) {
-	if nodeID < 0 || nodeID > 1023 {
-		return nil, fmt.Errorf("node ID must be between 0 and 1023, got %d", nodeID)
-	}
-
+	snowflake.Epoch = time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
 	node, err := snowflake.NewNode(nodeID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
@@ -60,9 +57,7 @@ func GetInstance(nodeID int64) (*SnowflakeGenerator, error) {
 // Generate creates a new unique Snowflake ID
 // This method is thread-safe and never fails (unless system clock goes backwards)
 func (g *SnowflakeGenerator) Generate() int64 {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	return int64(g.node.Generate())
+	return g.node.Generate().Int64()
 }
 
 // ParseID extracts metadata from a Snowflake ID
