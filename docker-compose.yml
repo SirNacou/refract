@@ -103,6 +103,44 @@ services:
       - refract
     restart: unless-stopped
 
+  # Redirector Service (Rust)
+  redirector:
+    container_name: refract-redirector
+    build:
+      context: .
+      dockerfile: services/redirector/Dockerfile
+    ports:
+      - "${REDIRECTOR_PORT:-8081}:8081"
+    environment:
+      REDIRECTOR_HOST: 0.0.0.0
+      REDIRECTOR_PORT: 8081
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-refract}
+      VALKEY_HOST: valkey
+      VALKEY_PORT: 6379
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD:-valkey}
+      VALKEY_DB: 0
+      # L1 Cache Configuration (Moka in-memory cache)
+      L1_CACHE_MAX_CAPACITY: ${L1_CACHE_MAX_CAPACITY:-10000}
+      L1_CACHE_TTL_SECONDS: ${L1_CACHE_TTL_SECONDS:-60}
+      RUST_LOG: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    networks:
+      - refract
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
 volumes:
   postgres_data:
     driver: local
