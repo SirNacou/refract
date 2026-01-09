@@ -45,9 +45,9 @@
 
 ### API Service Foundation
 
-- [ ] T011 Create domain layer structure: services/api/internal/domain/url/, domain/apikey/, domain/user/
-- [ ] T012 Create application layer structure: services/api/internal/application/commands/, application/queries/
-- [ ] T013 Create infrastructure layer structure: services/api/internal/infrastructure/persistence/postgres/, infrastructure/cache/, infrastructure/auth/, infrastructure/idgen/, infrastructure/http/
+- [X] T011 Create domain layer structure: services/api/internal/domain/url/, domain/apikey/, domain/user/
+- [X] T012 Create application layer structure: services/api/internal/application/commands/, application/queries/
+- [X] T013 Create infrastructure layer structure: services/api/internal/infrastructure/persistence/postgres/, infrastructure/cache/, infrastructure/auth/, infrastructure/idgen/, infrastructure/http/
 - [ ] T014 Create Snowflake ID generator in services/api/internal/infrastructure/idgen/snowflake_generator.go (FR-008)
 - [ ] T015 Create Base62 encoder/decoder in services/api/internal/infrastructure/idgen/base62.go (FR-008)
 - [ ] T016 [P] Create config management in services/api/internal/config/config.go (database, Redis, Zitadel URLs, worker ID)
