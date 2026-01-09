@@ -14,6 +14,8 @@
 - Q: What database ID type should be used to generate short codes? → A: Snowflake IDs (64-bit distributed) with Base62 encoding
 - Q: What caching architecture for <50ms redirect latency? → A: Multi-tier caching (in-memory L1 + Redis/Valkey L2)
 - Q: How should API keys be stored and validated securely? → A: Hash API keys using BLAKE2 or SHA256
+- Q: What TanStack Start project structure should be used? → A: Use official TanStack Start scaffold structure (npx create-tanstack@latest)
+- Q: Should Zitadel be included in docker-compose.yml or reference external deployment? → A: Reference existing external Zitadel via environment variables
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -228,7 +230,7 @@ A new visitor wants to create an account and log in to access the URL shortening
 
 ## Assumptions
 
-1. **Identity Provider**: Assumes Zitadel identity provider is deployed and configured with email/password and OAuth2 providers (Google, GitHub)
+1. **Identity Provider**: Assumes Zitadel identity provider is already deployed externally (separate Docker containers) and accessible via environment variables. Zitadel must be configured with email/password and OAuth2 providers (Google, GitHub).
 2. **Domain Name**: Assumes a short, memorable domain is available for the service (e.g., "short.link", "go.to")
 3. **Safe Browsing API**: Assumes integration with Google Safe Browsing or similar service for malicious URL detection
 4. **Geographic Data**: Assumes access to IP geolocation database/service (e.g., MaxMind GeoIP, IP2Location)

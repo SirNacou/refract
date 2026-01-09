@@ -1,0 +1,29 @@
+# Rust project ignore - redirector/
+# Build artifacts
+/target/
+**/target/
+
+# Byproducts
+**/*.rlib
+**/*.d
+
+# Executables
+*.exe
+*.dll
+*.so
+*.dylib
+
+# IDEs and editors
+.idea/
+.vscode/
+*.sww
+.DS_Store
+
+# Environment
+.env
+
+# Cargo lock (optional for libraries; keep/remove as needed)
+# Cargo.lock
+
+# Logs
+*.log

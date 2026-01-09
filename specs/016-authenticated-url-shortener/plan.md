@@ -213,24 +213,28 @@ services/
     ├── go.mod
     └── Dockerfile
 
-frontend/                         # TanStack Start (React SSR/SSG)
+frontend/                         # TanStack Start (official scaffold structure)
 ├── app/
 │   ├── routes/                   # File-based routing
-│   │   ├── index.tsx             # Landing page
-│   │   ├── dashboard.tsx         # URL list
-│   │   ├── create.tsx            # URL creation form
-│   │   ├── analytics.$id.tsx     # Analytics detail page
+│   │   ├── __root.tsx            # Root layout
+│   │   ├── index.tsx             # Landing page (/)
+│   │   ├── dashboard.tsx         # URL list (/dashboard)
+│   │   ├── create.tsx            # URL creation form (/create)
+│   │   ├── analytics.$id.tsx     # Analytics detail page (/analytics/:id)
 │   │   └── settings/
-│   │       └── api-keys.tsx      # API key management
+│   │       └── api-keys.tsx      # API key management (/settings/api-keys)
 │   ├── components/
 │   │   ├── URLList.tsx
 │   │   ├── AnalyticsCharts.tsx   # Recharts visualizations
 │   │   └── AuthGuard.tsx         # Zitadel OIDC integration
-│   └── utils/
-│       ├── api-client.ts         # Fetch wrapper for API service
-│       └── auth.ts               # Zitadel OIDC hooks
+│   ├── utils/
+│   │   ├── api-client.ts         # Fetch wrapper for API service
+│   │   └── auth.ts               # Zitadel OIDC hooks
+│   └── router.tsx                # Router configuration
+├── public/                       # Static assets
 ├── package.json
 ├── tsconfig.json
+├── vite.config.ts                # TanStack Start uses Vite
 └── Dockerfile
 
 migrations/
@@ -241,6 +245,8 @@ migrations/
     └── 00004_create_timescale_hypertables.sql
 
 docker-compose.yml                # Local development environment
+                                  # Note: Zitadel NOT included (references external instance via env vars)
+                                  # Services: PostgreSQL, TimescaleDB, Redis, API, Redirector, Analytics Processor, Frontend
 justfile                          # Development commands (just up, just test, just migrate)
 ```
 

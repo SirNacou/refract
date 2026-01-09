@@ -1,0 +1,23 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+count.txt
+.env
+.nitro
+.tanstack
+.wrangler
+.output
+.vinxi
+todos.json
+
+# TypeScript / frontend additional ignores
+.cache
+.vite
+coverage
+npm-debug.log
+yarn-error.log
+pnpm-lock.yaml
+package-lock.json
+.turbo

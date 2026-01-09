@@ -8,7 +8,7 @@
 
 ## Overview
 
-This guide helps you set up a complete local development environment for the distributed URL shortener platform in under 30 minutes. You'll run all services (API, Redirector, Analytics Processor, Frontend) plus dependencies (PostgreSQL, TimescaleDB, Redis, Zitadel) using Docker Compose.
+This guide helps you set up a complete local development environment for the distributed URL shortener platform in under 30 minutes. You'll run all services (API, Redirector, Analytics Processor, Frontend) plus dependencies (PostgreSQL, TimescaleDB, Redis) using Docker Compose. **Note**: This setup assumes you have Zitadel already deployed in external Docker containers.
 
 **Prerequisites**:
 - Docker 24+ and Docker Compose 2.20+
@@ -33,8 +33,10 @@ This guide helps you set up a complete local development environment for the dis
 ├─────────────────────────────────────────────────────────────┤
 │  PostgreSQL 16 + TimescaleDB       :5432                    │
 │  Redis/Valkey 7.2                  :6379                    │
-│  Zitadel (Identity Provider)       :8081                    │
 │  MaxMind GeoLite2 Database         (file: /data/geoip/)     │
+├─────────────────────────────────────────────────────────────┤
+│  External Dependencies (Already Deployed):                   │
+│  Zitadel (Identity Provider)       (configured via .env)    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -78,16 +80,16 @@ REDIS_PORT=6379
 REDIS_PASSWORD=
 REDIS_DB=0
 
-# Zitadel Configuration (OIDC)
-ZITADEL_URL=http://localhost:8081
-ZITADEL_CLIENT_ID=your_client_id_here
-ZITADEL_CLIENT_SECRET=your_client_secret_here
-ZITADEL_ISSUER=http://localhost:8081
+# Zitadel Configuration (External Instance)
+ZITADEL_URL=https://your-zitadel-instance.com  # URL of your existing Zitadel deployment
+ZITADEL_CLIENT_ID=your_client_id_here          # From your Zitadel application configuration
+ZITADEL_CLIENT_SECRET=your_client_secret_here  # From your Zitadel application configuration
+ZITADEL_ISSUER=https://your-zitadel-instance.com  # Must match the issuer in JWT tokens
 
 # API Service Configuration
 API_PORT=8080
 API_BASE_URL=http://localhost:8080
-JWT_ISSUER=http://localhost:8081
+JWT_ISSUER=https://your-zitadel-instance.com  # Must match ZITADEL_ISSUER
 WORKER_ID=1  # Snowflake ID worker ID (0-63)
 
 # Redirector Service Configuration
@@ -98,7 +100,7 @@ REDIRECTOR_WORKER_ID=64  # Separate range from API service
 # Frontend Configuration
 VITE_API_URL=http://localhost:8080
 VITE_SHORT_URL_BASE=http://localhost:3000
-VITE_ZITADEL_AUTHORITY=http://localhost:8081
+VITE_ZITADEL_AUTHORITY=https://your-zitadel-instance.com  # Must match ZITADEL_ISSUER
 VITE_ZITADEL_CLIENT_ID=your_client_id_here
 
 # Analytics Processor Configuration
@@ -117,15 +119,19 @@ LOG_LEVEL=debug
 LOG_FORMAT=json
 ```
 
-**Note**: Replace placeholder values (`your_client_id_here`, etc.) with actual credentials from Zitadel and external services.
+**Note**: Replace placeholder values with your actual external Zitadel configuration:
+- `your-zitadel-instance.com`: Your existing Zitadel deployment URL
+- `your_client_id_here`: Client ID from your Zitadel application (see Step 6)
+- `your_client_secret_here`: Client Secret from your Zitadel application
+- Ensure your Zitadel instance is accessible from your development environment
 
 ---
 
 ## Step 3: Start Infrastructure Services (Docker Compose)
 
 ```bash
-# Start PostgreSQL, Redis, and Zitadel
-docker-compose up -d postgres redis zitadel
+# Start PostgreSQL and Redis
+docker-compose up -d postgres redis
 
 # Wait for services to be healthy (30-60 seconds)
 docker-compose ps
@@ -133,7 +139,6 @@ docker-compose ps
 # Check logs if services fail to start
 docker-compose logs postgres
 docker-compose logs redis
-docker-compose logs zitadel
 ```
 
 **Docker Compose Configuration** (`docker-compose.yml`):
@@ -173,34 +178,9 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
-
-  zitadel:
-    image: ghcr.io/zitadel/zitadel:latest
-    container_name: url-shortener-zitadel
-    command: start-from-init --masterkeyFromEnv --tlsMode disabled
-    environment:
-      ZITADEL_DATABASE_POSTGRES_HOST: postgres
-      ZITADEL_DATABASE_POSTGRES_PORT: 5432
-      ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel
-      ZITADEL_DATABASE_POSTGRES_USER_USERNAME: refract
-      ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: dev_password_change_in_prod
-      ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: refract
-      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: dev_password_change_in_prod
-      ZITADEL_MASTERKEY: "MasterkeyNeedsToHave32Characters"
-      ZITADEL_FIRSTINSTANCE_ORG_NAME: "Refract"
-      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: "admin"
-      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: "Password1!"
-    ports:
-      - "8081:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/debug/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 ```
+
+**Note**: Zitadel is NOT included in this docker-compose.yml as it's already deployed externally. Services will connect to your existing Zitadel instance via the environment variables configured in Step 2.
 
 ---
 
@@ -255,32 +235,70 @@ ls -lh data/geoip/GeoLite2-City.mmdb
 
 ---
 
-## Step 6: Configure Zitadel (One-Time Setup)
+## Step 6: Configure Zitadel Application (One-Time Setup)
+
+**Prerequisites**: Your external Zitadel instance must be accessible and you must have admin access.
+
+### 6.1 Access Your Zitadel Instance
 
 ```bash
-# 1. Open Zitadel admin console: http://localhost:8081
-# 2. Login with admin credentials: admin / Password1!
-# 3. Create new project: "URL Shortener"
-# 4. Create OIDC application:
-#    - Name: "URL Shortener API"
-#    - Type: Web
-#    - Redirect URIs: http://localhost:5173/auth/callback
-#    - Post Logout URIs: http://localhost:5173
-#    - Grant Types: Authorization Code, Refresh Token
-#    - Response Types: Code
-# 5. Copy Client ID and Client Secret to .env file
-# 6. Create service account for API key validation:
-#    - Name: "API Service"
-#    - Grant roles: project.read, user.read
-# 7. Generate personal access token (PAT) for introspection
+# Navigate to your Zitadel admin console
+# Example: https://your-zitadel-instance.com
+# Login with your Zitadel admin credentials
 ```
 
-**Zitadel Configuration Values**:
-- **Issuer**: `http://localhost:8081`
-- **Authorization Endpoint**: `http://localhost:8081/oauth/v2/authorize`
-- **Token Endpoint**: `http://localhost:8081/oauth/v2/token`
-- **UserInfo Endpoint**: `http://localhost:8081/oidc/v1/userinfo`
-- **JWKS URI**: `http://localhost:8081/oauth/v2/keys`
+### 6.2 Create Application for URL Shortener
+
+1. Navigate to your organization/project
+2. Click **"Applications"** → **"New"**
+3. Configure application:
+   - **Name**: "URL Shortener"
+   - **Type**: Web
+4. Configure OIDC settings:
+   - **Redirect URIs**: `http://localhost:5173/auth/callback`
+   - **Post Logout URIs**: `http://localhost:5173`
+   - **Grant Types**: Authorization Code, Refresh Token
+   - **Response Types**: Code
+5. Click **"Create"**
+6. **Copy Client ID and Client Secret** → Update your `.env` file:
+   ```bash
+   ZITADEL_CLIENT_ID=<paste-client-id-here>
+   ZITADEL_CLIENT_SECRET=<paste-client-secret-here>
+   ```
+
+### 6.3 Configure OAuth Providers (Optional)
+
+If you want users to sign in with Google or GitHub:
+
+1. Navigate to **"Identity Providers"** in your Zitadel console
+2. Add **Google** provider:
+   - Enter Google OAuth Client ID and Secret
+   - Enable for your application
+3. Add **GitHub** provider:
+   - Enter GitHub OAuth App Client ID and Secret
+   - Enable for your application
+
+### 6.4 Verify Zitadel Endpoints
+
+Ensure your Zitadel instance has the following endpoints accessible:
+
+**Test connectivity**:
+```bash
+# Replace with your actual Zitadel URL
+ZITADEL_URL=https://your-zitadel-instance.com
+
+# Test OIDC discovery endpoint
+curl $ZITADEL_URL/.well-known/openid-configuration
+
+# Expected: JSON response with authorization_endpoint, token_endpoint, etc.
+```
+
+**Zitadel Configuration Values** (for reference):
+- **Issuer**: `https://your-zitadel-instance.com`
+- **Authorization Endpoint**: `https://your-zitadel-instance.com/oauth/v2/authorize`
+- **Token Endpoint**: `https://your-zitadel-instance.com/oauth/v2/token`
+- **UserInfo Endpoint**: `https://your-zitadel-instance.com/oidc/v1/userinfo`
+- **JWKS URI**: `https://your-zitadel-instance.com/oauth/v2/keys`
 
 ---
 
@@ -522,33 +540,19 @@ docker-compose ps postgres | grep healthy
 
 ---
 
-### Issue 2: Zitadel Not Starting
-
-**Symptoms**: `Zitadel container exits immediately`
-
-**Solution**:
-```bash
-# Check Zitadel logs
-docker-compose logs zitadel
-
-# Common issue: Database not initialized
-# Solution: Recreate database
-docker-compose down -v
-docker-compose up -d postgres
-sleep 10
-docker-compose up -d zitadel
-```
-
----
-
-### Issue 3: API Service Can't Validate JWT
+### Issue 2: Redirector L2 Cache Misses
 
 **Symptoms**: `401 Unauthorized` on API requests, logs show "failed to verify token"
 
 **Solution**:
 ```bash
-# Verify Zitadel JWKS endpoint accessible
-curl http://localhost:8081/oauth/v2/keys
+# Verify Zitadel JWKS endpoint accessible from your development environment
+curl https://your-zitadel-instance.com/oauth/v2/keys
+
+# If connection fails, check:
+# 1. Zitadel instance is running and accessible
+# 2. Network connectivity (firewall, VPN, etc.)
+# 3. .env ZITADEL_ISSUER matches your actual Zitadel URL
 
 # Check .env ZITADEL_ISSUER matches JWT issuer claim
 # Token issuer must exactly match ZITADEL_ISSUER value
@@ -562,7 +566,7 @@ curl http://localhost:8081/oauth/v2/keys
 
 ---
 
-### Issue 4: Redirector L2 Cache Misses
+### Issue 3: API Service Can't Validate JWT
 
 **Symptoms**: All redirects show `cache_tier: db` in logs (high latency)
 
@@ -584,7 +588,7 @@ redis-cli SET "url:1234567890123456" "https://example.com/article" EX 3600
 
 ---
 
-### Issue 5: Analytics Not Updating
+### Issue 4: Analytics Not Updating
 
 **Symptoms**: Dashboard shows 0 clicks after redirect
 

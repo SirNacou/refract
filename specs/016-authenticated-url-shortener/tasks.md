@@ -1,7 +1,7 @@
 # Tasks: Authenticated URL Shortener Platform
 
-**Feature Branch**: `016-authenticated-url-shortener`  
-**Input**: Design documents from `/specs/016-authenticated-url-shortener/`  
+**Feature Branch**: `016-authenticated-url-shortener`
+**Input**: Design documents from `/specs/016-authenticated-url-shortener/`
 **Prerequisites**: plan.md, spec.md, data-model.md, contracts/, research.md, quickstart.md
 
 **Organization**: Tasks are grouped by user story (P1, P2, P3, P4) to enable independent implementation and testing of each story.
@@ -22,16 +22,16 @@
 
 **Purpose**: Create distributed system structure with 3 services + frontend + infrastructure
 
-- [ ] T001 Create repository root structure: services/, frontend/, migrations/, docker-compose.yml, justfile
-- [ ] T002 [P] Initialize API service (Go): services/api/ with go.mod, cmd/api/main.go, internal/ structure
-- [ ] T003 [P] Initialize Redirector service (Rust): services/redirector/ with Cargo.toml, src/main.rs
-- [ ] T004 [P] Initialize Analytics Processor (Go): services/analytics-processor/ with go.mod, cmd/processor/main.go
-- [ ] T005 [P] Initialize Frontend (TanStack Start): frontend/ with package.json, app/ structure, tsconfig.json
-- [ ] T006 [P] Create migrations directory: migrations/postgres/ with .gitkeep
-- [ ] T007 [P] Create Docker Compose configuration in docker-compose.yml with PostgreSQL, Redis, Zitadel services
-- [ ] T008 [P] Create Justfile with commands: `just up`, `just down`, `just migrate`, `just test`
-- [ ] T009 [P] Create .env.example with all required environment variables per quickstart.md
-- [ ] T010 [P] Create .gitignore files for each service (Go, Rust, TypeScript, Docker volumes)
+- [X] T001 Create repository root structure: services/, frontend/, migrations/, docker-compose.yml, justfile
+- [X] T002 [P] Initialize API service (Go): services/api/ with go.mod, cmd/api/main.go, internal/ structure
+- [X] T003 [P] Initialize Redirector service (Rust): services/redirector/ with Cargo.toml, src/main.rs
+- [X] T004 [P] Initialize Analytics Processor (Go): services/analytics-processor/ with go.mod, cmd/processor/main.go
+- [X] T005 [P] Initialize Frontend (TanStack Start): frontend/ with package.json, app/ structure, tsconfig.json
+- [X] T006 [P] Create migrations directory: migrations/postgres/ with .gitkeep
+- [X] T007 [P] Create Docker Compose configuration in docker-compose.yml with PostgreSQL, Redis, Zitadel services
+- [X] T008 [P] Create Justfile with commands: `just up`, `just down`, `just migrate`, `just test`
+- [X] T009 [P] Create .env.example with all required environment variables per quickstart.md
+- [X] T010 [P] Create .gitignore files for each service (Go, Rust, TypeScript, Docker volumes)
 
 ---
 
@@ -430,6 +430,7 @@ Setup → Foundational → US5 (Auth) → US1 (URL Creation + Redirect) → MVP 
 ```
 
 **MVP Scope**: User Story 5 + User Story 1
+
 - Users can sign up, log in, create short URLs, visit them to redirect
 - Click events captured but analytics not yet viewable (US2 adds analytics dashboard)
 - Total tasks for MVP: T001-T095 (95 tasks)
@@ -459,7 +460,8 @@ MVP → US2 (Analytics) → US3 (URL Management) → US4 (API Keys) → FULL FEA
 
 **Within Setup (Phase 1)**: All tasks T002-T010 can run in parallel
 
-**Within Foundational (Phase 2)**: 
+**Within Foundational (Phase 2)**:
+
 - API Service Foundation (T011-T026): Most tasks marked [P] can run in parallel
 - Database Migrations (T027-T031): Must run sequentially (dependencies between migrations)
 - Redirector Foundation (T033-T039): Most tasks marked [P] can run in parallel
@@ -467,12 +469,14 @@ MVP → US2 (Analytics) → US3 (URL Management) → US4 (API Keys) → FULL FEA
 - Frontend Foundation (T045-T049): All tasks marked [P] can run in parallel
 
 **Within User Stories**:
+
 - Domain layer entities marked [P] can run in parallel (different files)
 - Application layer commands/queries marked [P] can run in parallel
 - HTTP handlers marked [P] can run in parallel
 - Frontend components marked [P] can run in parallel
 
 **Across User Stories** (after US5 complete):
+
 - US1, US2, US3, US4 can be developed in parallel by different team members IF:
   - Each story has its own domain/application/infrastructure/HTTP layers
   - US1 completed first (or work on US1 core + others' prep in parallel)
@@ -541,6 +545,7 @@ Task T088: "Create URL list component"
 With multiple developers (recommended team size: 4-6):
 
 **Phase 1-2 (Setup + Foundational)**: Everyone works together
+
 - Developer 1: API service foundation
 - Developer 2: Redirector service foundation
 - Developer 3: Analytics processor foundation
@@ -549,6 +554,7 @@ With multiple developers (recommended team size: 4-6):
 **Phase 3 (US5 Auth)**: Everyone works together (authentication is prerequisite)
 
 **Phase 4-7 (User Stories)**: Parallel development
+
 - Developer 1: US1 (API service + domain logic)
 - Developer 2: US1 (Redirector service)
 - Developer 3: US1 (Analytics processor)
@@ -577,6 +583,7 @@ With multiple developers (recommended team size: 4-6):
 - **Performance targets**: Redirector must achieve <50ms p95 latency (FR-016), analytics <5s visibility (FR-024)
 
 **Total Tasks**: 190 tasks
+
 - Setup: 10 tasks
 - Foundational: 39 tasks (BLOCKS all stories)
 - US5 (Auth): 14 tasks (MVP prerequisite)
