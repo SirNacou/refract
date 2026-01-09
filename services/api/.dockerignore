@@ -1,9 +1,0 @@
-*.md
-.git
-.gitignore
-.env
-.env.*
-*.test
-coverage.txt
-tmp/
-vendor/
