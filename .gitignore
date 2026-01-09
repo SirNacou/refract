@@ -4,6 +4,9 @@
 !.env.example
 .env.local
 
+#AI
+.opencode/
+
 # Go
 *.exe
 *.exe~
