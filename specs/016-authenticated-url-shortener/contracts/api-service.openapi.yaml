@@ -1,0 +1,1011 @@
+openapi: 3.1.0
+info:
+  title: URL Shortener API Service
+  version: 1.0.0
+  description: |
+    RESTful API for authenticated URL shortening platform. Provides endpoints for:
+    - URL creation and management (CRUD operations)
+    - Analytics retrieval (click metrics, geographic data, referrers)
+    - API key management (generation, revocation, listing)
+    
+    **Authentication**: Supports JWT (Zitadel OIDC) for web users and API key authentication for programmatic access.
+    
+    **Base URL**: `https://api.short.link` (production) | `http://localhost:8080` (development)
+  contact:
+    name: Refract Team
+    url: https://github.com/refract/url-shortener
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.short.link
+    description: Production server
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: URLs
+    description: Short URL creation and management
+  - name: Analytics
+    description: Click analytics and metrics
+  - name: API Keys
+    description: API key generation and management
+  - name: Health
+    description: Service health and status
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Health Check
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Service health check
+      description: Returns service status and dependency health (database, cache, Zitadel)
+      operationId: getHealth
+      security: []  # No authentication required
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service unhealthy (degraded or down)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  # URL Management Endpoints
+  /api/v1/urls:
+    get:
+      tags:
+        - URLs
+      summary: List user's short URLs
+      description: Retrieve paginated list of URLs created by authenticated user (FR-028)
+      operationId: listURLs
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: status
+          in: query
+          description: Filter by URL status
+          schema:
+            type: string
+            enum: [active, expired, disabled, deleted]
+        - name: search
+          in: query
+          description: Search by title or destination URL (FR-029)
+          schema:
+            type: string
+            maxLength: 200
+        - name: sort
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [created_at, updated_at, total_clicks]
+            default: created_at
+        - name: order
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: URLs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/URLListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - URLs
+      summary: Create short URL
+      description: |
+        Generate a new short URL with auto-generated or custom alias (FR-008, FR-009).
+        Validates destination URL against Safe Browsing API (FR-012, FR-042).
+      operationId: createURL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateURLRequest'
+      responses:
+        '201':
+          description: URL created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/URLResponse'
+        '400':
+          description: Invalid request (malformed URL, alias taken, malicious URL)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidURL:
+                  summary: Invalid destination URL
+                  value:
+                    error: "INVALID_URL"
+                    message: "Destination URL must be valid HTTP/HTTPS"
+                aliasTaken:
+                  summary: Custom alias already taken
+                  value:
+                    error: "ALIAS_TAKEN"
+                    message: "Custom alias 'my-blog' is already in use"
+                maliciousURL:
+                  summary: URL flagged as malicious
+                  value:
+                    error: "MALICIOUS_URL"
+                    message: "URL flagged as malicious by Safe Browsing API"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/urls/{id}:
+    get:
+      tags:
+        - URLs
+      summary: Get URL details
+      description: Retrieve detailed information about a specific short URL (FR-028)
+      operationId: getURL
+      parameters:
+        - $ref: '#/components/parameters/URLId'
+      responses:
+        '200':
+          description: URL details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/URLResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags:
+        - URLs
+      summary: Update URL metadata
+      description: Update title, notes, or destination URL (FR-030)
+      operationId: updateURL
+      parameters:
+        - $ref: '#/components/parameters/URLId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateURLRequest'
+      responses:
+        '200':
+          description: URL updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/URLResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - URLs
+      summary: Delete URL
+      description: Permanently delete short URL (soft delete, analytics retained) (FR-032)
+      operationId: deleteURL
+      parameters:
+        - $ref: '#/components/parameters/URLId'
+      responses:
+        '204':
+          description: URL deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/urls/{id}/disable:
+    post:
+      tags:
+        - URLs
+      summary: Disable URL
+      description: Deactivate URL without deleting (stops redirects) (FR-031)
+      operationId: disableURL
+      parameters:
+        - $ref: '#/components/parameters/URLId'
+      responses:
+        '200':
+          description: URL disabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/URLResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/urls/{id}/enable:
+    post:
+      tags:
+        - URLs
+      summary: Enable URL
+      description: Reactivate previously disabled URL (FR-031)
+      operationId: enableURL
+      parameters:
+        - $ref: '#/components/parameters/URLId'
+      responses:
+        '200':
+          description: URL enabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/URLResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Analytics Endpoints
+  /api/v1/analytics/{id}:
+    get:
+      tags:
+        - Analytics
+      summary: Get URL analytics
+      description: |
+        Retrieve comprehensive analytics for a short URL including:
+        - Total clicks and unique visitors (FR-027)
+        - Time-series data (hourly/daily trends) (FR-023)
+        - Geographic distribution (FR-021)
+        - Device and browser breakdown (FR-022)
+        - Top referrers (FR-026)
+      operationId: getAnalytics
+      parameters:
+        - $ref: '#/components/parameters/URLId'
+        - name: start_date
+          in: query
+          description: Start of date range (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+            example: "2026-01-01T00:00:00Z"
+        - name: end_date
+          in: query
+          description: End of date range (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+            example: "2026-01-31T23:59:59Z"
+        - name: granularity
+          in: query
+          description: Time bucket granularity (FR-025)
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/analytics/{id}/export:
+    get:
+      tags:
+        - Analytics
+      summary: Export analytics data
+      description: Export analytics in CSV format for external analysis
+      operationId: exportAnalytics
+      parameters:
+        - $ref: '#/components/parameters/URLId'
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: CSV export generated
+          content:
+            text/csv:
+              schema:
+                type: string
+                example: |
+                  timestamp,referrer,country,device_type,browser
+                  2026-01-09T12:00:00Z,https://google.com,US,desktop,Chrome 120.0
+                  2026-01-09T12:05:00Z,https://twitter.com,UK,mobile,Safari 17.2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # API Key Management Endpoints
+  /api/v1/api-keys:
+    get:
+      tags:
+        - API Keys
+      summary: List API keys
+      description: Retrieve user's API keys (excludes revoked by default) (FR-036)
+      operationId: listAPIKeys
+      parameters:
+        - name: include_revoked
+          in: query
+          description: Include revoked keys in results
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: API keys retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - API Keys
+      summary: Generate API key
+      description: Create new API key for programmatic access (FR-034)
+      operationId: generateAPIKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAPIKeyRequest'
+      responses:
+        '201':
+          description: API key generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateAPIKeyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/api-keys/{keyId}:
+    delete:
+      tags:
+        - API Keys
+      summary: Revoke API key
+      description: Permanently revoke API key (cannot be undone) (FR-036)
+      operationId: revokeAPIKey
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          description: API key ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: API key revoked successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+# Components
+components:
+  # Security Schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Zitadel OIDC JWT token (obtained via authentication flow)
+    
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API key for programmatic access (format: "refract_{random_base64}")
+        Example: X-API-Key: refract_abc123xyz456def789ghi012jkl345
+
+  # Reusable Parameters
+  parameters:
+    URLId:
+      name: id
+      in: path
+      required: true
+      description: Snowflake ID of short URL (int64)
+      schema:
+        type: integer
+        format: int64
+        example: 1234567890123456
+
+  # Request Schemas
+  schemas:
+    CreateURLRequest:
+      type: object
+      required:
+        - destination_url
+      properties:
+        destination_url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: Original long URL to shorten
+          example: "https://example.com/very/long/path/to/resource?param1=value1"
+        custom_alias:
+          type: string
+          pattern: '^[a-zA-Z0-9-]{3,50}$'
+          minLength: 3
+          maxLength: 50
+          description: Custom vanity alias (optional, must be unique)
+          example: "my-blog"
+        title:
+          type: string
+          maxLength: 200
+          description: Descriptive title for organization
+          example: "My Blog Post"
+        notes:
+          type: string
+          maxLength: 1000
+          description: Private notes (not visible in analytics)
+          example: "Shared in January 2026 newsletter"
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional expiration date (ISO 8601)
+          example: "2026-12-31T23:59:59Z"
+
+    UpdateURLRequest:
+      type: object
+      properties:
+        destination_url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: Updated destination URL
+        title:
+          type: string
+          maxLength: 200
+          description: Updated title
+        notes:
+          type: string
+          maxLength: 1000
+          description: Updated notes
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Updated expiration date (null to remove expiration)
+
+    GenerateAPIKeyRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Descriptive name for API key
+          example: "Blog automation script"
+
+    # Response Schemas
+    URLResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Snowflake ID
+          example: 1234567890123456
+        short_code:
+          type: string
+          description: Base62-encoded short code (derived from Snowflake ID)
+          example: "dBvJIX9uyO"
+        short_url:
+          type: string
+          format: uri
+          description: Full short URL
+          example: "https://short.link/dBvJIX9uyO"
+        custom_alias:
+          type: string
+          nullable: true
+          description: Custom alias if set
+          example: "my-blog"
+        destination_url:
+          type: string
+          format: uri
+          description: Original long URL
+          example: "https://example.com/very/long/path"
+        title:
+          type: string
+          nullable: true
+          description: User-provided title
+          example: "My Blog Post"
+        notes:
+          type: string
+          nullable: true
+          description: User notes
+        status:
+          type: string
+          enum: [active, expired, disabled, deleted]
+          description: URL lifecycle status
+          example: "active"
+        total_clicks:
+          type: integer
+          format: int64
+          description: Total click count (cached)
+          example: 1234
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2026-01-09T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2026-01-09T14:30:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Expiration timestamp
+          example: "2026-12-31T23:59:59Z"
+        last_clicked_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Most recent click timestamp
+          example: "2026-01-09T15:45:00Z"
+
+    URLListResponse:
+      type: object
+      properties:
+        urls:
+          type: array
+          items:
+            $ref: '#/components/schemas/URLResponse'
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 50
+        total_count:
+          type: integer
+          description: Total number of items
+          example: 237
+        total_pages:
+          type: integer
+          description: Total number of pages
+          example: 5
+
+    AnalyticsResponse:
+      type: object
+      properties:
+        url_id:
+          type: integer
+          format: int64
+          example: 1234567890123456
+        summary:
+          $ref: '#/components/schemas/AnalyticsSummary'
+        time_series:
+          type: array
+          description: Click counts over time (bucketed by granularity)
+          items:
+            $ref: '#/components/schemas/TimeSeriesDataPoint'
+        geographic_distribution:
+          type: array
+          description: Clicks by country
+          items:
+            $ref: '#/components/schemas/GeographicDataPoint'
+        device_breakdown:
+          $ref: '#/components/schemas/DeviceBreakdown'
+        browser_breakdown:
+          type: array
+          description: Clicks by browser
+          items:
+            $ref: '#/components/schemas/BrowserDataPoint'
+        top_referrers:
+          type: array
+          description: Top referring domains
+          items:
+            $ref: '#/components/schemas/ReferrerDataPoint'
+
+    AnalyticsSummary:
+      type: object
+      properties:
+        total_clicks:
+          type: integer
+          format: int64
+          description: Total clicks in date range
+          example: 15234
+        unique_visitors:
+          type: integer
+          format: int64
+          description: Unique IP addresses (24-hour window)
+          example: 8721
+        average_clicks_per_day:
+          type: number
+          format: float
+          description: Average daily clicks
+          example: 507.8
+
+    TimeSeriesDataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Time bucket start
+          example: "2026-01-09T12:00:00Z"
+        clicks:
+          type: integer
+          format: int64
+          description: Click count in bucket
+          example: 234
+        unique_visitors:
+          type: integer
+          format: int64
+          description: Unique visitors in bucket
+          example: 178
+
+    GeographicDataPoint:
+      type: object
+      properties:
+        country_code:
+          type: string
+          description: ISO 3166-1 alpha-2 country code
+          example: "US"
+        country_name:
+          type: string
+          description: Full country name
+          example: "United States"
+        clicks:
+          type: integer
+          format: int64
+          description: Click count from country
+          example: 5432
+        percentage:
+          type: number
+          format: float
+          description: Percentage of total clicks
+          example: 35.67
+
+    DeviceBreakdown:
+      type: object
+      properties:
+        desktop:
+          type: integer
+          format: int64
+          example: 8234
+        mobile:
+          type: integer
+          format: int64
+          example: 6123
+        tablet:
+          type: integer
+          format: int64
+          example: 877
+
+    BrowserDataPoint:
+      type: object
+      properties:
+        browser:
+          type: string
+          description: Browser name and version
+          example: "Chrome 120.0"
+        clicks:
+          type: integer
+          format: int64
+          example: 7234
+        percentage:
+          type: number
+          format: float
+          example: 47.48
+
+    ReferrerDataPoint:
+      type: object
+      properties:
+        referrer:
+          type: string
+          description: Referring domain or URL
+          example: "https://google.com"
+        clicks:
+          type: integer
+          format: int64
+          example: 3456
+        percentage:
+          type: number
+          format: float
+          example: 22.68
+
+    GenerateAPIKeyResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: API key ID
+          example: 42
+        key:
+          type: string
+          description: Full API key (shown only once, never retrievable)
+          example: "refract_abc123xyz456def789ghi012jkl345mno678pqr"
+        key_prefix:
+          type: string
+          description: Key prefix for identification
+          example: "refract_abc12345"
+        name:
+          type: string
+          description: Key name
+          example: "Blog automation script"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-09T12:00:00Z"
+
+    APIKeyListResponse:
+      type: object
+      properties:
+        api_keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIKeyResponse'
+
+    APIKeyResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 42
+        key_prefix:
+          type: string
+          description: Key prefix (first 16 chars)
+          example: "refract_abc12345"
+        name:
+          type: string
+          example: "Blog automation script"
+        status:
+          type: string
+          enum: [active, revoked]
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-09T12:00:00Z"
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Most recent API request timestamp
+          example: "2026-01-09T15:30:00Z"
+        usage_count:
+          type: integer
+          format: int64
+          description: Total API requests made
+          example: 1234
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall service status
+          example: "healthy"
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+        dependencies:
+          type: object
+          properties:
+            database:
+              $ref: '#/components/schemas/DependencyStatus'
+            cache:
+              $ref: '#/components/schemas/DependencyStatus'
+            zitadel:
+              $ref: '#/components/schemas/DependencyStatus'
+
+    DependencyStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [up, down, degraded]
+          example: "up"
+        response_time_ms:
+          type: number
+          format: float
+          description: Health check response time
+          example: 12.5
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code
+          example: "ALIAS_TAKEN"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Custom alias 'my-blog' is already in use"
+        details:
+          type: object
+          description: Additional error context (optional)
+          additionalProperties: true
+
+  # Reusable Responses
+  responses:
+    BadRequest:
+      description: Invalid request parameters or body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "INVALID_REQUEST"
+            message: "Validation failed"
+
+    Unauthorized:
+      description: Missing or invalid authentication credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "UNAUTHORIZED"
+            message: "Invalid or expired JWT token"
+
+    Forbidden:
+      description: Authenticated but not authorized to access resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "FORBIDDEN"
+            message: "You do not own this URL"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "NOT_FOUND"
+            message: "URL not found"
+
+    RateLimitExceeded:
+      description: Rate limit exceeded (too many requests)
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Request limit per hour
+          example: 100
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in current window
+          example: 0
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Unix timestamp when rate limit resets
+          example: 1704844800
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "RATE_LIMIT_EXCEEDED"
+            message: "Rate limit exceeded (100 URLs per hour)"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "INTERNAL_ERROR"
+            message: "An unexpected error occurred"
