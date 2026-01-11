@@ -6,7 +6,7 @@
 
 **Organization**: Tasks are grouped by user story (P1, P2, P3, P4) to enable independent implementation and testing of each story.
 
-**Tests**: Tests are OPTIONAL and not included by default (no explicit test request in specification). Focus on implementation with validation via quickstart.md scenarios.
+**Tests**: Tests included in Phase 8 (T176-T180). Per constitution Principle IV, contract/integration tests MUST pass before production deployment. Tests may be deferred during rapid MVP iteration but are REQUIRED for production readiness.
 
 ---
 
@@ -47,20 +47,20 @@
 
 - [X] T011 Create domain layer structure: services/api/internal/domain/url/, domain/apikey/, domain/user/
 - [X] T012 Create application layer structure: services/api/internal/application/commands/, application/queries/
-- [X] T013 Create infrastructure layer structure: services/api/internal/infrastructure/persistence/postgres/, infrastructure/cache/, infrastructure/auth/, infrastructure/idgen/, infrastructure/http/
-- [ ] T014 Create Snowflake ID generator in services/api/internal/infrastructure/idgen/snowflake_generator.go (FR-008)
-- [ ] T015 Create Base62 encoder/decoder in services/api/internal/infrastructure/idgen/base62.go (FR-008)
-- [ ] T016 [P] Create config management in services/api/internal/config/config.go (database, Redis, Zitadel URLs, worker ID)
-- [ ] T017 [P] Create database connection pooling setup in services/api/internal/infrastructure/persistence/postgres/connection.go
-- [ ] T018 [P] Create Redis client setup in services/api/internal/infrastructure/cache/redis_cache.go (L2 cache interface)
-- [ ] T019 [P] Create Zitadel OIDC provider in services/api/internal/infrastructure/auth/zitadel_provider.go (JWT validation, FR-002)
-- [ ] T020 [P] Create HTTP router setup with Chi in services/api/internal/infrastructure/http/router.go
-- [ ] T021 [P] Create authentication middleware in services/api/internal/infrastructure/http/middleware/auth.go (JWT + API key validation)
-- [ ] T022 [P] Create rate limiting middleware in services/api/internal/infrastructure/http/middleware/rate_limit.go (FR-040, FR-041)
-- [ ] T023 [P] Create CORS middleware in services/api/internal/infrastructure/http/middleware/cors.go
-- [ ] T024 [P] Create logging middleware in services/api/internal/infrastructure/http/middleware/logging.go (structured JSON logs, Principle V)
-- [ ] T025 [P] Create error handling utilities in services/api/internal/infrastructure/http/errors.go
-- [ ] T026 [P] Create DTO structures in services/api/internal/infrastructure/http/dto/ (request/response models per OpenAPI spec)
+- [X] T013 Create infrastructure layer structure: services/api/internal/infrastructure/persistence/postgres/, infrastructure/cache/, infrastructure/auth/, infrastructure/idgen/, infrastructure/server/
+- [X] T014 Create Snowflake ID generator in services/api/internal/infrastructure/idgen/snowflake_generator.go (FR-008: 64-bit distributed IDs with worker coordination, timestamp+sequence generation)
+- [X] T015 Add Base62 encoder/decoder functions to services/api/internal/infrastructure/idgen/snowflake_generator.go (FR-008: EncodeBase62, DecodeBase62 for URL-safe short codes)
+- [X] T016 [P] Create config management in services/api/internal/config/config.go (database, Redis, Zitadel URLs, worker ID)
+- [X] T017 [P] Create database connection pooling setup in services/api/internal/infrastructure/persistence/postgres/connection.go
+- [X] T018 [P] Create Redis client setup in services/api/internal/infrastructure/cache/redis_cache.go (L2 cache interface)
+- [X] T019 [P] Create Zitadel OIDC provider in services/api/internal/infrastructure/auth/zitadel_provider.go (JWT validation, FR-002)
+- [X] T020 [P] Create HTTP router setup with Chi in services/api/internal/infrastructure/server/router.go
+- [X] T021 [P] Create authentication middleware in services/api/internal/infrastructure/server/middleware/auth.go (JWT + API key validation)
+- [X] T022 [P] Create rate limiting middleware in services/api/internal/infrastructure/server/middleware/rate_limit.go (FR-040, FR-041)
+- [X] T023 [P] Configure CORS middleware using go-chi/cors in services/api/internal/infrastructure/server/middleware/cors.go (use SecurityConfig CORS settings)
+- [X] T024 [P] Create logging middleware in services/api/internal/infrastructure/server/middleware/logging.go (structured JSON logs, Principle V)
+- [X] T025 [P] Create error handling utilities in services/api/internal/infrastructure/server/errors.go
+- [X] T026 [P] Create DTO structures in services/api/internal/infrastructure/server/dto/ (request/response models per OpenAPI spec)
 
 ### Database Migrations
 
@@ -126,8 +126,8 @@
 
 ### HTTP Layer (US5)
 
-- [ ] T056 [P] [US5] Create /api/v1/auth/callback handler in services/api/internal/infrastructure/http/handlers/auth.go (exchange code for tokens, sync user)
-- [ ] T057 [P] [US5] Create /api/v1/auth/logout handler in services/api/internal/infrastructure/http/handlers/auth.go (invalidate Zitadel session, FR-005)
+- [ ] T056 [P] [US5] Create /api/v1/auth/callback handler in services/api/internal/infrastructure/server/handlers/auth.go (exchange code for tokens, sync user)
+- [ ] T057 [P] [US5] Create /api/v1/auth/logout handler in services/api/internal/infrastructure/server/handlers/auth.go (invalidate Zitadel session, FR-005)
 - [ ] T058 [P] [US5] Create /api/v1/users/me handler (get current user profile)
 
 ### Frontend (US5)
@@ -171,7 +171,7 @@
 
 ### HTTP Layer (US1)
 
-- [ ] T074 [US1] Create POST /api/v1/urls handler in services/api/internal/infrastructure/http/handlers/urls.go (create short URL, requires JWT auth)
+- [ ] T074 [US1] Create POST /api/v1/urls handler in services/api/internal/infrastructure/server/handlers/urls.go (create short URL, requires JWT auth)
 - [ ] T075 [P] [US1] Add request validation to POST /api/v1/urls (validate DTO against OpenAPI schema)
 - [ ] T076 [P] [US1] Add response mapping (domain URL → DTO URLResponse per api-service.openapi.yaml)
 
@@ -202,7 +202,7 @@
 
 ### Health Checks (US1)
 
-- [ ] T093 [P] [US1] Create /health endpoint in services/api/internal/infrastructure/http/handlers/health.go (check DB, Redis, Zitadel connectivity)
+- [ ] T093 [P] [US1] Create /health endpoint in services/api/internal/infrastructure/server/handlers/health.go (check DB, Redis, Zitadel connectivity)
 - [ ] T094 [P] [US1] Create /health endpoint in services/redirector/src/handlers/health.rs (check DB, L1/L2 cache, event stream)
 - [ ] T095 [P] [US1] Create /metrics endpoint in services/redirector/src/handlers/metrics.rs (Prometheus format: redirect latency, cache hit rates)
 
@@ -234,7 +234,7 @@
 
 ### HTTP Layer (US2)
 
-- [ ] T104 [US2] Create GET /api/v1/analytics/:id handler in services/api/internal/infrastructure/http/handlers/analytics.go (return comprehensive analytics, FR-024)
+- [ ] T104 [US2] Create GET /api/v1/analytics/:id handler in services/api/internal/infrastructure/server/handlers/analytics.go (return comprehensive analytics, FR-024)
 - [ ] T105 [US2] Add query parameters: start_date, end_date, granularity (hour/day/week/month) per api-service.openapi.yaml
 - [ ] T106 [P] [US2] Add authorization check (user can only view analytics for their own URLs)
 - [ ] T107 [P] [US2] Create GET /api/v1/analytics/:id/export handler (CSV export of click data)
@@ -277,7 +277,7 @@
 
 ### HTTP Layer (US3)
 
-- [ ] T123 [US3] Create GET /api/v1/urls handler in services/api/internal/infrastructure/http/handlers/urls.go (list with pagination, search, sort per api-service.openapi.yaml)
+- [ ] T123 [US3] Create GET /api/v1/urls handler in services/api/internal/infrastructure/server/handlers/urls.go (list with pagination, search, sort per api-service.openapi.yaml)
 - [ ] T124 [P] [US3] Create GET /api/v1/urls/:id handler (get single URL details)
 - [ ] T125 [P] [US3] Create PATCH /api/v1/urls/:id handler (update URL metadata)
 - [ ] T126 [P] [US3] Create POST /api/v1/urls/:id/disable handler (disable URL)
@@ -333,7 +333,7 @@
 ### HTTP Layer (US4)
 
 - [ ] T148 [US4] Update authentication middleware to support X-API-Key header (validate API key if no JWT, extract user ID from API key)
-- [ ] T149 [P] [US4] Create POST /api/v1/api-keys handler in services/api/internal/infrastructure/http/handlers/api_keys.go (generate API key, return full key once)
+- [ ] T149 [P] [US4] Create POST /api/v1/api-keys handler in services/api/internal/infrastructure/server/handlers/api_keys.go (generate API key, return full key once)
 - [ ] T150 [P] [US4] Create GET /api/v1/api-keys handler (list user's API keys, exclude revoked by default)
 - [ ] T151 [P] [US4] Create DELETE /api/v1/api-keys/:id handler (revoke API key)
 - [ ] T152 [US4] Update POST /api/v1/urls handler to accept API key authentication (use same CreateShortURL command, FR-035)
@@ -407,6 +407,9 @@
 - [ ] T188 [P] Security audit (dependency scanning, vulnerability checks)
 - [ ] T189 [P] Performance profiling (identify bottlenecks, optimize hot paths)
 - [ ] T190 [P] Final constitution compliance check (verify all 5 principles followed)
+- [ ] T191 [P] Create user account deletion flow in services/api/internal/application/commands/delete_user.go (cascade deactivate URLs, anonymize email per data-model.md lines 641-645, delete API keys per Edge Case 7)
+- [ ] T192 [P] Add TimescaleDB retention/compression validation test in tests/integration/timescale_retention_test.go (verify 5-year retention policy, 90% compression, query performance at 600M+ rows per technical constraints)
+- [ ] T193 [P] [OPTIONAL] Implement destination unavailable warning banner in services/redirector/src/handlers/redirect.rs (optional HEAD request to check destination health, show warning if 404/500 per Edge Case 10)
 
 ---
 
@@ -582,7 +585,7 @@ With multiple developers (recommended team size: 4-6):
 - **Validation**: Run quickstart.md scenarios at each checkpoint to verify story completeness
 - **Performance targets**: Redirector must achieve <50ms p95 latency (FR-016), analytics <5s visibility (FR-024)
 
-**Total Tasks**: 190 tasks
+**Total Tasks**: 193 tasks
 
 - Setup: 10 tasks
 - Foundational: 39 tasks (BLOCKS all stories)
@@ -591,7 +594,7 @@ With multiple developers (recommended team size: 4-6):
 - US2 (Analytics): 19 tasks (Post-MVP)
 - US3 (URL Management): 23 tasks (Post-MVP)
 - US4 (API Keys): 20 tasks (Post-MVP)
-- Polish: 33 tasks (Production ready)
+- Polish: 36 tasks (Production ready - includes T191-T193)
 
 **MVP Task Count**: 95 tasks (Setup + Foundational + US5 + US1)
-**Full Feature Set**: 190 tasks (all phases)
+**Full Feature Set**: 193 tasks (all phases)

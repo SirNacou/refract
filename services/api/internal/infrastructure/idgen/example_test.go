@@ -78,3 +78,64 @@ func Example_interfaceUsage() {
 
 	fmt.Printf("Generated %d IDs via interface\n", len(ids))
 }
+
+// Example_base62Encoding demonstrates encoding Snowflake IDs to Base62 for URLs
+func Example_base62Encoding() {
+	// Generate a Snowflake ID
+	gen, _ := idgen.NewSnowflakeGeneratorWithWorkerID(0)
+	id, _ := gen.NextID()
+
+	// Encode to Base62 for URL-safe short code
+	shortCode := idgen.EncodeBase62(id)
+
+	fmt.Printf("Snowflake ID: %d\n", id)
+	fmt.Printf("Base62 code: %s\n", shortCode)
+	fmt.Printf("Code length: %d characters\n", len(shortCode))
+
+	// Decode back to verify
+	decoded, _ := idgen.DecodeBase62(shortCode)
+	fmt.Printf("Roundtrip successful: %t\n", decoded == id)
+}
+
+// Example_urlShortener demonstrates a complete URL shortener workflow
+func Example_urlShortener() {
+	// Setup: Create generator
+	gen, _ := idgen.NewSnowflakeGeneratorWithWorkerID(0)
+
+	// User submits a long URL
+	longURL := "https://example.com/very/long/path?param1=value1&param2=value2"
+
+	// Generate unique ID and create short code
+	id, _ := gen.NextID()
+	shortCode := idgen.EncodeBase62(id)
+	shortURL := fmt.Sprintf("https://short.link/%s", shortCode)
+
+	fmt.Printf("Original: %s\n", longURL)
+	fmt.Printf("Shortened: %s\n", shortURL)
+	fmt.Printf("Saved %d characters!\n", len(longURL)-len(shortURL))
+
+	// When user visits short URL, decode and redirect
+	decodedID, _ := idgen.DecodeBase62(shortCode)
+	fmt.Printf("\nDecoded ID: %d (use to lookup in database)\n", decodedID)
+}
+
+// Example_base62Properties demonstrates Base62 encoding properties
+func Example_base62Properties() {
+	// Encode various numbers
+	examples := []uint64{
+		0,
+		123,
+		1234567890,
+		1234567890123456,
+	}
+
+	fmt.Println("Base62 Encoding Examples:")
+	for _, num := range examples {
+		encoded := idgen.EncodeBase62(num)
+		fmt.Printf("%d -> %s\n", num, encoded)
+	}
+
+	// Show URL-safe alphabet
+	fmt.Println("\nBase62 alphabet: 0-9, a-z, A-Z (62 chars total)")
+	fmt.Println("URL-safe: ✓ No special characters")
+}
