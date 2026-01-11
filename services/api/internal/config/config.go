@@ -40,6 +40,10 @@ type DatabaseConfig struct {
 
 	// DatabaseURL takes precedence if set (for DATABASE_URL env var)
 	DatabaseURL string `env:"DATABASE_URL"`
+
+	// Migration settings
+	RunMigrations  bool   `env:"RUN_MIGRATIONS" envDefault:"true"`
+	MigrationsPath string `env:"MIGRATIONS_PATH" envDefault:"migrations/postgres"`
 }
 
 // RedisConfig holds Redis connection configuration

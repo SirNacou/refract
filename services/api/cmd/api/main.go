@@ -13,6 +13,7 @@ import (
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/persistence/postgres"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/server"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/server/middleware"
+	"github.com/SirNacou/refract/services/api/migrations"
 )
 
 func main() {
@@ -29,6 +30,17 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Pool.Close()
+
+	// Run migrations before starting server
+	if cfg.Database.RunMigrations {
+		if err := postgres.RunMigrations(
+			db.Pool,
+			migrations.PostgresFS,
+			"postgres",
+		); err != nil {
+			log.Fatalf("Migration failed: %v", err)
+		}
+	}
 
 	redis, err := cache.NewRedisCache(cfg.Redis.Host, cfg.Redis.Port)
 	if err != nil {
@@ -47,9 +59,11 @@ func main() {
 		&cfg.Security,
 		slog.Default(),
 	)
+	loggingMiddleware := middleware.NewLoggingMiddleware(slog.Default())
 
 	router := server.NewRouter(authMiddleware,
 		rateLimiter,
+		loggingMiddleware,
 		&cfg.Security,
 	)
 

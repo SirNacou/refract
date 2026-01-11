@@ -64,11 +64,11 @@
 
 ### Database Migrations
 
-- [ ] T027 Create migration 00001_create_users.sql in migrations/postgres/ (users table per data-model.md)
-- [ ] T028 Create migration 00002_create_urls.sql in migrations/postgres/ (urls table with indexes per data-model.md)
-- [ ] T029 Create migration 00003_create_api_keys.sql in migrations/postgres/ (api_keys table per data-model.md)
-- [ ] T030 Create migration 00004_create_timescale_hypertables.sql in migrations/postgres/ (click_events hypertable, continuous aggregates per data-model.md)
-- [ ] T031 Add migration runner to services/api/cmd/api/main.go (check/run migrations on startup)
+- [X] T027 Create migration 00001_create_users.sql in migrations/postgres/ (users table per data-model.md)
+- [X] T028 Create migration 00002_create_urls.sql in migrations/postgres/ (urls table with indexes per data-model.md)
+- [X] T029 Create migration 00003_create_api_keys.sql in migrations/postgres/ (api_keys table per data-model.md)
+- [X] T030 Create migration 00004_create_timescale_hypertables.sql in migrations/postgres/ (click_events hypertable, continuous aggregates per data-model.md)
+- [X] T031 Add migration runner to services/api/cmd/api/main.go (check/run migrations on startup)
 
 ### Redirector Service Foundation
 
