@@ -138,6 +138,15 @@
     }
   },
   "additionalProperties": false,
+  "x-redis-stream": {
+    "stream_key": "refract:click_events",
+    "consumer_group": "analytics-processor",
+    "batch_size": 100,
+    "flush_interval_ms": 1000,
+    "max_length": 1000000,
+    "max_length_approximate": true,
+    "max_latency_seconds": 5
+  },
   "examples": [
     {
       "event_id": "550e8400-e29b-41d4-a716-446655440000",

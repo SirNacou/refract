@@ -261,6 +261,6 @@ The following items are explicitly excluded from this specification:
 11. **Password Policies**: No enforced complexity rules (beyond minimum length)
 12. **Two-Factor Authentication (2FA)**: Not included in initial release
 13. **Audit Logs**: No detailed activity logs beyond basic analytics
-14. **Export Features**: No CSV/PDF export of analytics data
+14. **Export Features**: No PDF export of analytics data (CSV export included for basic data portability)
 15. **Webhook Notifications**: No real-time notifications for click events
 

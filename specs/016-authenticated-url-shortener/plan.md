@@ -202,7 +202,7 @@ services/
 │
 └── analytics-processor/          # Go - Real-time analytics aggregation
     ├── cmd/processor/
-    │   └── main.rs               # Event consumer
+    │   └── main.go               # Event consumer
     ├── internal/
     │   ├── consumer/
     │   │   └── click_events.go   # Redis Stream consumer

@@ -72,14 +72,14 @@
 
 ### Redirector Service Foundation
 
-- [ ] T032 Create Axum server setup in services/redirector/src/main.rs with graceful shutdown
-- [ ] T033 [P] Create config management in services/redirector/src/config.rs (database, Redis, worker ID, L1 cache size)
-- [ ] T034 [P] Create PostgreSQL connection pool in services/redirector/src/repository/postgres.rs using SQLx
-- [ ] T035 [P] Create L1 in-memory LRU cache in services/redirector/src/cache/memory.rs (10K capacity, FR-017)
-- [ ] T036 [P] Create L2 Redis cache client in services/redirector/src/cache/redis.rs (FR-017)
-- [ ] T037 [P] Create Redis Stream publisher in services/redirector/src/events/publisher.rs (click events to analytics)
-- [ ] T038 [P] Create GeoIP lookup utilities in services/redirector/src/geo/ (MaxMind GeoLite2 integration, FR-021)
-- [ ] T039 [P] Create user agent parser in services/redirector/src/parser/user_agent.rs (device type, browser, OS, FR-022)
+- [X] T032 Create Axum server setup in services/redirector/src/main.rs with graceful shutdown
+- [X] T033 [P] Create config management in services/redirector/src/config.rs (database, Redis, worker ID, L1 cache size)
+- [X] T034 [P] Create PostgreSQL connection pool in services/redirector/src/repository/postgres.rs using SQLx
+- [X] T035 [P] Create L1 in-memory LRU cache in services/redirector/src/cache/memory.rs (10K capacity, FR-017)
+- [X] T036 [P] Create L2 Redis cache client in services/redirector/src/cache/redis.rs (FR-017)
+- [X] T037 [P] Create Redis Stream publisher in services/redirector/src/events/publisher.rs (click events to analytics)
+- [X] T038 [P] Create GeoIP lookup utilities in services/redirector/src/geo/ (MaxMind GeoLite2 integration, FR-021)
+- [X] T039 [P] Create user agent parser in services/redirector/src/parser/user_agent.rs (device type, browser, OS, FR-022)
 
 ### Analytics Processor Foundation
 
