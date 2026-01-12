@@ -6,7 +6,7 @@
 
 **Organization**: Tasks are grouped by user story (P1, P2, P3, P4) to enable independent implementation and testing of each story.
 
-**Tests**: Tests included in Phase 8 (T176-T180). Per constitution Principle IV, contract/integration tests MUST pass before production deployment. Tests may be deferred during rapid MVP iteration but are REQUIRED for production readiness.
+**Tests**: Tests included in Phase 8 (T176-T180). Per constitution Principle IV, contract/integration tests MUST pass before merging feature branches to main and before production deployment. Local MVP iteration may defer test writing, but all boundary tests (contract/integration) are MANDATORY before PR merge.
 
 ---
 
@@ -28,7 +28,7 @@
 - [X] T004 [P] Initialize Analytics Processor (Go): services/analytics-processor/ with go.mod, cmd/processor/main.go
 - [X] T005 [P] Initialize Frontend (TanStack Start): frontend/ with package.json, app/ structure, tsconfig.json
 - [X] T006 [P] Create migrations directory: migrations/postgres/ with .gitkeep
-- [X] T007 [P] Create Docker Compose configuration in docker-compose.yml with PostgreSQL, Redis, Zitadel services
+- [X] T007 [P] Create Docker Compose configuration in docker-compose.yml with PostgreSQL, Redis services (Zitadel external via env vars per spec.md clarification)
 - [X] T008 [P] Create Justfile with commands: `just up`, `just down`, `just migrate`, `just test`
 - [X] T009 [P] Create .env.example with all required environment variables per quickstart.md
 - [X] T010 [P] Create .gitignore files for each service (Go, Rust, TypeScript, Docker volumes)
@@ -48,15 +48,15 @@
 - [X] T011 Create domain layer structure: services/api/internal/domain/url/, domain/apikey/, domain/user/
 - [X] T012 Create application layer structure: services/api/internal/application/commands/, application/queries/
 - [X] T013 Create infrastructure layer structure: services/api/internal/infrastructure/persistence/postgres/, infrastructure/cache/, infrastructure/auth/, infrastructure/idgen/, infrastructure/server/
-- [X] T014 Create Snowflake ID generator in services/api/internal/infrastructure/idgen/snowflake_generator.go (FR-008: 64-bit distributed IDs with worker coordination, timestamp+sequence generation)
+- [X] T014 Create Snowflake ID generator in services/api/internal/infrastructure/idgen/snowflake_generator.go (FR-008: 64-bit distributed IDs with worker coordination via environment variable WORKER_ID [0-1023], timestamp+sequence generation, collision prevention via mutex)
 - [X] T015 Add Base62 encoder/decoder functions to services/api/internal/infrastructure/idgen/snowflake_generator.go (FR-008: EncodeBase62, DecodeBase62 for URL-safe short codes)
-- [X] T016 [P] Create config management in services/api/internal/config/config.go (database, Redis, Zitadel URLs, worker ID)
+- [X] T016 [P] Create config management in services/api/internal/config/config.go (database, Redis, Zitadel URLs, WORKER_ID for Snowflake generator)
 - [X] T017 [P] Create database connection pooling setup in services/api/internal/infrastructure/persistence/postgres/connection.go
 - [X] T018 [P] Create Redis client setup in services/api/internal/infrastructure/cache/redis_cache.go (L2 cache interface)
 - [X] T019 [P] Create Zitadel OIDC provider in services/api/internal/infrastructure/auth/zitadel_provider.go (JWT validation, FR-002)
 - [X] T020 [P] Create HTTP router setup with Chi in services/api/internal/infrastructure/server/router.go
 - [X] T021 [P] Create authentication middleware in services/api/internal/infrastructure/server/middleware/auth.go (JWT + API key validation)
-- [X] T022 [P] Create rate limiting middleware in services/api/internal/infrastructure/server/middleware/rate_limit.go (FR-040, FR-041)
+- [X] T022 [P] Create rate limiting middleware in services/api/internal/infrastructure/server/middleware/rate_limit.go (FR-040, FR-041: token bucket algorithm, Redis-backed, 100 URLs/hour per user, 1000 API requests/hour per API key, return 429 with Retry-After header)
 - [X] T023 [P] Configure CORS middleware using go-chi/cors in services/api/internal/infrastructure/server/middleware/cors.go (use SecurityConfig CORS settings)
 - [X] T024 [P] Create logging middleware in services/api/internal/infrastructure/server/middleware/logging.go (structured JSON logs, Principle V)
 - [X] T025 [P] Create error handling utilities in services/api/internal/infrastructure/server/errors.go
@@ -328,7 +328,7 @@
 ### Infrastructure Layer (US4)
 
 - [ ] T146 [US4] Implement PostgresAPIKeyRepository in services/api/internal/infrastructure/persistence/postgres/apikey_repository.go (implements domain interface)
-- [ ] T147 [US4] Add API key rate limiting: use Redis incr with 1-hour expiration (1000 requests/hour per key, FR-041)
+- [ ] T147 [US4] Add API key rate limiting: use Redis incr with 1-hour expiration (1000 requests/hour per key, FR-041, token bucket via Redis INCR + TTL, return 429 with Retry-After header)
 
 ### HTTP Layer (US4)
 

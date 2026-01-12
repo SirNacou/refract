@@ -47,8 +47,8 @@ Build a distributed URL shortener platform where authenticated users can create 
 
 **Performance Goals**: 
 - **Redirects**: <50ms p95 latency, 10,000 concurrent requests
-- **API**: <200ms p95 for URL creation, <100ms p95 for analytics queries
-- **Analytics Processing**: <5 second latency from click to dashboard visibility
+- **API**: <200ms p95 for URL creation, <100ms p95 for analytics queries (query time only, excludes event processing)
+- **Analytics Processing**: <5 second latency from click event to data visible in TimescaleDB aggregates (event-to-store SLA)
 - **Throughput**: 1M+ redirects per day sustained load
 
 **Constraints**: 
@@ -57,6 +57,7 @@ Build a distributed URL shortener platform where authenticated users can create 
 - **Analytics Data Volume**: 10M+ events/month, 5-year retention
 - **Authentication**: Zero password storage (Zitadel handles all auth flows)
 - **Horizontal Scaling**: All services must scale independently without coordination
+- **Snowflake ID Worker Coordination**: Each API service instance MUST have unique WORKER_ID (0-1023) set via environment variable; manual assignment during deployment (container orchestrator assigns static IDs)
 
 **Scale/Scope**: 
 - **Users**: 10,000 active users initially, 100K growth target

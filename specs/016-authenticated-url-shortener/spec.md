@@ -160,7 +160,7 @@ A new visitor wants to create an account and log in to access the URL shortening
 - **FR-021**: System MUST derive geographic location (country, region, city) from IP addresses
 - **FR-022**: System MUST extract device type (desktop, mobile, tablet) and browser information from user agents
 - **FR-023**: System MUST aggregate click data into time-series metrics (hourly, daily, weekly, monthly views)
-- **FR-024**: System MUST display near real-time analytics (data visible within 5 seconds of click)
+- **FR-024**: System MUST display near real-time analytics (event-to-store processing within 5 seconds, API query response <100ms p95)
 - **FR-025**: System MUST provide filtering/date range selection for analytics views
 - **FR-026**: System MUST show top referrers (domains that linked to the short URL)
 - **FR-027**: System MUST track unique visitors vs total clicks (deduplicate by IP + user agent within 24-hour window)
@@ -185,8 +185,8 @@ A new visitor wants to create an account and log in to access the URL shortening
 
 #### Security & Abuse Prevention
 
-- **FR-040**: System MUST enforce rate limiting on URL creation (e.g., 100 URLs per hour per user)
-- **FR-041**: System MUST enforce rate limiting on API requests (e.g., 1000 requests per hour per API key)
+- **FR-040**: System MUST enforce rate limiting on URL creation using token bucket algorithm (100 URLs per hour per user, Redis-backed counters, return HTTP 429 with Retry-After header)
+- **FR-041**: System MUST enforce rate limiting on API requests using token bucket algorithm (1000 requests per hour per API key, Redis-backed counters, return HTTP 429 with Retry-After header)
 - **FR-042**: System MUST block creation of short URLs pointing to known malicious/phishing domains
 - **FR-043**: System MUST use HTTPS for all connections (frontend and API)
 - **FR-044**: System MUST NOT store passwords (authentication delegated to Zitadel identity provider)
@@ -219,7 +219,7 @@ A new visitor wants to create an account and log in to access the URL shortening
 
 - **SC-001**: Users can create a short URL and receive a working redirect in under 2 seconds from form submission
 - **SC-002**: System handles 10,000 concurrent redirects without degradation (sub-50ms p95 latency maintained)
-- **SC-003**: Click analytics data appears in user dashboard within 5 seconds of redirect event
+- **SC-003**: Click analytics data appears in user dashboard within 5 seconds of redirect event (measures event-to-store processing latency, not including UI query time)
 - **SC-004**: 95% of users successfully create their first short URL within 3 minutes of account activation
 - **SC-005**: System achieves 99.9% uptime for redirect service (core functionality)
 - **SC-006**: Short URL redirects work correctly for 100% of valid destination URLs
