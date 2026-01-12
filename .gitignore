@@ -50,3 +50,7 @@ docker-compose.override.yml
 
 # Project-specific
 services/api/api
+
+# Data files (downloaded during setup)
+services/redirector/data/geoip/*.mmdb
+services/redirector/data/user_agent/*.yaml
