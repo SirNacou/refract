@@ -90,11 +90,11 @@
 
 ### Frontend Foundation
 
-- [ ] T044 Setup TanStack Start project structure in frontend/app/ with routes/, components/, utils/
-- [ ] T045 [P] Create API client wrapper in frontend/app/utils/api-client.ts (fetch with auth headers, error handling)
-- [ ] T046 [P] Create Zitadel OIDC integration in frontend/app/utils/auth.ts (login, logout, token refresh)
-- [ ] T047 [P] Create AuthGuard component in frontend/app/components/AuthGuard.tsx (protected route wrapper)
-- [ ] T048 [P] Install and configure TanStack Query in frontend/app/root.tsx (QueryClientProvider)
+- [ ] T044 Setup TanStack Start project structure in frontend/src/ with routes/, components/, utils/
+- [ ] T045 [P] Create API client wrapper in frontend/src/utils/api-client.ts (fetch with auth headers, error handling)
+- [ ] T046 [P] Create Zitadel OIDC integration in frontend/src/utils/auth.ts (login, logout, token refresh)
+- [ ] T047 [P] Create AuthGuard component in frontend/src/components/AuthGuard.tsx (protected route wrapper)
+- [ ] T048 [P] Install and configure TanStack Query in frontend/src/root.tsx (QueryClientProvider)
 - [ ] T049 [P] Install and configure Recharts for analytics visualizations
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
@@ -132,11 +132,11 @@
 
 ### Frontend (US5)
 
-- [ ] T059 [P] [US5] Create homepage in frontend/app/routes/index.tsx (public landing page with Sign Up / Log In buttons)
-- [ ] T060 [P] [US5] Create auth callback route in frontend/app/routes/auth/callback.tsx (handle Zitadel redirect, store tokens)
-- [ ] T061 [P] [US5] Create logout route in frontend/app/routes/auth/logout.tsx (clear tokens, redirect to homepage)
-- [ ] T062 [US5] Implement login flow in frontend/app/utils/auth.ts (redirect to Zitadel, handle PKCE, FR-004)
-- [ ] T063 [US5] Create dashboard route in frontend/app/routes/dashboard.tsx (protected, shows "Welcome {email}" placeholder)
+- [ ] T059 [P] [US5] Create homepage in frontend/src/routes/index.tsx (public landing page with Sign Up / Log In buttons)
+- [ ] T060 [P] [US5] Create auth callback route in frontend/src/routes/auth/callback.tsx (handle Zitadel redirect, store tokens)
+- [ ] T061 [P] [US5] Create logout route in frontend/src/routes/auth/logout.tsx (clear tokens, redirect to homepage)
+- [ ] T062 [US5] Implement login flow in frontend/src/utils/auth.ts (redirect to Zitadel, handle PKCE, FR-004)
+- [ ] T063 [US5] Create dashboard route in frontend/src/routes/dashboard.tsx (protected, shows "Welcome {email}" placeholder)
 
 **Checkpoint**: Authentication complete - users can sign up, log in, log out, access protected dashboard
 
@@ -193,11 +193,11 @@
 
 ### Frontend (US1)
 
-- [ ] T087 [P] [US1] Create URL creation form component in frontend/app/components/URLForm.tsx (destination URL, optional custom alias, title, notes, expiration)
-- [ ] T088 [P] [US1] Create URL list component in frontend/app/components/URLList.tsx (display short URLs with click counts)
-- [ ] T089 [US1] Implement POST /api/v1/urls API call in frontend/app/utils/api-client.ts (with auth header)
-- [ ] T090 [US1] Update dashboard route in frontend/app/routes/dashboard.tsx (show URLForm + URLList, empty state if no URLs)
-- [ ] T091 [US1] Create URL creation page in frontend/app/routes/create.tsx (dedicated page with URLForm)
+- [ ] T087 [P] [US1] Create URL creation form component in frontend/src/components/URLForm.tsx (destination URL, optional custom alias, title, notes, expiration)
+- [ ] T088 [P] [US1] Create URL list component in frontend/src/components/URLList.tsx (display short URLs with click counts)
+- [ ] T089 [US1] Implement POST /api/v1/urls API call in frontend/src/utils/api-client.ts (with auth header)
+- [ ] T090 [US1] Update dashboard route in frontend/src/routes/dashboard.tsx (show URLForm + URLList, empty state if no URLs)
+- [ ] T091 [US1] Create URL creation page in frontend/src/routes/create.tsx (dedicated page with URLForm)
 - [ ] T092 [US1] Add TanStack Query mutation for URL creation (optimistic updates, error handling)
 
 ### Health Checks (US1)
@@ -241,10 +241,10 @@
 
 ### Frontend (US2)
 
-- [ ] T108 [P] [US2] Create AnalyticsCharts component in frontend/app/components/AnalyticsCharts.tsx (Recharts visualizations: line chart for time series, bar chart for countries, pie chart for devices)
-- [ ] T109 [P] [US2] Create AnalyticsSummary component in frontend/app/components/AnalyticsSummary.tsx (total clicks, unique visitors, average clicks/day)
-- [ ] T110 [P] [US2] Create TopReferrers component in frontend/app/components/TopReferrers.tsx (table of top referrer domains)
-- [ ] T111 [US2] Create analytics detail route in frontend/app/routes/analytics.$id.tsx (full analytics page with charts, date range filter)
+- [ ] T108 [P] [US2] Create AnalyticsCharts component in frontend/src/components/AnalyticsCharts.tsx (Recharts visualizations: line chart for time series, bar chart for countries, pie chart for devices)
+- [ ] T109 [P] [US2] Create AnalyticsSummary component in frontend/src/components/AnalyticsSummary.tsx (total clicks, unique visitors, average clicks/day)
+- [ ] T110 [P] [US2] Create TopReferrers component in frontend/src/components/TopReferrers.tsx (table of top referrer domains)
+- [ ] T111 [US2] Create analytics detail route in frontend/src/routes/analytics.$id.tsx (full analytics page with charts, date range filter)
 - [ ] T112 [US2] Add TanStack Query for analytics fetching (auto-refresh every 5 seconds, FR-024)
 - [ ] T113 [US2] Update URLList component to show total clicks + link to analytics page per URL
 - [ ] T114 [US2] Add date range picker to analytics page (Last 7 days, Last 30 days, custom range)
@@ -294,7 +294,7 @@
 - [ ] T131 [P] [US3] Add search bar to URLList component (search by title or destination URL)
 - [ ] T132 [P] [US3] Add filter dropdown to URLList component (filter by status: all/active/disabled)
 - [ ] T133 [P] [US3] Add sort dropdown to URLList component (sort by creation date, click count, last modified)
-- [ ] T134 [P] [US3] Create EditURLModal component in frontend/app/components/EditURLModal.tsx (form to edit title, notes, destination URL)
+- [ ] T134 [P] [US3] Create EditURLModal component in frontend/src/components/EditURLModal.tsx (form to edit title, notes, destination URL)
 - [ ] T135 [US3] Add action buttons to URLList items: Edit, Disable/Enable, Delete (with confirmation dialog)
 - [ ] T136 [US3] Implement TanStack Query mutations for update/disable/enable/delete (optimistic updates, invalidate cache)
 - [ ] T137 [US3] Add URL status badges to URLList component (active: green, disabled: yellow, expired: orange, deleted: red)
@@ -340,9 +340,9 @@
 
 ### Frontend (US4)
 
-- [ ] T153 [P] [US4] Create API key settings page in frontend/app/routes/settings/api-keys.tsx (list API keys, generate new, revoke)
-- [ ] T154 [P] [US4] Create APIKeyList component in frontend/app/components/APIKeyList.tsx (table with key prefix, name, created date, last used, usage count, revoke button)
-- [ ] T155 [P] [US4] Create GenerateAPIKeyModal component in frontend/app/components/GenerateAPIKeyModal.tsx (form with key name input, show full key once with copy button)
+- [ ] T153 [P] [US4] Create API key settings page in frontend/src/routes/settings/api-keys.tsx (list API keys, generate new, revoke)
+- [ ] T154 [P] [US4] Create APIKeyList component in frontend/src/components/APIKeyList.tsx (table with key prefix, name, created date, last used, usage count, revoke button)
+- [ ] T155 [P] [US4] Create GenerateAPIKeyModal component in frontend/src/components/GenerateAPIKeyModal.tsx (form with key name input, show full key once with copy button)
 - [ ] T156 [US4] Implement TanStack Query mutations for generate/revoke API keys
 - [ ] T157 [US4] Add navigation link to API Keys settings in dashboard header
 

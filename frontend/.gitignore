@@ -21,3 +21,6 @@ yarn-error.log
 pnpm-lock.yaml
 package-lock.json
 .turbo
+
+# TanStack Router generated files
+src/routeTree.gen.ts
