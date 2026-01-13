@@ -91,7 +91,7 @@
 ### Frontend Foundation
 
 - [X] T044 Setup TanStack Start project structure in frontend/src/ with routes/, components/, utils/
-- [ ] T045 [P] Create API client wrapper in frontend/src/utils/api-client.ts (fetch with auth headers, error handling)
+- [X] T045 [P] Create API client wrapper in frontend/src/utils/api-client.ts (fetch with auth headers, error handling)
 - [ ] T046 [P] Create Zitadel OIDC integration in frontend/src/utils/auth.ts (login, logout, token refresh)
 - [ ] T047 [P] Create AuthGuard component in frontend/src/components/AuthGuard.tsx (protected route wrapper)
 - [ ] T048 [P] Install and configure TanStack Query in frontend/src/root.tsx (QueryClientProvider)

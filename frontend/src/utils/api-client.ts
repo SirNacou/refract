@@ -45,7 +45,7 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   // Build headers
   const requestHeaders: HeadersInit = {
     'Accept': 'application/json',
-    ...(body && { 'Content-Type': 'application/json' }),
+    ...(!!body && { 'Content-Type': 'application/json' }),
     ...(token && { 'Authorization': `Bearer ${token}` }),
     ...headers,
   }
