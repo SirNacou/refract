@@ -17,6 +17,10 @@
 - Q: What TanStack Start project structure should be used? → A: Use official TanStack Start scaffold structure (npx create-tanstack@latest)
 - Q: Should Zitadel be included in docker-compose.yml or reference external deployment? → A: Reference existing external Zitadel via environment variables
 
+### Session 2026-01-13
+
+- Q: For frontend API client (T045), use library (axios/ky) or build fetch wrapper? → A: Build thin internal fetch wrapper (base URL + JSON + auth header + ApiError). Defer OpenAPI generation until backend APIs stabilize.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Create and Share Short URLs (Priority: P1)
