@@ -15,10 +15,11 @@ export const env = createEnv({
   client: {
     VITE_APP_TITLE: z.string().min(1).optional(),
     VITE_API_BASE_URL: z.url().default('http://localhost:8080'),
-    VITE_ZITADEL_ISSUER: z.string(),
-    VITE_ZITADEL_CLIENT_ID: z.string(),
-    VITE_ZITADEL_REDIRECT_URI: z.url(),
-    VITE_ZITADEL_POST_LOGOUT_REDIRECT_URI: z.string().optional(),
+    VITE_OIDC_ISSUER: z.string().url(),
+    VITE_OIDC_CLIENT_ID: z.string(),
+    VITE_OIDC_REDIRECT_URI: z.url(),
+    VITE_OIDC_POST_LOGOUT_REDIRECT_URI: z.string().url().optional(),
+    VITE_OIDC_SCOPES: z.string().default('openid profile email'),
   },
 
   /**
