@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/caarlos0/env/v11"
@@ -12,7 +13,8 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Redis    RedisConfig
-	Zitadel  ZitadelConfig
+	OIDC     OIDCConfig
+	Zitadel  ZitadelConfig // Deprecated: Use OIDC instead
 	Worker   WorkerConfig
 	Security SecurityConfig
 	Logging  LoggingConfig
@@ -61,7 +63,20 @@ type RedisConfig struct {
 	ConnMaxIdleTime time.Duration `env:"REDIS_CONN_MAX_IDLE_TIME" envDefault:"5m"`
 }
 
+// OIDCConfig holds generic OIDC provider configuration
+// This replaces ZitadelConfig to support any OIDC-compliant identity provider
+type OIDCConfig struct {
+	// Issuer is the OIDC provider URL (e.g., https://auth.example.com)
+	// Used for discovery and validating the 'iss' claim in JWTs
+	Issuer string `env:"OIDC_ISSUER"`
+
+	// Audience is the expected 'aud' claim in JWTs (e.g., "refract-api")
+	// Strict validation - token must contain this audience
+	Audience string `env:"OIDC_AUDIENCE"`
+}
+
 // ZitadelConfig holds Zitadel OIDC provider configuration
+// Deprecated: Use OIDCConfig instead. This is kept for backward compatibility.
 type ZitadelConfig struct {
 	URL          string `env:"ZITADEL_URL" envDefault:"https://zitadel.nacou.uk"`
 	ClientID     string `env:"ZITADEL_CLIENT_ID"`
@@ -110,12 +125,40 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to parse environment variables: %w", err)
 	}
 
+	// Apply backward compatibility mapping for ZITADEL_* -> OIDC_*
+	cfg.applyOIDCBackwardCompatibility()
+
 	// Validate configuration
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
 
 	return cfg, nil
+}
+
+// applyOIDCBackwardCompatibility maps deprecated ZITADEL_* env vars to OIDC_* fields
+// This allows existing deployments to continue working during migration
+func (c *Config) applyOIDCBackwardCompatibility() {
+	// If OIDC_ISSUER is not set, try to use ZITADEL_ISSUER or ZITADEL_URL
+	if c.OIDC.Issuer == "" {
+		if c.Zitadel.Issuer != "" {
+			c.OIDC.Issuer = c.Zitadel.Issuer
+			slog.Warn("ZITADEL_ISSUER is deprecated, use OIDC_ISSUER instead",
+				"value", c.Zitadel.Issuer)
+		} else if c.Zitadel.URL != "" {
+			c.OIDC.Issuer = c.Zitadel.URL
+			slog.Warn("ZITADEL_URL is deprecated, use OIDC_ISSUER instead",
+				"value", c.Zitadel.URL)
+		}
+	}
+
+	// If OIDC_AUDIENCE is not set, use ZITADEL_CLIENT_ID as a fallback
+	// Many OIDC providers use client_id as the default audience
+	if c.OIDC.Audience == "" && c.Zitadel.ClientID != "" {
+		c.OIDC.Audience = c.Zitadel.ClientID
+		slog.Warn("OIDC_AUDIENCE not set, using ZITADEL_CLIENT_ID as fallback",
+			"value", c.Zitadel.ClientID)
+	}
 }
 
 // Validate checks if configuration values are valid
@@ -152,22 +195,14 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("invalid Redis port: %d (must be 1-65535)", c.Redis.Port)
 	}
 
-	// Validate Zitadel configuration
-	if c.Zitadel.URL == "" {
-		return fmt.Errorf("ZITADEL_URL is required")
+	// Validate OIDC configuration (new style)
+	// OIDC is now the primary auth config; Zitadel vars are mapped in applyOIDCBackwardCompatibility
+	if c.OIDC.Issuer == "" {
+		return fmt.Errorf("OIDC_ISSUER is required (or set ZITADEL_ISSUER for backward compatibility)")
 	}
 
-	if c.Zitadel.ClientID == "" {
-		return fmt.Errorf("ZITADEL_CLIENT_ID is required")
-	}
-
-	// ClientSecret is optional (not needed for JWT validation, only for token introspection)
-	// if c.Zitadel.ClientSecret == "" {
-	// 	return fmt.Errorf("ZITADEL_CLIENT_SECRET is required")
-	// }
-
-	if c.Zitadel.Issuer == "" {
-		return fmt.Errorf("ZITADEL_ISSUER is required")
+	if c.OIDC.Audience == "" {
+		return fmt.Errorf("OIDC_AUDIENCE is required (or set ZITADEL_CLIENT_ID for backward compatibility)")
 	}
 
 	// Validate worker ID (must be 0-1023 for Snowflake IDs)

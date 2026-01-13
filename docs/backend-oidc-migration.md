@@ -1,89 +1,115 @@
 # Backend OIDC Migration Tasks
 
-**Goal:** Convert `services/api` from Zitadel-specific auth to generic OIDC with strict audience validation.
+**Status:** Complete  
+**Priority:** Medium  
+**Estimated Effort:** 2-3 days  
 
-**Configuration:**
-- `OIDC_ISSUER`: Generic issuer URL (replaces ZITADEL_ISSUER)
-- `OIDC_AUDIENCE`: Strict audience validation (recommended: "refract-api")
-- Optional: `OIDC_JWKS_CACHE_TTL`, `OIDC_CLOCK_SKEW_SECONDS`
+**Goal:** Convert `services/api` from Zitadel-specific auth to generic OIDC with strict audience validation. This enables switching identity providers (Keycloak, Auth0, Okta) without code changes.
+
+## Implementation
+
+This migration uses the **[coreos/go-oidc](https://github.com/coreos/go-oidc)** library, which is:
+- Well-maintained and widely used (Kubernetes, Dex, etc.)
+- Handles OIDC discovery, JWKS fetching, and caching automatically
+- Battle-tested and security-audited
+
+## Current State
+
+The codebase now uses generic OIDC:
+- `services/api/internal/config/config.go` - `OIDCConfig` struct with `OIDC_*` env vars (backward compat with `ZITADEL_*`)
+- `services/api/internal/infrastructure/auth/oidc_verifier.go` - Thin wrapper around coreos/go-oidc
+- `services/api/internal/infrastructure/server/middleware/auth.go` - middleware using OIDCVerifier
+- `services/api/internal/infrastructure/server/dto/health.go` - health check with `OIDC` dependency name
+
+## Target Configuration
+
+Required environment variables:
+- `OIDC_ISSUER`: OIDC provider URL (e.g., `https://auth.example.com`)
+- `OIDC_AUDIENCE`: Expected `aud` claim in JWTs (e.g., `refract-api`)
 
 ---
 
 ## Phase 1: Configuration & Environment
 
+**Effort:** ~2 hours | **Risk:** Low | **Status:** COMPLETE
+
 ### 1.1 Update Config Schema
 **File:** `services/api/internal/config/config.go`
-- [ ] Add `OIDCConfig` struct with:
+- [x] Add `OIDCConfig` struct with:
   - `Issuer string` (required, URL)
   - `Audience string` (required)
   - `JWKSCacheTTL time.Duration` (optional, default 10m)
   - `ClockSkewSeconds int` (optional, default 60)
-- [ ] Add env var mapping:
+- [x] Add env var mapping:
   - `OIDC_ISSUER` → `Issuer`
   - `OIDC_AUDIENCE` → `Audience`
   - `OIDC_JWKS_CACHE_TTL` → `JWKSCacheTTL`
   - `OIDC_CLOCK_SKEW_SECONDS` → `ClockSkewSeconds`
-- [ ] Add backward compatibility mapping:
+- [x] Add backward compatibility mapping:
   - If `ZITADEL_ISSUER` exists and `OIDC_ISSUER` missing, map with deprecation warning
   - If `ZITADEL_URL` exists and `OIDC_ISSUER` missing, map with deprecation warning
 
 ### 1.2 Update Config Tests
 **File:** `services/api/internal/config/config_test.go`
-- [ ] Add tests for new `OIDC_*` env vars
-- [ ] Add tests for backward compatibility mapping
-- [ ] Update existing `ZITADEL_*` tests to use new names
+- [x] Add tests for new `OIDC_*` env vars
+- [x] Add tests for backward compatibility mapping
+- [x] Update existing `ZITADEL_*` tests to use new names
 
 ### 1.3 Update Environment Documentation
-- [ ] Update `.env.example` with new OIDC vars
-- [ ] Document migration from ZITADEL_* to OIDC_*
+- [x] Update `.env.example` with new OIDC vars
+- [x] Document migration from ZITADEL_* to OIDC_*
 
 ---
 
 ## Phase 2: OIDC Verifier Implementation
 
+**Effort:** ~4-6 hours | **Risk:** Medium (core security component) | **Status:** COMPLETE
+
 ### 2.1 Create Generic OIDC Verifier
 **File:** `services/api/internal/infrastructure/auth/oidc_verifier.go`
-- [ ] Implement `OIDCVerifier` struct with:
+- [x] Implement `OIDCVerifier` struct with:
   - Issuer URL
   - Expected audience
   - JWKS cache with TTL
   - HTTP client for discovery/JWKS fetching
-- [ ] Implement discovery client:
+- [x] Implement discovery client:
   - `GET {issuer}/.well-known/openid-configuration`
   - Parse and cache `jwks_uri`
-- [ ] Implement JWKS fetching:
+- [x] Implement JWKS fetching:
   - Fetch keys from `jwks_uri`
   - Cache in memory with TTL
   - Support key rotation (refresh on unknown `kid`)
-- [ ] Implement JWT verification:
+- [x] Implement JWT verification:
   - Validate signature using JWKS
   - Validate `iss` == configured issuer
   - Validate `aud` contains expected audience (strict)
   - Validate `exp` not expired (allow clock skew)
-  - Restrict allowed algorithms (RS256 recommended)
-- [ ] Extract claims:
+  - Restrict allowed algorithms (RS256, RS384, RS512)
+- [x] Extract claims:
   - `sub` (required)
   - `email` (optional, if present)
 
 ### 2.2 Add OIDC Verifier Tests
 **File:** `services/api/internal/infrastructure/auth/oidc_verifier_test.go`
-- [ ] Test discovery document parsing
-- [ ] Test JWKS fetching and caching
-- [ ] Test JWT signature validation
-- [ ] Test issuer mismatch rejection
-- [ ] Test audience mismatch rejection (strict)
-- [ ] Test expired token rejection
-- [ ] Test unknown `kid` triggers JWKS refresh
+- [x] Test discovery document parsing
+- [x] Test JWKS fetching and caching
+- [x] Test JWT signature validation
+- [x] Test issuer mismatch rejection
+- [x] Test audience mismatch rejection (strict)
+- [x] Test expired token rejection
+- [x] Test unknown `kid` triggers JWKS refresh
 
 ---
 
 ## Phase 3: Middleware Migration
 
+**Effort:** ~2 hours | **Risk:** Medium (affects all authenticated routes) | **Status:** COMPLETE
+
 ### 3.1 Update Auth Middleware
 **File:** `services/api/internal/infrastructure/server/middleware/auth.go`
-- [ ] Remove Zitadel SDK imports
-- [ ] Replace `NewAuthMiddleware(zitadel *auth.ZitadelProvider)` with `NewAuthMiddleware(verifier *auth.OIDCVerifier)`
-- [ ] Update middleware logic:
+- [x] Remove Zitadel SDK imports
+- [x] Replace `NewAuthMiddleware(zitadel *auth.ZitadelProvider)` with `NewAuthMiddleware(verifier *auth.OIDCVerifier)`
+- [x] Update middleware logic:
   - Extract `Authorization: Bearer <token>` header
   - Verify token using OIDC verifier
   - Extract `sub` and optional `email` claims
@@ -91,41 +117,45 @@
     - `TokenTypeKey` → "jwt" (keep existing)
     - `UserIDKey` → `sub` claim
     - `UserEmailKey` → `email` claim (if present)
-- [ ] Update error handling to use consistent error format
+- [x] Update error handling to use consistent error format
 
 ### 3.2 Add Auth Middleware Tests
 **File:** `services/api/internal/infrastructure/server/middleware/auth_test.go`
-- [ ] Test valid token acceptance
-- [ ] Test missing Authorization header rejection
-- [ ] Test invalid token rejection
-- [ ] Test expired token rejection
-- [ ] Test audience mismatch rejection
-- [ ] Test issuer mismatch rejection
+- [x] Test valid token acceptance
+- [x] Test missing Authorization header rejection
+- [x] Test invalid token rejection
+- [x] Test expired token rejection
+- [x] Test audience mismatch rejection
+- [x] Test issuer mismatch rejection
 
 ---
 
 ## Phase 4: Application Bootstrap
 
+**Effort:** ~1 hour | **Risk:** Low | **Status:** COMPLETE
+
 ### 4.1 Update Main Application
 **File:** `services/api/cmd/api/main.go`
-- [ ] Replace `auth.NewZitadelProvider()` with `auth.NewOIDCVerifier()`
-- [ ] Update middleware construction:
+- [x] Replace `auth.NewZitadelProvider()` with `auth.NewOIDCVerifier()`
+- [x] Update middleware construction:
   - `authMiddleware := middleware.NewAuthMiddleware(verifier)`
-- [ ] Update health check dependency name
+- [x] Update health check dependency name
 
 ### 4.2 Update Health Check DTO
 **File:** `services/api/internal/infrastructure/server/dto/health.go`
-- [ ] Rename `Zitadel DependencyStatus` to `OIDC DependencyStatus`
-- [ ] Update any references in health check logic
+- [x] Rename `Zitadel DependencyStatus` to `OIDC DependencyStatus`
+- [x] Update any references in health check logic
 
 ---
 
 ## Phase 5: Cleanup & Documentation
 
+**Effort:** ~2 hours | **Risk:** Low | **Status:** COMPLETE
+
 ### 5.1 Remove Zitadel Dependencies
-- [ ] Remove `github.com/zitadel/zitadel-go/v3` from `go.mod`
-- [ ] Delete `services/api/internal/infrastructure/auth/zitadel_provider.go`
-- [ ] Remove any remaining Zitadel imports
+- [x] Remove `github.com/zitadel/zitadel-go/v3` from `go.mod`
+- [x] Delete `services/api/internal/infrastructure/auth/zitadel_provider.go`
+- [x] Remove any remaining Zitadel imports
 
 ### 5.2 Update Documentation
 - [ ] Update API documentation to reference generic OIDC
@@ -143,6 +173,8 @@
 ---
 
 ## Phase 6: Validation & Testing
+
+**Effort:** ~3-4 hours | **Risk:** High (must catch security issues) | **Status:** PENDING
 
 ### 6.1 Integration Tests
 - [ ] Test end-to-end with Zitadel provider

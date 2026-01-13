@@ -9,7 +9,7 @@ type HealthResponse struct {
 type DependencyStatusMap struct {
 	Database DependencyStatus `json:"database"`
 	Cache    DependencyStatus `json:"cache"`
-	Zitadel  DependencyStatus `json:"zitadel"`
+	OIDC     DependencyStatus `json:"oidc"`
 }
 
 type DependencyStatus struct {
