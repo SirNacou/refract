@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SirNacou/refract/services/analytics-processor/internal/config"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/valkey-io/valkey-go"
 )
 
@@ -46,7 +48,6 @@ type BatchHandler func(ctx context.Context, events []ClickEvent) error
 // StreamConsumer consumes click events from Redis Streams using consumer groups
 type StreamConsumer struct {
 	client valkey.Client
-	logger *slog.Logger
 
 	streamKey string
 	group     string
@@ -63,33 +64,23 @@ type StreamConsumer struct {
 // NewStreamConsumer creates a new Redis Stream consumer
 func NewStreamConsumer(
 	client valkey.Client,
-	logger *slog.Logger,
-	streamKey string,
-	group string,
-	consumer string,
-	batchSize int64,
-	blockMs int64,
-	startID string,
-	minBackoffMs int64,
-	maxBackoffMs int64,
+	cfg *config.Config,
 ) *StreamConsumer {
 	return &StreamConsumer{
 		client:     client,
-		logger:     logger,
-		streamKey:  streamKey,
-		group:      group,
-		consumer:   consumer,
-		batchSize:  batchSize,
-		blockMs:    blockMs,
-		startID:    startID,
-		minBackoff: time.Duration(minBackoffMs) * time.Millisecond,
-		maxBackoff: time.Duration(maxBackoffMs) * time.Millisecond,
+		streamKey:  cfg.REDIS_STREAM_KEY,
+		group:      cfg.ANALYTICS_CONSUMER_GROUP,
+		consumer:   cfg.ANALYTICS_CONSUMER_NAME,
+		batchSize:  cfg.ANALYTICS_BATCH_SIZE,
+		blockMs:    cfg.ANALYTICS_BLOCK_MS,
+		startID:    cfg.ANALYTICS_STREAM_START,
+		maxBackoff: time.Duration(cfg.ANALYTICS_RETRY_MAX_BACKOFF_MS) * time.Millisecond,
 	}
 }
 
 // EnsureGroup creates the consumer group if it doesn't exist (idempotent)
 func (c *StreamConsumer) EnsureGroup(ctx context.Context) error {
-	c.logger.Info("ensuring consumer group exists",
+	slog.Info("ensuring consumer group exists",
 		"stream", c.streamKey,
 		"group", c.group,
 		"start_id", c.startID,
@@ -108,19 +99,19 @@ func (c *StreamConsumer) EnsureGroup(ctx context.Context) error {
 	if err != nil {
 		// BUSYGROUP means group already exists - that's okay
 		if valkey.IsValkeyBusyGroup(err) {
-			c.logger.Info("consumer group already exists", "group", c.group)
+			slog.Info("consumer group already exists", "group", c.group)
 			return nil
 		}
 		return fmt.Errorf("failed to create consumer group: %w", err)
 	}
 
-	c.logger.Info("consumer group created successfully", "group", c.group)
+	slog.Info("consumer group created successfully", "group", c.group)
 	return nil
 }
 
 // Run starts the consumer loop (blocks until context cancelled)
 func (c *StreamConsumer) Run(ctx context.Context, handler BatchHandler) error {
-	c.logger.Info("starting consumer loop",
+	slog.Info("starting consumer loop",
 		"stream", c.streamKey,
 		"group", c.group,
 		"consumer", c.consumer,
@@ -128,40 +119,35 @@ func (c *StreamConsumer) Run(ctx context.Context, handler BatchHandler) error {
 		"block_ms", c.blockMs,
 	)
 
-	backoff := c.minBackoff
-
 	for {
 		select {
 		case <-ctx.Done():
-			c.logger.Info("consumer loop stopped", "reason", ctx.Err())
+			slog.Info("consumer loop stopped", "reason", ctx.Err())
 			return ctx.Err()
 		default:
 		}
 
-		entries, err := c.readBatch(ctx)
+		op := func() ([]StreamEntry, error) {
+			return c.readBatch(ctx)
+		}
+		entries, err := backoff.Retry(ctx, op, backoff.WithMaxElapsedTime(c.maxBackoff))
 		if err != nil {
-			c.logger.Error("failed to read batch from stream",
+			slog.Error("failed to read batch from stream",
 				"error", err,
-				"backoff", backoff,
 			)
-			time.Sleep(backoff)
-			backoff = min(backoff*2, c.maxBackoff)
 			continue
 		}
-
-		// Reset backoff on success
-		backoff = c.minBackoff
 
 		if len(entries) == 0 {
 			// No messages (block timeout) - continue immediately
 			continue
 		}
 
-		c.logger.Debug("received batch from stream", "count", len(entries))
+		slog.Debug("received batch from stream", "count", len(entries))
 
 		events, ids, err := decodeClickEvents(entries)
 		if err != nil {
-			c.logger.Error("failed to decode click events (NOT acking)",
+			slog.Error("failed to decode click events (NOT acking)",
 				"error", err,
 				"entry_count", len(entries),
 			)
@@ -175,11 +161,11 @@ func (c *StreamConsumer) Run(ctx context.Context, handler BatchHandler) error {
 			continue
 		}
 
-		c.logger.Info("decoded click events", "count", len(events))
+		slog.Info("decoded click events", "count", len(events))
 
 		// Call handler (T041 will insert to DB)
 		if err := handler(ctx, events); err != nil {
-			c.logger.Error("handler failed (NOT acking)",
+			slog.Error("handler failed (NOT acking)",
 				"error", err,
 				"event_count", len(events),
 			)
@@ -190,13 +176,13 @@ func (c *StreamConsumer) Run(ctx context.Context, handler BatchHandler) error {
 
 		// Handler succeeded - ACK all messages
 		if err := c.ack(ctx, ids); err != nil {
-			c.logger.Error("failed to ack messages (duplicates possible)",
+			slog.Error("failed to ack messages (duplicates possible)",
 				"error", err,
 				"id_count", len(ids),
 			)
 			// Continue anyway - messages were processed, duplicates are acceptable
 		} else {
-			c.logger.Debug("acked messages", "count", len(ids))
+			slog.Debug("acked messages", "count", len(ids))
 		}
 	}
 }

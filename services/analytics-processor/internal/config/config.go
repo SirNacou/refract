@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/caarlos0/env/v11"
 )
@@ -25,11 +27,13 @@ type Config struct {
 	ANALYTICS_STREAM_START   string `env:"ANALYTICS_STREAM_START" envDefault:"$"`
 
 	// Retry backoff
-	ANALYTICS_RETRY_MIN_BACKOFF_MS int64 `env:"ANALYTICS_RETRY_MIN_BACKOFF_MS" envDefault:"250"`
 	ANALYTICS_RETRY_MAX_BACKOFF_MS int64 `env:"ANALYTICS_RETRY_MAX_BACKOFF_MS" envDefault:"5000"`
 
 	// Database
 	ANALYTICS_DATABASE_URL string `env:"ANALYTICS_DATABASE_URL" envDefault:"postgres://refract:password@localhost:5432/url_shortener?sslmode=disable"`
+
+	// GeoIP
+	GEOIP_DB_PATH string `env:"GEOIP_DB_PATH" envDefault:"/usr/share/GeoIP/GeoLite2-City.mmdb"`
 
 	// Logging
 	LOG_LEVEL  string `env:"LOG_LEVEL" envDefault:"info"`
@@ -64,4 +68,42 @@ func (c *Config) GetRedisURL() string {
 		return fmt.Sprintf("redis://%s:%s/%d", c.REDIS_HOST, c.REDIS_PORT, c.REDIS_DB)
 	}
 	return fmt.Sprintf("redis://:%s@%s:%s/%d", c.REDIS_PASSWORD, c.REDIS_HOST, c.REDIS_PORT, c.REDIS_DB)
+}
+
+// GetLogLevel parses LOG_LEVEL and returns slog.Level
+func (c *Config) GetLogLevel() slog.Level {
+	level := strings.ToLower(c.LOG_LEVEL)
+	switch level {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}
+
+// IsJSONFormat returns true if LOG_FORMAT is "json"
+func (c *Config) IsJSONFormat() bool {
+	return strings.ToLower(c.LOG_FORMAT) == "json"
+}
+
+// SetupLogger creates and configures slog logger based on config
+func (c *Config) SetupLogger() *slog.Logger {
+	opts := &slog.HandlerOptions{
+		Level: c.GetLogLevel(),
+	}
+
+	var handler slog.Handler
+	if c.IsJSONFormat() {
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+	} else {
+		handler = slog.NewTextHandler(os.Stdout, opts)
+	}
+
+	return slog.New(handler)
 }

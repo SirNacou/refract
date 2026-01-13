@@ -10,21 +10,24 @@ import (
 
 	"github.com/SirNacou/refract/services/analytics-processor/internal/config"
 	"github.com/SirNacou/refract/services/analytics-processor/internal/consumer"
+	"github.com/SirNacou/refract/services/analytics-processor/internal/geo"
 	"github.com/SirNacou/refract/services/analytics-processor/internal/redis"
+	"github.com/SirNacou/refract/services/analytics-processor/internal/repository"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
-	// Setup logger
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-	slog.SetDefault(logger)
+	ctx := context.Background()
 
 	// Load config
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
+
+	// Setup logger from config
+	logger := cfg.SetupLogger()
+	slog.SetDefault(logger)
 
 	logger.Info("analytics processor starting",
 		"stream_key", cfg.REDIS_STREAM_KEY,
@@ -40,18 +43,35 @@ func main() {
 	}
 	defer client.Close()
 
+	// Create database connection pool
+	db, err := pgxpool.New(ctx, cfg.ANALYTICS_DATABASE_URL)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	logger.Info("database connection established", "url", cfg.ANALYTICS_DATABASE_URL)
+
+	// Create GeoIP lookup (optional fallback enrichment)
+	geoLookup, err := geo.NewGeoLookup(cfg.GEOIP_DB_PATH)
+	if err != nil {
+		logger.Warn("failed to load GeoIP database, geo enrichment disabled",
+			"path", cfg.GEOIP_DB_PATH,
+			"error", err,
+		)
+		geoLookup = nil // continue without geo enrichment
+	} else {
+		defer geoLookup.Close()
+		logger.Info("GeoIP database loaded", "path", cfg.GEOIP_DB_PATH)
+	}
+
+	// Create repository
+	repo := repository.NewTimescaleRepository(db, geoLookup)
+
 	// Create stream consumer
 	streamConsumer := consumer.NewStreamConsumer(
 		client,
-		logger,
-		cfg.REDIS_STREAM_KEY,
-		cfg.ANALYTICS_CONSUMER_GROUP,
-		cfg.ANALYTICS_CONSUMER_NAME,
-		cfg.ANALYTICS_BATCH_SIZE,
-		cfg.ANALYTICS_BLOCK_MS,
-		cfg.ANALYTICS_STREAM_START,
-		cfg.ANALYTICS_RETRY_MIN_BACKOFF_MS,
-		cfg.ANALYTICS_RETRY_MAX_BACKOFF_MS,
+		cfg,
 	)
 
 	// Context with graceful shutdown
@@ -72,15 +92,9 @@ func main() {
 		log.Fatalf("failed to ensure consumer group: %v", err)
 	}
 
-	// Placeholder handler (T041 will replace this with DB insert)
+	// Handler: batch insert click events into TimescaleDB
 	handler := func(ctx context.Context, events []consumer.ClickEvent) error {
-		logger.Info("processing batch (placeholder)",
-			"count", len(events),
-			"first_event_id", events[0].EventID,
-			"first_url_id", events[0].URLID,
-		)
-		// TODO (T041): Insert events into TimescaleDB
-		return nil
+		return repo.InsertClickEvents(ctx, events)
 	}
 
 	// Run consumer loop

@@ -83,10 +83,10 @@
 
 ### Analytics Processor Foundation
 
-- [ ] T040 Create Redis Stream consumer in services/analytics-processor/internal/consumer/click_events.go (consumer group, batch processing)
-- [ ] T041 [P] Create TimescaleDB repository in services/analytics-processor/internal/repository/timescale_repository.go (batch insert click events)
-- [ ] T042 [P] Create GeoIP lookup in services/analytics-processor/internal/geo/maxmind.go (same as redirector for consistency)
-- [ ] T043 [P] Create config management in services/analytics-processor/internal/config/config.go
+- [X] T040 Create Redis Stream consumer in services/analytics-processor/internal/consumer/click_events.go (consumer group, batch processing)
+- [X] T041 [P] Create TimescaleDB repository in services/analytics-processor/internal/repository/timescale_repository.go (batch insert click events)
+- [X] T042 [P] Create GeoIP lookup in services/analytics-processor/internal/geo/maxmind.go (same as redirector for consistency)
+- [X] T043 [P] Create config management in services/analytics-processor/internal/config/config.go
 
 ### Frontend Foundation
 
