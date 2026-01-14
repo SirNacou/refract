@@ -2,8 +2,8 @@
   "projectName": "frontend",
   "mode": "file-router",
   "typescript": true,
-  "tailwind": true,
   "packageManager": "bun",
+  "tailwind": true,
   "addOnOptions": {},
   "git": true,
   "version": 1,
@@ -12,11 +12,11 @@
     "biome",
     "nitro",
     "start",
+    "compiler",
     "form",
     "shadcn",
     "t3env",
     "table",
-    "tanstack-query",
-    "compiler"
+    "tanstack-query"
   ]
 }

@@ -50,8 +50,8 @@ func main() {
 
 	// Create OIDC verifier (replaces Zitadel provider)
 	oidcVerifier, err := auth.NewOIDCVerifier(ctx, auth.OIDCVerifierConfig{
-		Issuer:   cfg.OIDC.Issuer,
-		Audience: cfg.OIDC.Audience,
+		Issuer:   cfg.Zitadel.Issuer,
+		Audience: cfg.Zitadel.Audience,
 	})
 	if err != nil {
 		log.Fatalf("Failed to create OIDC verifier: %v", err)

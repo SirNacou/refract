@@ -1,21 +1,21 @@
-# Multi-stage build using Bun
-FROM oven/bun:latest AS builder
+FROM oven/bun:alpine AS builder
+
 WORKDIR /app
 
-# Install deps and build
-COPY package.json bun.lock* ./
+COPY package.json bun.lock ./
+
+RUN bun install --frozen-lockfile
+
 COPY . .
-RUN bun install
+
+COPY --from=root .env .
+
 RUN bun run build
 
-# Final image: only runtime + built assets
-FROM oven/bun:latest AS runner
+FROM oven/bun:alpine
+
 WORKDIR /app
-ENV NODE_ENV=production
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.output ./
 
-EXPOSE 4000
-CMD ["bun", "run", "preview", "--", "--port", "4000", "--host", "0.0.0.0"]
+CMD ["bun", "./server/index.mjs"]

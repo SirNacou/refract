@@ -7,18 +7,18 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       additional_contexts:
-        root: ./
-    env_file:
-      - .env
+        root: .
+    environment:
+      - PORT=${VITE_PORT}
     restart: always
     ports:
-      - 4000:4000
+      - 4000:${VITE_PORT}
     depends_on:
       - postgres
       - valkey
 
   postgres:
-    container_name: postgres
+    container_name: refract-postgres
     image: timescale/timescaledb:latest-pg18
     restart: always
     shm_size: 128mb

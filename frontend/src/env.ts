@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 export const env = createEnv({
   server: {
-    SERVER_URL: z.url().optional(),
+    SERVER_URL: z.string().url().optional(),
   },
 
   /**
@@ -14,12 +14,6 @@ export const env = createEnv({
 
   client: {
     VITE_APP_TITLE: z.string().min(1).optional(),
-    VITE_API_BASE_URL: z.url().default('http://localhost:8080'),
-    VITE_OIDC_ISSUER: z.string().url(),
-    VITE_OIDC_CLIENT_ID: z.string(),
-    VITE_OIDC_REDIRECT_URI: z.url(),
-    VITE_OIDC_POST_LOGOUT_REDIRECT_URI: z.string().url().optional(),
-    VITE_OIDC_SCOPES: z.string().default('openid profile email'),
   },
 
   /**
