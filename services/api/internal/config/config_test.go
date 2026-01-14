@@ -11,10 +11,8 @@ func TestLoad_DefaultValues(t *testing.T) {
 	clearEnv(t)
 
 	// Set only required fields
-	os.Setenv("ZITADEL_CLIENT_ID", "test-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "test-client-secret")
-	defer os.Unsetenv("ZITADEL_CLIENT_ID")
-	defer os.Unsetenv("ZITADEL_CLIENT_SECRET")
+	os.Setenv("ZITADEL_AUDIENCE", "test-audience")
+	defer os.Unsetenv("ZITADEL_AUDIENCE")
 
 	cfg, err := Load()
 	if err != nil {
@@ -49,6 +47,11 @@ func TestLoad_DefaultValues(t *testing.T) {
 	if cfg.Logging.Format != "json" {
 		t.Errorf("expected Logging.Format=json, got %s", cfg.Logging.Format)
 	}
+
+	// Verify Zitadel default issuer
+	if cfg.Zitadel.Issuer != "https://zitadel.nacou.uk" {
+		t.Errorf("expected Zitadel.Issuer default, got %s", cfg.Zitadel.Issuer)
+	}
 }
 
 func TestLoad_CustomValues(t *testing.T) {
@@ -61,10 +64,10 @@ func TestLoad_CustomValues(t *testing.T) {
 	os.Setenv("POSTGRES_PORT", "5433")
 	os.Setenv("REDIS_HOST", "redis.example.com")
 	os.Setenv("REDIS_PORT", "6380")
-	os.Setenv("ZITADEL_URL", "https://auth.example.com")
+	os.Setenv("ZITADEL_ISSUER", "https://auth.example.com")
+	os.Setenv("ZITADEL_AUDIENCE", "custom-audience")
 	os.Setenv("ZITADEL_CLIENT_ID", "custom-client-id")
 	os.Setenv("ZITADEL_CLIENT_SECRET", "custom-client-secret")
-	os.Setenv("ZITADEL_ISSUER", "https://auth.example.com")
 	os.Setenv("WORKER_ID", "42")
 	os.Setenv("LOG_LEVEL", "debug")
 	defer clearEnv(t)
@@ -98,8 +101,12 @@ func TestLoad_CustomValues(t *testing.T) {
 		t.Errorf("expected Redis.Port=6380, got %d", cfg.Redis.Port)
 	}
 
-	if cfg.Zitadel.URL != "https://auth.example.com" {
-		t.Errorf("expected Zitadel.URL=https://auth.example.com, got %s", cfg.Zitadel.URL)
+	if cfg.Zitadel.Issuer != "https://auth.example.com" {
+		t.Errorf("expected Zitadel.Issuer=https://auth.example.com, got %s", cfg.Zitadel.Issuer)
+	}
+
+	if cfg.Zitadel.Audience != "custom-audience" {
+		t.Errorf("expected Zitadel.Audience=custom-audience, got %s", cfg.Zitadel.Audience)
 	}
 
 	if cfg.Worker.WorkerID != 42 {
@@ -115,8 +122,7 @@ func TestLoad_DatabaseURL(t *testing.T) {
 	clearEnv(t)
 
 	os.Setenv("DATABASE_URL", "postgres://user:pass@host:5432/db?sslmode=require")
-	os.Setenv("ZITADEL_CLIENT_ID", "test-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("ZITADEL_AUDIENCE", "test-audience")
 	defer clearEnv(t)
 
 	cfg, err := Load()
@@ -134,21 +140,17 @@ func TestLoad_DatabaseURL(t *testing.T) {
 	}
 }
 
-func TestValidate_MissingAuthConfig(t *testing.T) {
+func TestValidate_MissingZitadelAudience(t *testing.T) {
 	clearEnv(t)
 
-	// Note: ZitadelConfig has default values, so we need to test the case where
-	// neither direct OIDC config nor Zitadel defaults provide valid auth.
-	// Since ZITADEL_ISSUER defaults to a value but ZITADEL_CLIENT_ID does not,
-	// clearing all env vars means OIDC.Issuer gets the default but OIDC.Audience is empty.
-
+	// ZITADEL_ISSUER has a default, but ZITADEL_AUDIENCE does not
 	_, err := Load()
 	if err == nil {
-		t.Fatal("expected error when no auth config is set")
+		t.Fatal("expected error when ZITADEL_AUDIENCE is not set")
 	}
-	// Should mention OIDC_AUDIENCE since OIDC_ISSUER gets a default from ZITADEL_ISSUER
-	if !contains(err.Error(), "OIDC") {
-		t.Errorf("expected error to mention OIDC config, got: %v", err)
+
+	if !contains(err.Error(), "ZITADEL_AUDIENCE") {
+		t.Errorf("expected error to mention ZITADEL_AUDIENCE, got: %v", err)
 	}
 }
 
@@ -156,8 +158,7 @@ func TestValidate_InvalidWorkerID(t *testing.T) {
 	clearEnv(t)
 
 	os.Setenv("WORKER_ID", "1024") // Out of range
-	os.Setenv("ZITADEL_CLIENT_ID", "test-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("ZITADEL_AUDIENCE", "test-audience")
 	defer clearEnv(t)
 
 	_, err := Load()
@@ -170,8 +171,7 @@ func TestValidate_InvalidPort(t *testing.T) {
 	clearEnv(t)
 
 	os.Setenv("API_PORT", "70000") // Out of range
-	os.Setenv("ZITADEL_CLIENT_ID", "test-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("ZITADEL_AUDIENCE", "test-audience")
 	defer clearEnv(t)
 
 	_, err := Load()
@@ -184,8 +184,7 @@ func TestValidate_InvalidLogLevel(t *testing.T) {
 	clearEnv(t)
 
 	os.Setenv("LOG_LEVEL", "invalid")
-	os.Setenv("ZITADEL_CLIENT_ID", "test-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("ZITADEL_AUDIENCE", "test-audience")
 	defer clearEnv(t)
 
 	_, err := Load()
@@ -243,8 +242,7 @@ func TestServerAddress(t *testing.T) {
 func TestRedisConfig_DefaultCacheSettings(t *testing.T) {
 	clearEnv(t)
 
-	os.Setenv("ZITADEL_CLIENT_ID", "test-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("ZITADEL_AUDIENCE", "test-audience")
 	defer clearEnv(t)
 
 	cfg, err := Load()
@@ -268,8 +266,7 @@ func TestRedisConfig_DefaultCacheSettings(t *testing.T) {
 func TestSecurityConfig_DefaultRateLimits(t *testing.T) {
 	clearEnv(t)
 
-	os.Setenv("ZITADEL_CLIENT_ID", "test-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("ZITADEL_AUDIENCE", "test-audience")
 	defer clearEnv(t)
 
 	cfg, err := Load()
@@ -294,8 +291,7 @@ func TestSecurityConfig_CORSArrayParsing(t *testing.T) {
 	clearEnv(t)
 
 	os.Setenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,https://example.com,https://app.example.com")
-	os.Setenv("ZITADEL_CLIENT_ID", "test-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("ZITADEL_AUDIENCE", "test-audience")
 	defer clearEnv(t)
 
 	cfg, err := Load()
@@ -320,86 +316,13 @@ func TestSecurityConfig_CORSArrayParsing(t *testing.T) {
 	}
 }
 
-// clearEnv clears all environment variables used by config
-func clearEnv(t *testing.T) {
-	t.Helper()
-
-	vars := []string{
-		"API_PORT", "API_BASE_URL", "API_HOST",
-		"POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB",
-		"POSTGRES_SSLMODE", "POSTGRES_MAX_OPEN_CONNS", "POSTGRES_MAX_IDLE_CONNS",
-		"POSTGRES_CONN_MAX_LIFETIME", "POSTGRES_CONN_MAX_IDLE_TIME", "DATABASE_URL",
-		"REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "REDIS_DB",
-		"REDIS_CACHE_TTL", "REDIS_MAX_RETRIES", "REDIS_POOL_SIZE",
-		"REDIS_MIN_IDLE_CONNS", "REDIS_CONN_MAX_IDLE_TIME",
-		"ZITADEL_URL", "ZITADEL_CLIENT_ID", "ZITADEL_CLIENT_SECRET", "ZITADEL_ISSUER",
-		"OIDC_ISSUER", "OIDC_AUDIENCE", "OIDC_JWKS_CACHE_TTL", "OIDC_CLOCK_SKEW_SECONDS",
-		"JWT_ISSUER", "WORKER_ID",
-		"SAFE_BROWSING_API_KEY", "RATE_LIMIT_PER_USER", "RATE_LIMIT_PER_API_KEY",
-		"RATE_LIMIT_WINDOW", "CORS_ALLOWED_ORIGINS", "CORS_ALLOWED_METHODS", "CORS_ALLOWED_HEADERS",
-		"LOG_LEVEL", "LOG_FORMAT",
-	}
-
-	for _, v := range vars {
-		os.Unsetenv(v)
-	}
-}
-
-// =============================================================================
-// OIDC Configuration Tests
-// =============================================================================
-
-func TestOIDCConfig_DirectValues(t *testing.T) {
+func TestZitadelConfig_AllFields(t *testing.T) {
 	clearEnv(t)
 
-	// Set OIDC config directly (new way)
-	os.Setenv("OIDC_ISSUER", "https://auth.example.com")
-	os.Setenv("OIDC_AUDIENCE", "my-api")
-	defer clearEnv(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() failed: %v", err)
-	}
-
-	if cfg.OIDC.Issuer != "https://auth.example.com" {
-		t.Errorf("expected OIDC.Issuer=https://auth.example.com, got %s", cfg.OIDC.Issuer)
-	}
-
-	if cfg.OIDC.Audience != "my-api" {
-		t.Errorf("expected OIDC.Audience=my-api, got %s", cfg.OIDC.Audience)
-	}
-}
-
-func TestOIDCConfig_DefaultValues(t *testing.T) {
-	clearEnv(t)
-
-	// Set only required values
-	os.Setenv("OIDC_ISSUER", "https://auth.example.com")
-	os.Setenv("OIDC_AUDIENCE", "my-api")
-	defer clearEnv(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() failed: %v", err)
-	}
-
-	// Verify the required values are set
-	if cfg.OIDC.Issuer != "https://auth.example.com" {
-		t.Errorf("expected OIDC.Issuer=https://auth.example.com, got %s", cfg.OIDC.Issuer)
-	}
-
-	if cfg.OIDC.Audience != "my-api" {
-		t.Errorf("expected OIDC.Audience=my-api, got %s", cfg.OIDC.Audience)
-	}
-}
-
-func TestOIDCConfig_BackwardCompatibility_ZitadelIssuer(t *testing.T) {
-	clearEnv(t)
-
-	// Use old ZITADEL_* vars - should be mapped to OIDC
 	os.Setenv("ZITADEL_ISSUER", "https://zitadel.example.com")
+	os.Setenv("ZITADEL_AUDIENCE", "my-api")
 	os.Setenv("ZITADEL_CLIENT_ID", "my-client-id")
+	os.Setenv("ZITADEL_CLIENT_SECRET", "my-client-secret")
 	defer clearEnv(t)
 
 	cfg, err := Load()
@@ -407,70 +330,25 @@ func TestOIDCConfig_BackwardCompatibility_ZitadelIssuer(t *testing.T) {
 		t.Fatalf("Load() failed: %v", err)
 	}
 
-	// ZITADEL_ISSUER should be mapped to OIDC.Issuer
-	if cfg.OIDC.Issuer != "https://zitadel.example.com" {
-		t.Errorf("expected OIDC.Issuer to be mapped from ZITADEL_ISSUER, got %s", cfg.OIDC.Issuer)
+	if cfg.Zitadel.Issuer != "https://zitadel.example.com" {
+		t.Errorf("expected Zitadel.Issuer=https://zitadel.example.com, got %s", cfg.Zitadel.Issuer)
 	}
 
-	// ZITADEL_CLIENT_ID should be mapped to OIDC.Audience
-	if cfg.OIDC.Audience != "my-client-id" {
-		t.Errorf("expected OIDC.Audience to be mapped from ZITADEL_CLIENT_ID, got %s", cfg.OIDC.Audience)
-	}
-}
-
-func TestOIDCConfig_BackwardCompatibility_ZitadelURL(t *testing.T) {
-	// Note: This test verifies that ZITADEL_URL is used as a fallback when ZITADEL_ISSUER
-	// is not explicitly set. However, since ZitadelConfig has envDefault for Issuer,
-	// the default value is always used. This test documents the current behavior.
-	//
-	// In practice, ZITADEL_ISSUER default is used, and ZITADEL_URL fallback only
-	// happens when both OIDC_ISSUER and ZITADEL_ISSUER are empty strings, which
-	// requires removing the envDefault tag (breaking change).
-	//
-	// For now, we verify that ZITADEL_ISSUER default is correctly mapped to OIDC.Issuer.
-	clearEnv(t)
-
-	os.Setenv("ZITADEL_CLIENT_ID", "my-client-id")
-	defer clearEnv(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() failed: %v", err)
+	if cfg.Zitadel.Audience != "my-api" {
+		t.Errorf("expected Zitadel.Audience=my-api, got %s", cfg.Zitadel.Audience)
 	}
 
-	// Default ZITADEL_ISSUER should be mapped to OIDC.Issuer
-	if cfg.OIDC.Issuer != "https://zitadel.nacou.uk" {
-		t.Errorf("expected OIDC.Issuer to have default value, got %s", cfg.OIDC.Issuer)
+	if cfg.Zitadel.ClientID != "my-client-id" {
+		t.Errorf("expected Zitadel.ClientID=my-client-id, got %s", cfg.Zitadel.ClientID)
+	}
+
+	if cfg.Zitadel.ClientSecret != "my-client-secret" {
+		t.Errorf("expected Zitadel.ClientSecret=my-client-secret, got %s", cfg.Zitadel.ClientSecret)
 	}
 }
 
-func TestOIDCConfig_OIDCTakesPrecedence(t *testing.T) {
-	clearEnv(t)
-
-	// Set both OIDC and ZITADEL vars - OIDC should take precedence
-	os.Setenv("OIDC_ISSUER", "https://oidc.example.com")
-	os.Setenv("OIDC_AUDIENCE", "oidc-audience")
-	os.Setenv("ZITADEL_ISSUER", "https://zitadel.example.com")
-	os.Setenv("ZITADEL_CLIENT_ID", "zitadel-client-id")
-	defer clearEnv(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() failed: %v", err)
-	}
-
-	// OIDC values should be used, not Zitadel
-	if cfg.OIDC.Issuer != "https://oidc.example.com" {
-		t.Errorf("expected OIDC.Issuer to use OIDC_ISSUER, got %s", cfg.OIDC.Issuer)
-	}
-
-	if cfg.OIDC.Audience != "oidc-audience" {
-		t.Errorf("expected OIDC.Audience to use OIDC_AUDIENCE, got %s", cfg.OIDC.Audience)
-	}
-}
-
-func TestValidate_MissingOIDCIssuer(t *testing.T) {
-	// Test that validation correctly rejects empty OIDC.Issuer
+func TestValidate_MissingZitadelIssuer(t *testing.T) {
+	// Test that validation correctly rejects empty Zitadel.Issuer
 	cfg := &Config{
 		Server: ServerConfig{
 			Port:    8080,
@@ -487,7 +365,7 @@ func TestValidate_MissingOIDCIssuer(t *testing.T) {
 			Host: "localhost",
 			Port: 6379,
 		},
-		OIDC: OIDCConfig{
+		Zitadel: ZitadelConfig{
 			Issuer:   "", // Empty - should fail
 			Audience: "my-api",
 		},
@@ -502,28 +380,35 @@ func TestValidate_MissingOIDCIssuer(t *testing.T) {
 
 	err := cfg.Validate()
 	if err == nil {
-		t.Fatal("expected error when OIDC.Issuer is empty")
+		t.Fatal("expected error when Zitadel.Issuer is empty")
 	}
 
-	if !contains(err.Error(), "OIDC_ISSUER") {
-		t.Errorf("expected error to mention OIDC_ISSUER, got: %v", err)
+	if !contains(err.Error(), "ZITADEL_ISSUER") {
+		t.Errorf("expected error to mention ZITADEL_ISSUER, got: %v", err)
 	}
 }
 
-func TestValidate_MissingOIDCAudience(t *testing.T) {
-	clearEnv(t)
+// clearEnv clears all environment variables used by config
+func clearEnv(t *testing.T) {
+	t.Helper()
 
-	// No OIDC or Zitadel audience set
-	os.Setenv("OIDC_ISSUER", "https://auth.example.com")
-	defer clearEnv(t)
-
-	_, err := Load()
-	if err == nil {
-		t.Fatal("expected error when OIDC_AUDIENCE is missing")
+	vars := []string{
+		"API_PORT", "API_BASE_URL", "API_HOST",
+		"POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB",
+		"POSTGRES_SSLMODE", "POSTGRES_MAX_OPEN_CONNS", "POSTGRES_MAX_IDLE_CONNS",
+		"POSTGRES_CONN_MAX_LIFETIME", "POSTGRES_CONN_MAX_IDLE_TIME", "DATABASE_URL",
+		"REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD", "REDIS_DB",
+		"REDIS_CACHE_TTL", "REDIS_MAX_RETRIES", "REDIS_POOL_SIZE",
+		"REDIS_MIN_IDLE_CONNS", "REDIS_CONN_MAX_IDLE_TIME",
+		"ZITADEL_ISSUER", "ZITADEL_AUDIENCE", "ZITADEL_CLIENT_ID", "ZITADEL_CLIENT_SECRET",
+		"WORKER_ID",
+		"SAFE_BROWSING_API_KEY", "RATE_LIMIT_PER_USER", "RATE_LIMIT_PER_API_KEY",
+		"RATE_LIMIT_WINDOW", "CORS_ALLOWED_ORIGINS", "CORS_ALLOWED_METHODS", "CORS_ALLOWED_HEADERS",
+		"LOG_LEVEL", "LOG_FORMAT",
 	}
 
-	if !contains(err.Error(), "OIDC_AUDIENCE") {
-		t.Errorf("expected error to mention OIDC_AUDIENCE, got: %v", err)
+	for _, v := range vars {
+		os.Unsetenv(v)
 	}
 }
 

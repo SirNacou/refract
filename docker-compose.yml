@@ -1,6 +1,22 @@
 name: refract
 
 services:
+  frontend:
+    container_name: refract-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      additional_contexts:
+        root: ./
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - 4000:4000
+    depends_on:
+      - postgres
+      - valkey
+
   postgres:
     container_name: postgres
     image: timescale/timescaledb:latest-pg18
