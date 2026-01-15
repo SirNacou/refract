@@ -8,7 +8,7 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
-COPY --from=root .env .
+COPY --from=root .env ./
 
 RUN bun run build
 
@@ -18,4 +18,4 @@ WORKDIR /app
 
 COPY --from=builder /app/.output ./
 
-CMD ["bun", "./server/index.mjs"]
+CMD [ "bun", "./server/index.mjs" ]

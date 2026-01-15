@@ -48,16 +48,12 @@ func main() {
 	}
 	defer redis.Close()
 
-	// Create OIDC verifier (replaces Zitadel provider)
-	oidcVerifier, err := auth.NewOIDCVerifier(ctx, auth.OIDCVerifierConfig{
-		Issuer:   cfg.Zitadel.Issuer,
-		Audience: cfg.Zitadel.Audience,
-	})
+	authZ, err := auth.NewAuth(ctx, cfg.Zitadel.Issuer, "./keypath.json")
 	if err != nil {
-		log.Fatalf("Failed to create OIDC verifier: %v", err)
+		log.Fatalf("Failed to initialize Auth: %v", err)
 	}
+	authMw := middleware.NewAuthMiddleware(authZ)
 
-	authMiddleware := middleware.NewAuthMiddleware(oidcVerifier)
 	rateLimiter := middleware.NewRateLimiter(
 		redis.Client(),
 		&cfg.Security,
@@ -65,7 +61,7 @@ func main() {
 	)
 	loggingMiddleware := middleware.NewLoggingMiddleware(slog.Default())
 
-	router := server.NewRouter(authMiddleware,
+	router := server.NewRouter(authMw,
 		rateLimiter,
 		loggingMiddleware,
 		&cfg.Security,

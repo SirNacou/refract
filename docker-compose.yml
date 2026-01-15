@@ -17,6 +17,20 @@ services:
       - postgres
       - valkey
 
+  api:
+    container_name: refract-api
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - 5000:8080
+    depends_on:
+      - postgres
+      - valkey
+
   postgres:
     container_name: refract-postgres
     image: timescale/timescaledb:latest-pg18

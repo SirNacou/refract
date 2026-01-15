@@ -26,7 +26,7 @@ func NewRouter(
 
 	r.Route("/api/v1", func(apiRouter chi.Router) {
 		// Define your API routes here
-		apiRouter.Use(authMw.RequireAuthentication())
+		apiRouter.Use(authMw.RequireAuthorization())
 		apiRouter.Use(rateLimiter.RateLimitPerUser())
 
 		apiRouter.Get("/urls", listURLsHandler)

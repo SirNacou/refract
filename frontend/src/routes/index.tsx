@@ -1,16 +1,24 @@
+import { zitadel } from '@/lib/auth'
 import { createFileRoute } from '@tanstack/react-router'
 import {
-  Zap,
-  Server,
   Route as RouteIcon,
+  Server,
   Shield,
-  Waves,
   Sparkles,
+  Waves,
+  Zap,
 } from 'lucide-react'
+import { useEffect } from 'react'
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({
+  component: App,
+})
 
 function App() {
+  useEffect(() => {
+    zitadel.authorize()
+  }, [])
+
   const features = [
     {
       icon: <Zap className="w-12 h-12 text-cyan-400" />,

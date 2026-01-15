@@ -11,6 +11,7 @@ import (
 	"github.com/SirNacou/refract/services/api/internal/config"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/server/errors"
 	"github.com/valkey-io/valkey-go"
+	"github.com/zitadel/zitadel-go/v3/pkg/authorization"
 )
 
 type RateLimiter struct {
@@ -38,7 +39,7 @@ func NewRateLimiter(redis valkey.Client, cfg *config.SecurityConfig, logger *slo
 func (rl *RateLimiter) RateLimitPerUser() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			userID := GetUserID(r.Context())
+			userID := authorization.UserID(r.Context())
 
 			remaining, resetTime, err := rl.checkLimit(r.Context(), userID)
 

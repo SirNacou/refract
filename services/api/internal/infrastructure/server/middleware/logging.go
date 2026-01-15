@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/zitadel/zitadel-go/v3/pkg/authorization"
 )
 
 type LoggingMiddleware struct {
@@ -29,7 +30,7 @@ func (lm *LoggingMiddleware) Handler() func(http.Handler) http.Handler {
 
 			lm.logger.Info("Request completed",
 				slog.String("request_id", middleware.GetReqID(r.Context())),
-				slog.String("user_id", GetUserID(r.Context())),
+				slog.String("user_id", authorization.UserID(r.Context())),
 				slog.String("method", r.Method),
 				slog.String("path", r.URL.Path),
 				slog.Int("status", wrapped.status),

@@ -8,35 +8,31 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
 
-const config = defineConfig(() => {
-  const port = process.env.VITE_PORT ? parseInt(process.env.VITE_PORT) : 4000
-  return {
-    server: {
-      port
+const config = defineConfig({
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
-    resolve: {
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
+  },
+  plugins: [
+    devtools(),
+    nitro({ preset: 'bun' }),
+    // this is the plugin that enables path aliases
+    viteTsConfigPaths({
+      projects: ['./tsconfig.json'],
+    }),
+    tailwindcss(),
+    tanstackStart({
+      spa: {
+        enabled: true
+      }
+    }),
+    viteReact({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
       },
-    },
-    plugins: [
-      devtools(),
-      nitro({
-        preset: 'bun'
-      }),
-      // this is the plugin that enables path aliases
-      viteTsConfigPaths({
-        projects: ['./tsconfig.json'],
-      }),
-      tailwindcss(),
-      tanstackStart(),
-      viteReact({
-        babel: {
-          plugins: ['babel-plugin-react-compiler'],
-        },
-      }),
-    ],
-  }
+    }),
+  ],
 })
 
 export default config
