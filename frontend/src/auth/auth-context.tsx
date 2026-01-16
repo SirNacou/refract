@@ -1,5 +1,5 @@
 // src/auth/AuthContext.tsx
-import { zitadel } from "@/lib/auth"
+import { getZitadel } from "@/lib/auth"
 import { User } from "oidc-client-ts"
 import React, { createContext, useContext, useEffect, useState } from "react"
 
@@ -17,6 +17,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    const zitadel = getZitadel()
     // Check for existing user session on mount
     zitadel.userManager.getUser().then((loadedUser) => {
       if (loadedUser && !loadedUser.expired) {
@@ -38,8 +39,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [])
 
-  const login = () => zitadel.authorize()
-  const logout = () => zitadel.signout()
+  const login = () => getZitadel().authorize()
+  const logout = () => getZitadel().signout()
 
   if (isLoading) return <div>Loading Auth...</div> // Or a proper skeleton loader
 

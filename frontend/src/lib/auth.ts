@@ -10,4 +10,18 @@ const config: ZitadelConfig = {
   scope: env.VITE_ZITADEL_SCOPES,
 }
 
-export const zitadel = createZitadelAuth(config)
+let zitadelInstance: ReturnType<typeof createZitadelAuth> | null = null
+
+
+export const getZitadel = () => {
+  // Only create the instance on the client side
+  if (typeof window === 'undefined') {
+    throw new Error('Zitadel auth can only be used on the client side')
+  }
+
+  if (!zitadelInstance) {
+    zitadelInstance = createZitadelAuth(config)
+  }
+
+  return zitadelInstance
+}

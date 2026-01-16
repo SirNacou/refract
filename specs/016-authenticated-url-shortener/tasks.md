@@ -92,10 +92,10 @@
 
 - [X] T044 Setup TanStack Start project structure in frontend/src/ with routes/, components/, utils/
 - [X] T045 [P] Create API client wrapper in frontend/src/utils/api-client.ts (fetch with auth headers, error handling)
-- [ ] T046 [P] Create Zitadel OIDC integration in frontend/src/utils/auth.ts (login, logout, token refresh)
-- [ ] T047 [P] Create AuthGuard component in frontend/src/components/AuthGuard.tsx (protected route wrapper)
-- [ ] T048 [P] Install and configure TanStack Query in frontend/src/root.tsx (QueryClientProvider)
-- [ ] T049 [P] Install and configure Recharts for analytics visualizations
+- [X] T046 [P] Create Zitadel OIDC integration in frontend/src/utils/auth.ts (login, logout, token refresh)
+- [X] T047 [P] Create AuthGuard component in frontend/src/components/AuthGuard.tsx (protected route wrapper)
+- [X] T048 [P] Install and configure TanStack Query in frontend/src/root.tsx (QueryClientProvider)
+- [X] T049 [P] Install and configure Recharts for analytics visualizations
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -111,7 +111,7 @@
 
 ### Domain Layer (US5)
 
-- [ ] T050 [P] [US5] Create User entity in services/api/internal/domain/user/entity.go (Zitadel subject ID, email, status)
+- [X] T050 [P] [US5] Create User entity in services/api/internal/domain/user/entity.go (Zitadel subject ID, email, status)
 - [ ] T051 [P] [US5] Create UserRepository interface in services/api/internal/domain/user/repository.go (CreateOrUpdate, GetByZitadelSub)
 - [ ] T052 [P] [US5] Create domain errors in services/api/internal/domain/user/errors.go (UserNotFound, UserSuspended)
 
@@ -136,7 +136,7 @@
 - [ ] T060 [P] [US5] Create auth callback route in frontend/src/routes/auth/callback.tsx (handle Zitadel redirect, store tokens)
 - [ ] T061 [P] [US5] Create logout route in frontend/src/routes/auth/logout.tsx (clear tokens, redirect to homepage)
 - [ ] T062 [US5] Implement login flow in frontend/src/utils/auth.ts (redirect to Zitadel, handle PKCE, FR-004)
-- [ ] T063 [US5] Create dashboard route in frontend/src/routes/dashboard.tsx (protected, shows "Welcome {email}" placeholder)
+- [X] T063 [US5] Create dashboard route in frontend/src/routes/dashboard.tsx (protected, shows "Welcome {email}" placeholder)
 
 **Checkpoint**: Authentication complete - users can sign up, log in, log out, access protected dashboard
 
@@ -152,11 +152,11 @@
 
 ### Domain Layer (US1)
 
-- [ ] T064 [P] [US1] Create URL aggregate root in services/api/internal/domain/url/entity.go (Snowflake ID, custom alias, destination URL, status, expiration, metadata)
-- [ ] T065 [P] [US1] Create ShortCode value object in services/api/internal/domain/url/short_code.go (Base62 encode/decode, validation)
-- [ ] T066 [P] [US1] Create URLRepository interface in services/api/internal/domain/url/repository.go (Create, GetBySnowflakeID, GetByCustomAlias, GetByCreatorID)
-- [ ] T067 [P] [US1] Create domain errors in services/api/internal/domain/url/errors.go (URLNotFound, AliasAlreadyTaken, InvalidURL, MaliciousURL)
-- [ ] T068 [US1] Add business rules to URL entity: ValidateDestinationURL, ValidateCustomAlias (3-50 chars, alphanumeric+hyphens, no reserved words per data-model.md Appendix A)
+- [X] T064 [P] [US1] Create URL aggregate root in services/api/internal/domain/url/entity.go (Snowflake ID, custom alias, destination URL, status, expiration, metadata)
+- [X] T065 [P] [US1] Create ShortCode value object in services/api/internal/domain/url/short_code.go (Base62 encode/decode, validation)
+- [X] T066 [P] [US1] Create URLRepository interface in services/api/internal/domain/url/repository.go (Create, GetBySnowflakeID, GetByCustomAlias, GetByCreatorID)
+- [X] T067 [P] [US1] Create domain errors in services/api/internal/domain/url/errors.go (URLNotFound, AliasAlreadyTaken, InvalidURL, MaliciousURL)
+- [X] T068 [US1] Add business rules to URL entity: ValidateDestinationURL, ValidateCustomAlias (3-50 chars, alphanumeric+hyphens, no reserved words per data-model.md Appendix A)
 
 ### Application Layer (US1)
 
