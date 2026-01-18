@@ -3,7 +3,9 @@ package server
 import (
 	"net/http"
 
+	"github.com/SirNacou/refract/services/api/internal/application"
 	"github.com/SirNacou/refract/services/api/internal/config"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/server/handlers"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/server/middleware"
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
@@ -14,6 +16,7 @@ func NewRouter(
 	rateLimiter *middleware.RateLimiter,
 	logging *middleware.LoggingMiddleware,
 	securityCfg *config.SecurityConfig,
+	app *application.Application,
 ) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -24,15 +27,15 @@ func NewRouter(
 
 	r.Get("/health", healthHandler)
 
+	// Create handlers instance
+	h := handlers.NewHandlers(app)
+
 	r.Route("/api/v1", func(apiRouter chi.Router) {
-		// Define your API routes here
 		apiRouter.Use(authMw.RequireAuthorization())
 		apiRouter.Use(rateLimiter.RateLimitPerUser())
 
-		apiRouter.Get("/urls", listURLsHandler)
-		apiRouter.Post("/urls", createURLHandler)
-
-		apiRouter.Get("/analytics/{id}", getAnalyticsHandler)
+		// Register all routes
+		h.RegisterRoutes(apiRouter)
 	})
 
 	return r
@@ -41,16 +44,4 @@ func NewRouter(
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
-}
-
-func listURLsHandler(w http.ResponseWriter, r *http.Request) {
-	// Handler logic for listing URLs
-}
-
-func createURLHandler(w http.ResponseWriter, r *http.Request) {
-	// Handler logic for creating a new URL
-}
-
-func getAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
-	// Handler logic for getting analytics by ID
 }

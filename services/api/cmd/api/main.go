@@ -7,10 +7,13 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/SirNacou/refract/services/api/internal/application"
 	"github.com/SirNacou/refract/services/api/internal/config"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/auth"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/cache"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/idgen"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/persistence/postgres"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/safebrowsing"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/server"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/server/middleware"
 	"github.com/SirNacou/refract/services/api/migrations"
@@ -48,6 +51,22 @@ func main() {
 	}
 	defer redis.Close()
 
+	sb, err := safebrowsing.NewSafeBrowsing(cfg.Security.SafeBrowsingAPIKey, cfg.Redis.GetRedisAddr(), redis)
+	if err != nil {
+		log.Fatalf("Failed to initialize SafeBrowsing: %v", err)
+	}
+
+	generator, err := idgen.NewSnowflakeGenerator(int64(cfg.Worker.WorkerID))
+	if err != nil {
+		log.Fatalf("Failed to initialize Snowflake generator: %v", err)
+	}
+
+	// Initialize repositories
+	urlRepo := postgres.NewPostgresURLRepository(db)
+
+	// Create application service with all dependencies
+	app := application.NewApplication(generator, sb, urlRepo)
+
 	authZ, err := auth.NewAuth(ctx, cfg.Zitadel.Issuer, "./keypath.json")
 	if err != nil {
 		log.Fatalf("Failed to initialize Auth: %v", err)
@@ -61,10 +80,12 @@ func main() {
 	)
 	loggingMiddleware := middleware.NewLoggingMiddleware(slog.Default())
 
-	router := server.NewRouter(authMw,
+	router := server.NewRouter(
+		authMw,
 		rateLimiter,
 		loggingMiddleware,
 		&cfg.Security,
+		app,
 	)
 
 	port := fmt.Sprintf(":%d", cfg.Server.Port)

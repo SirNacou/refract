@@ -57,12 +57,7 @@ type SnowflakeGenerator struct {
 //   - API service: 0-63 (recommended)
 //   - Redirector service: 64-127 (recommended)
 //   - Maximum: 0-1023
-func NewSnowflakeGenerator() (*SnowflakeGenerator, error) {
-	workerID, err := getWorkerIDFromEnv()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get worker ID from environment: %w", err)
-	}
-
+func NewSnowflakeGenerator(workerID int64) (*SnowflakeGenerator, error) {
 	return NewSnowflakeGeneratorWithWorkerID(workerID)
 }
 

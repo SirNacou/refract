@@ -51,7 +51,7 @@ func NewURL(req CreateURLRequest) (*URL, error) {
 	if req.CustomAlias != nil {
 		customAlias = *req.CustomAlias
 	} else {
-		customAlias = *NewShortCode(req.id)
+		customAlias = *NewShortCode(req.ID)
 	}
 
 	if !req.ExpiresAt.After(time.Now().Add(time.Minute)) {

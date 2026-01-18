@@ -5,6 +5,7 @@ import (
 
 	"github.com/SirNacou/refract/services/api/internal/domain/url"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/idgen"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/safebrowsing"
 )
 
 type CreateURLCommand struct {
@@ -22,10 +23,19 @@ type CreateURLResult struct {
 
 type CreateURLHandler struct {
 	generator *idgen.SnowflakeGenerator
+	sb        *safebrowsing.SafeBrowsing
+	urlRepo   url.URLRepository
+}
+
+func NewCreateURLHandler(generator *idgen.SnowflakeGenerator, sb *safebrowsing.SafeBrowsing, urlRepo url.URLRepository) *CreateURLHandler {
+	return &CreateURLHandler{
+		generator: generator,
+		sb:        sb,
+		urlRepo:   urlRepo,
+	}
 }
 
 func (h *CreateURLHandler) Handle(cmd CreateURLCommand) (*CreateURLResult, error) {
-	
 
 	id, err := h.generator.NextID()
 	if err != nil {
@@ -52,6 +62,11 @@ func (h *CreateURLHandler) Handle(cmd CreateURLCommand) (*CreateURLResult, error
 	})
 
 	if err != nil {
+		return nil, err
+	}
+
+	// Persist URL to database
+	if err := h.urlRepo.Create(r); err != nil {
 		return nil, err
 	}
 

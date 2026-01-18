@@ -44,3 +44,18 @@ func NewCustomShortCode(s string) (*ShortCode, error) {
 func (s ShortCode) String() string {
 	return s.value
 }
+
+// ParseShortCode parses a string into a ShortCode
+// Used when loading from database
+func ParseShortCode(s string) (*ShortCode, error) {
+	// For database values, we trust they are already validated
+	// But we still do basic validation
+	s = strings.TrimSpace(s)
+	if len(s) < MinShortCodeLength || len(s) > MaxShortCodeLength {
+		return nil, ErrInvalidShortCode
+	}
+	if !shortCodePattern.MatchString(s) {
+		return nil, ErrInvalidShortCode
+	}
+	return &ShortCode{value: s}, nil
+}

@@ -35,6 +35,7 @@ require (
 	github.com/muhlemmer/httpforwarded v0.1.0 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/valkey-io/valkey-go/valkeyaside v1.0.70 // indirect
 	github.com/zitadel/logging v0.6.2 // indirect
 	github.com/zitadel/oidc/v3 v3.45.3 // indirect
 	github.com/zitadel/schema v1.3.2 // indirect

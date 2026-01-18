@@ -1,5 +1,6 @@
 import { env } from '@/env'
-import { createZitadelAuth, type ZitadelConfig } from '@zitadel/react'
+import { createClientOnlyFn } from '@tanstack/react-start'
+import { createZitadelAuth, type ZitadelAuth, type ZitadelConfig } from '@zitadel/react'
 
 const config: ZitadelConfig = {
   authority: env.VITE_ZITADEL_ISSUER,
@@ -10,18 +11,11 @@ const config: ZitadelConfig = {
   scope: env.VITE_ZITADEL_SCOPES,
 }
 
-let zitadelInstance: ReturnType<typeof createZitadelAuth> | null = null
+let zitadel: ZitadelAuth | null = null
 
-
-export const getZitadel = () => {
-  // Only create the instance on the client side
-  if (typeof window === 'undefined') {
-    throw new Error('Zitadel auth can only be used on the client side')
+export const getZitadel = createClientOnlyFn(() => {
+  if (!zitadel) {
+    zitadel = createZitadelAuth(config)
   }
-
-  if (!zitadelInstance) {
-    zitadelInstance = createZitadelAuth(config)
-  }
-
-  return zitadelInstance
-}
+  return zitadel
+})

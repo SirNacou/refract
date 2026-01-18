@@ -19,6 +19,10 @@ type UpdateURLRequest struct {
 }
 
 // Responses
+type CreateURLResponse struct {
+	ShortCode string `json:"short_code"`
+}
+
 type URLResponse struct {
 	ID             int64      `json:"id"`
 	ShortCode      string     `json:"short_code"`

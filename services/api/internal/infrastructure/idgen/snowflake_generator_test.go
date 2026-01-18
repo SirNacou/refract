@@ -7,20 +7,6 @@ import (
 	"time"
 )
 
-func TestNewSnowflakeGenerator_DefaultWorkerID(t *testing.T) {
-	// Clear environment variable
-	os.Unsetenv("WORKER_ID")
-
-	gen, err := NewSnowflakeGenerator()
-	if err != nil {
-		t.Fatalf("Failed to create generator: %v", err)
-	}
-
-	if gen.WorkerID() != 0 {
-		t.Errorf("Expected default worker ID 0, got %d", gen.WorkerID())
-	}
-}
-
 func TestNewSnowflakeGenerator_FromEnv(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -47,7 +33,12 @@ func TestNewSnowflakeGenerator_FromEnv(t *testing.T) {
 			}
 			defer os.Unsetenv("WORKER_ID")
 
-			gen, err := NewSnowflakeGenerator()
+			workerID, err := getWorkerIDFromEnv()
+			if err != nil {
+				t.Errorf("Unexpected error for WORKER_ID=%s: %v", tt.envValue, err)
+			}
+
+			gen, err := NewSnowflakeGenerator(workerID)
 			if tt.wantError {
 				if err == nil {
 					t.Errorf("Expected error for WORKER_ID=%s, got nil", tt.envValue)
