@@ -45,7 +45,7 @@ func (h *Handlers) CreateURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute command
-	result, err := h.app.Commands.CreateURL.Handle(cmd)
+	result, err := h.app.Commands.CreateURL.Handle(r.Context(), cmd)
 	if err != nil {
 		handleCommandError(w, r, err)
 		return

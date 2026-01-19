@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"time"
 
 	"github.com/SirNacou/refract/services/api/internal/domain/url"
@@ -35,7 +36,16 @@ func NewCreateURLHandler(generator *idgen.SnowflakeGenerator, sb *safebrowsing.S
 	}
 }
 
-func (h *CreateURLHandler) Handle(cmd CreateURLCommand) (*CreateURLResult, error) {
+func (h *CreateURLHandler) Handle(ctx context.Context, cmd CreateURLCommand) (*CreateURLResult, error) {
+
+	ok, err := h.sb.CheckURLv5Proto(ctx, cmd.DestinationURL)
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
+		return nil, url.ErrMaliciousURL
+	}
 
 	id, err := h.generator.NextID()
 	if err != nil {

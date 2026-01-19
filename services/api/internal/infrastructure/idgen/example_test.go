@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/idgen"
 )
@@ -32,8 +33,13 @@ func Example_fromEnvironment() {
 	os.Setenv("WORKER_ID", "42")
 	defer os.Unsetenv("WORKER_ID")
 
+	workerID := os.Getenv("WORKER_ID")
+	id, err := strconv.ParseInt(workerID, 0, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Create generator (reads from WORKER_ID env var)
-	gen, err := idgen.NewSnowflakeGenerator()
+	gen, err := idgen.NewSnowflakeGenerator(id)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -73,7 +73,7 @@ func getCanonicalHash(rawURL string) ([]byte, error) {
 	return hash[:], nil
 }
 
-func (s *SafeBrowsing) CheckURLv5Proto(ctx context.Context, targetURL string) (bool, error) {
+func (s *SafeBrowsing) CheckURLv5Proto(ctx context.Context, targetURL string) (ok bool, err error) {
 	fullHash, _ := getCanonicalHash(targetURL)
 	prefix := fullHash[:4]
 	encodedPrefix := base64.URLEncoding.EncodeToString(prefix)
