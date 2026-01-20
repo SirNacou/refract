@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -23,9 +21,8 @@ func setupTestRateLimiterWithMemory() *RateLimiter {
 		RateLimitPerUser: 100,
 		RateLimitWindow:  time.Hour,
 	}
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 	// Pass nil for redis to force in-memory fallback
-	return NewRateLimiter(nil, cfg, logger)
+	return NewRateLimiter(nil, cfg)
 }
 
 func createTestRequest(userID string) *http.Request {
@@ -274,8 +271,7 @@ func TestRateLimiter_WindowReset(t *testing.T) {
 		RateLimitPerUser: 5,
 		RateLimitWindow:  2 * time.Second, // Short window for testing
 	}
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
-	rl := NewRateLimiter(nil, cfg, logger)
+	rl := NewRateLimiter(nil, cfg)
 
 	handler := rl.RateLimitPerUser()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

@@ -18,7 +18,7 @@ const (
 
 type URL struct {
 	ID             uint64     `json:"id"`
-	CustomAlias    ShortCode  `json:"custom_alias"`
+	ShortCode      ShortCode  `json:"custom_alias"`
 	DestinationURL string     `json:"destination_url"`
 	Title          string     `json:"title"`
 	Notes          string     `json:"notes"`
@@ -33,7 +33,7 @@ type URL struct {
 
 type CreateURLRequest struct {
 	ID             uint64 `validate:"required"`
-	CustomAlias    *ShortCode
+	ShortCode      *ShortCode
 	DestinationURL string `validate:"url"`
 	Title          string `validate:"required"`
 	Notes          string `validate:"max=255"`
@@ -48,8 +48,8 @@ func NewURL(req CreateURLRequest) (*URL, error) {
 	}
 
 	var customAlias ShortCode
-	if req.CustomAlias != nil {
-		customAlias = *req.CustomAlias
+	if req.ShortCode != nil {
+		customAlias = *req.ShortCode
 	} else {
 		customAlias = *NewShortCode(req.ID)
 	}
@@ -60,7 +60,7 @@ func NewURL(req CreateURLRequest) (*URL, error) {
 
 	e := &URL{
 		ID:             req.ID,
-		CustomAlias:    customAlias,
+		ShortCode:      customAlias,
 		DestinationURL: req.DestinationURL,
 		Title:          req.Title,
 		Notes:          req.Notes,

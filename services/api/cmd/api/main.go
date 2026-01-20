@@ -28,16 +28,16 @@ func main() {
 	}
 
 	// Initialize database connection
-	db, err := postgres.NewDBConnection(ctx, &cfg.Database)
+	dbPool, err := postgres.NewPool(ctx, &cfg.Database)
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	defer db.Pool.Close()
+	defer dbPool.Close()
 
 	// Run migrations before starting server
 	if cfg.Database.RunMigrations {
 		if err := postgres.RunMigrations(
-			db.Pool,
+			dbPool,
 			migrations.PostgresFS,
 			"postgres",
 		); err != nil {
@@ -45,13 +45,15 @@ func main() {
 		}
 	}
 
-	redis, err := cache.NewRedisCache(cfg.Redis.Host, cfg.Redis.Port)
+	store := postgres.NewSQLStore(dbPool)
+
+	cache, err := cache.NewRedisCache(cfg.Redis.Host, cfg.Redis.Port)
 	if err != nil {
 		log.Fatalf("Failed to initialize redis: %v", err)
 	}
-	defer redis.Close()
+	defer cache.Close()
 
-	sb, err := safebrowsing.NewSafeBrowsing(cfg.Security.SafeBrowsingAPIKey, cfg.Redis.GetRedisAddr(), redis)
+	sb, err := safebrowsing.NewGoogleSafeBrowsing(cfg.Security.SafeBrowsingAPIKey, cfg.Redis.GetRedisAddr(), cache)
 	if err != nil {
 		log.Fatalf("Failed to initialize SafeBrowsing: %v", err)
 	}
@@ -61,11 +63,8 @@ func main() {
 		log.Fatalf("Failed to initialize Snowflake generator: %v", err)
 	}
 
-	// Initialize repositories
-	urlRepo := postgres.NewPostgresURLRepository(db)
-
 	// Create application service with all dependencies
-	app := application.NewApplication(generator, sb, urlRepo)
+	app := application.NewApplication(generator, sb, store, cache)
 
 	authZ, err := auth.NewAuth(ctx, cfg.Zitadel.Issuer, "./keypath.json")
 	if err != nil {
@@ -74,9 +73,8 @@ func main() {
 	authMw := middleware.NewAuthMiddleware(authZ)
 
 	rateLimiter := middleware.NewRateLimiter(
-		redis.Client(),
+		cache,
 		&cfg.Security,
-		slog.Default(),
 	)
 	loggingMiddleware := middleware.NewLoggingMiddleware(slog.Default())
 

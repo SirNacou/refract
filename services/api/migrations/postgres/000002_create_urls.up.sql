@@ -4,9 +4,9 @@
 
 CREATE TABLE urls (
     snowflake_id BIGINT PRIMARY KEY,
-    custom_alias TEXT,
+    short_code TEXT NOT NULL UNIQUE,
     destination_url TEXT NOT NULL,
-    title TEXT,
+    title TEXT NOT NULL,
     notes TEXT,
     status TEXT NOT NULL DEFAULT 'active'
         CHECK (status IN ('active', 'expired', 'disabled', 'deleted')),
@@ -23,7 +23,6 @@ CREATE TABLE urls (
 CREATE INDEX idx_urls_creator ON urls(creator_user_id, created_at DESC);
 CREATE INDEX idx_urls_status ON urls(status) WHERE status = 'active';
 CREATE INDEX idx_urls_expires_at ON urls(expires_at) WHERE expires_at IS NOT NULL;
-CREATE UNIQUE INDEX idx_urls_custom_alias ON urls(custom_alias) WHERE custom_alias IS NOT NULL;
 
 -- Trigger function for updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()

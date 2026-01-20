@@ -3,30 +3,27 @@ package cache
 import (
 	"fmt"
 
+	"github.com/SirNacou/refract/services/api/internal/application/service"
 	"github.com/valkey-io/valkey-go"
+	"github.com/valkey-io/valkey-go/valkeyaside"
 )
 
 type RedisCache struct {
-	client valkey.Client
+	valkeyaside.CacheAsideClient
 }
 
-func NewRedisCache(host string, port int) (*RedisCache, error) {
+func NewRedisCache(host string, port int) (service.Cache, error) {
 	config := valkey.ClientOption{
 		InitAddress: []string{fmt.Sprintf("%s:%d", host, port)},
 	}
 
-	client, err := valkey.NewClient(config)
+	c, err := valkeyaside.NewClient(valkeyaside.ClientOption{
+		ClientOption: config,
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &RedisCache{client}, nil
-}
-
-func (rc *RedisCache) Client() valkey.Client {
-	return rc.client
-}
-
-func (rc *RedisCache) Close() {
-	rc.client.Close()
+	return c, nil
 }

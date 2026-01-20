@@ -7,12 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DBConnection wraps a pgxpool.Pool to provide database connection pooling
-type DBConnection struct {
-	Pool *pgxpool.Pool
-}
-
-func NewDBConnection(ctx context.Context, cfg *config.DatabaseConfig) (*DBConnection, error) {
+func NewPool(ctx context.Context, cfg *config.DatabaseConfig) (*pgxpool.Pool, error) {
 	dsn := cfg.GetDatabaseDSN()
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -30,5 +25,5 @@ func NewDBConnection(ctx context.Context, cfg *config.DatabaseConfig) (*DBConnec
 		return nil, err
 	}
 
-	return &DBConnection{Pool: pool}, nil
+	return pool, nil
 }

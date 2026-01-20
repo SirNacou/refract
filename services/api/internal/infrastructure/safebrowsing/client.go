@@ -15,18 +15,18 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/SirNacou/refract/services/api/internal/infrastructure/cache"
+	"github.com/SirNacou/refract/services/api/internal/application/service"
 	pb "github.com/SirNacou/refract/services/api/internal/infrastructure/safebrowsing/sbproto"
 	"github.com/valkey-io/valkey-go"
 	"github.com/valkey-io/valkey-go/valkeyaside"
 )
 
-type SafeBrowsing struct {
+type GoogleSafeBrowsing struct {
 	apiKey string
 	cache  valkeyaside.TypedCacheAsideClient[pb.SearchHashesResponse]
 }
 
-func NewSafeBrowsing(apiKey, redisURL string, cache *cache.RedisCache) (*SafeBrowsing, error) {
+func NewGoogleSafeBrowsing(apiKey, redisURL string, cache service.Cache) (service.SafeBrowsing, error) {
 	client, err := valkeyaside.NewClient(valkeyaside.ClientOption{
 		ClientOption: valkey.MustParseURL(redisURL),
 	})
@@ -50,7 +50,7 @@ func NewSafeBrowsing(apiKey, redisURL string, cache *cache.RedisCache) (*SafeBro
 			return t, nil
 		})
 
-	return &SafeBrowsing{apiKey: apiKey, cache: typedClient}, nil
+	return &GoogleSafeBrowsing{apiKey: apiKey, cache: typedClient}, nil
 }
 
 func getCanonicalHash(rawURL string) ([]byte, error) {
@@ -73,7 +73,7 @@ func getCanonicalHash(rawURL string) ([]byte, error) {
 	return hash[:], nil
 }
 
-func (s *SafeBrowsing) CheckURLv5Proto(ctx context.Context, targetURL string) (ok bool, err error) {
+func (s *GoogleSafeBrowsing) CheckURLv5Proto(ctx context.Context, targetURL string) (ok bool, err error) {
 	fullHash, _ := getCanonicalHash(targetURL)
 	prefix := fullHash[:4]
 	encodedPrefix := base64.URLEncoding.EncodeToString(prefix)

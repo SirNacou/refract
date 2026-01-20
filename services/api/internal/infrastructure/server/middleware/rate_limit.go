@@ -8,17 +8,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SirNacou/refract/services/api/internal/application/service"
 	"github.com/SirNacou/refract/services/api/internal/config"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/server/errors"
-	"github.com/valkey-io/valkey-go"
 	"github.com/zitadel/zitadel-go/v3/pkg/authorization"
 )
 
 type RateLimiter struct {
-	redis    valkey.Client
+	cache    service.Cache
 	fallback *sync.Map
 	config   *config.SecurityConfig
-	logger   *slog.Logger
 }
 
 type memoryCounter struct {
@@ -27,12 +26,11 @@ type memoryCounter struct {
 	mu        sync.Mutex
 }
 
-func NewRateLimiter(redis valkey.Client, cfg *config.SecurityConfig, logger *slog.Logger) *RateLimiter {
+func NewRateLimiter(cache service.Cache, cfg *config.SecurityConfig) *RateLimiter {
 	return &RateLimiter{
-		redis:    redis,
+		cache:    cache,
 		fallback: &sync.Map{},
 		config:   cfg,
-		logger:   logger,
 	}
 }
 
@@ -82,10 +80,10 @@ func (rl *RateLimiter) checkLimit(ctx context.Context, userID string) (
 	window := rl.config.RateLimitWindow
 
 	var count int
-	if rl.redis != nil {
+	if rl.cache != nil {
 		count, err = rl.checkRedis(ctx, userID, window)
 		if err != nil {
-			rl.logger.Warn("Redis unavailable, using in-memory rate limiter",
+			slog.WarnContext(ctx, "Redis unavailable, using in-memory rate limiter",
 				"user_id", userID,
 				"error", err)
 			count = rl.checkInMemory(userID, window)
@@ -112,15 +110,15 @@ func (rl *RateLimiter) checkLimit(ctx context.Context, userID string) (
 func (rl *RateLimiter) checkRedis(ctx context.Context, userID string, window time.Duration) (int, error) {
 	key := fmt.Sprintf("ratelimit:user:%s", userID)
 
-	incrCmd := rl.redis.B().Incr().Key(key).Build()
-	count, err := rl.redis.Do(ctx, incrCmd).AsInt64()
+	incrCmd := rl.cache.Client().B().Incr().Key(key).Build()
+	count, err := rl.cache.Client().Do(ctx, incrCmd).AsInt64()
 	if err != nil {
 		return 0, fmt.Errorf("redis INCR failed: %w", err)
 	}
 
 	if count == 1 {
-		expireCmd := rl.redis.B().Expire().Key(key).Seconds(int64(window.Seconds())).Build()
-		rl.redis.Do(ctx, expireCmd)
+		expireCmd := rl.cache.Client().B().Expire().Key(key).Seconds(int64(window.Seconds())).Build()
+		rl.cache.Client().Do(ctx, expireCmd)
 	}
 
 	return int(count), nil

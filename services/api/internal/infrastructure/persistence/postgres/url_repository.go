@@ -1,33 +1,72 @@
 package postgres
 
 import (
+	"context"
+
 	"github.com/SirNacou/refract/services/api/internal/domain/url"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/persistence/db"
 )
 
 type PostgresURLRepository struct {
-	db *DBConnection
+	db db.Querier
 }
 
-func NewPostgresURLRepository(db *DBConnection) *PostgresURLRepository {
+func NewPostgresURLRepository(db db.Querier) url.URLRepository {
 	return &PostgresURLRepository{db: db}
 }
 
-func (r *PostgresURLRepository) Create(u *url.URL) error {
-	// TODO: Implement database insert
-	panic("not implemented")
+// Create implements [url.URLRepository].
+func (p *PostgresURLRepository) Create(ctx context.Context, url *url.URL) error {
+	code := url.ShortCode.String()
+	p.db.CreateURL(ctx, db.CreateURLParams{
+		SnowflakeID:    int64(url.ID),
+		ShortCode:      code,
+		DestinationUrl: url.DestinationURL,
+		Title:          url.Title,
+		Notes:          &url.Notes,
+		Status:         string(url.Status),
+		CreatedAt:      url.CreatedAt,
+		UpdatedAt:      url.UpdatedAt,
+		ExpiresAt:      url.ExpiresAt,
+		CreatorUserID:  url.CreatorUserID,
+	})
+	return nil
 }
 
-func (r *PostgresURLRepository) GetBySnowflakeID(snowflakeID uint64) (*url.URL, error) {
-	// TODO: Implement database query
-	panic("not implemented")
+// GetByCreatorID implements [url.URLRepository].
+func (p *PostgresURLRepository) GetByCreatorID(ctx context.Context, userID string) ([]url.URL, error) {
+	panic("unimplemented")
 }
 
-func (r *PostgresURLRepository) GetByCustomAlias(alias string) (*url.URL, error) {
-	// TODO: Implement database query
-	panic("not implemented")
+// GetByCustomAlias implements [url.URLRepository].
+func (p *PostgresURLRepository) GetByCustomAlias(ctx context.Context, shortCode string) (*url.URL, error) {
+	r, err := p.db.GetURLByShortCode(ctx, shortCode)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := url.ParseShortCode(r.ShortCode)
+	if err != nil {
+		return nil, err
+	}
+
+	return &url.URL{
+		ID:             uint64(r.SnowflakeID),
+		ShortCode:      *s,
+		DestinationURL: r.DestinationUrl,
+		Title:          r.Title,
+		Notes:          *r.Notes,
+		Status:         url.Status(r.Status),
+		CreatedAt:      r.CreatedAt,
+		UpdatedAt:      r.UpdatedAt,
+		ExpiresAt:      r.ExpiresAt,
+		CreatorUserID:  r.CreatorUserID,
+		TotalClicks:    uint64(r.TotalClicks),
+		LastClickedAt:  r.LastClickedAt,
+	}, nil
 }
 
-func (r *PostgresURLRepository) GetByCreatorID(userID string) ([]url.URL, error) {
-	// TODO: Implement database query
-	panic("not implemented")
+// GetBySnowflakeID implements [url.URLRepository].
+func (p *PostgresURLRepository) GetBySnowflakeID(ctx context.Context, snowflakeID uint64) (*url.URL, error) {
+	panic("unimplemented")
 }

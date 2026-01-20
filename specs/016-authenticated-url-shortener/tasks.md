@@ -160,13 +160,13 @@
 
 ### Application Layer (US1)
 
-- [ ] T069 [P] [US1] Create CreateShortURL command in services/api/internal/application/commands/create_url.go (generate Snowflake ID, validate URL, check Safe Browsing API, FR-012)
-- [ ] T070 [P] [US1] Create GetURLByShortCode query in services/api/internal/application/queries/get_url.go (decode Base62 or lookup custom alias)
+- [X] T069 [P] [US1] Create CreateShortURL command in services/api/internal/application/commands/create_url.go (generate Snowflake ID, validate URL, check Safe Browsing API, FR-012)
+- [X] T070 [P] [US1] Create GetURLByShortCode query in services/api/internal/application/queries/get_url.go (decode Base62 or lookup custom alias)
 
 ### Infrastructure Layer (US1)
 
-- [ ] T071 [US1] Implement PostgresURLRepository in services/api/internal/infrastructure/persistence/postgres/url_repository.go (implements domain interface, uses prepared statements)
-- [ ] T072 [P] [US1] Create Safe Browsing API client in services/api/internal/infrastructure/safebrowsing/client.go (validate URLs against malicious domains, FR-042)
+- [X] T071 [US1] Implement PostgresURLRepository in services/api/internal/infrastructure/persistence/postgres/url_repository.go (implements domain interface, uses prepared statements)
+- [X] T072 [P] [US1] Create Safe Browsing API client in services/api/internal/infrastructure/safebrowsing/client.go (validate URLs against malicious domains, FR-042)
 - [ ] T073 [P] [US1] Add cache warming logic to PostgresURLRepository (insert into Redis L2 on create)
 
 ### HTTP Layer (US1)

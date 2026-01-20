@@ -2,9 +2,10 @@ package application
 
 import (
 	"github.com/SirNacou/refract/services/api/internal/application/commands"
-	"github.com/SirNacou/refract/services/api/internal/domain/url"
+	"github.com/SirNacou/refract/services/api/internal/application/queries"
+	"github.com/SirNacou/refract/services/api/internal/application/service"
+	"github.com/SirNacou/refract/services/api/internal/domain"
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/idgen"
-	"github.com/SirNacou/refract/services/api/internal/infrastructure/safebrowsing"
 )
 
 // Application holds all application services (commands and queries)
@@ -20,21 +21,22 @@ type Commands struct {
 
 // Queries holds all query handlers
 type Queries struct {
-	// Future query handlers will go here
+	GetURL *queries.GetURLByShortCodeHandler
 }
 
 // NewApplication creates a new Application instance with all dependencies
 func NewApplication(
-	generator *idgen.SnowflakeGenerator,
-	sb *safebrowsing.SafeBrowsing,
-	urlRepo url.URLRepository,
+	generator idgen.IDGenerator,
+	sb service.SafeBrowsing,
+	store domain.Store,
+	cache service.Cache,
 ) *Application {
 	return &Application{
 		Commands: Commands{
-			CreateURL: commands.NewCreateURLHandler(generator, sb, urlRepo),
+			CreateURL: commands.NewCreateURLHandler(generator, sb, store, cache),
 		},
 		Queries: Queries{
-			// Initialize queries here when added
+			GetURL: queries.NewGetURLByShortCodeHandler(store, cache),
 		},
 	}
 }
