@@ -167,13 +167,13 @@
 
 - [X] T071 [US1] Implement PostgresURLRepository in services/api/internal/infrastructure/persistence/postgres/url_repository.go (implements domain interface, uses prepared statements)
 - [X] T072 [P] [US1] Create Safe Browsing API client in services/api/internal/infrastructure/safebrowsing/client.go (validate URLs against malicious domains, FR-042)
-- [ ] T073 [P] [US1] Add cache warming logic to PostgresURLRepository (insert into Redis L2 on create)
+- [X] T073 [P] [US1] Add cache warming logic to PostgresURLRepository (insert into Redis L2 on create)
 
 ### HTTP Layer (US1)
 
-- [ ] T074 [US1] Create POST /api/v1/urls handler in services/api/internal/infrastructure/server/handlers/urls.go (create short URL, requires JWT auth)
-- [ ] T075 [P] [US1] Add request validation to POST /api/v1/urls (validate DTO against OpenAPI schema)
-- [ ] T076 [P] [US1] Add response mapping (domain URL → DTO URLResponse per api-service.openapi.yaml)
+- [X] T074 [US1] Create POST /api/v1/urls handler in services/api/internal/infrastructure/server/handlers/urls.go (create short URL, requires JWT auth)
+- [X] T075 [P] [US1] Add request validation to POST /api/v1/urls (validate DTO against OpenAPI schema)
+- [X] T076 [P] [US1] Add response mapping (domain URL → DTO URLResponse per api-service.openapi.yaml)
 
 ### Redirector Service (US1)
 
