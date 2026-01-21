@@ -4,10 +4,11 @@ use axum::{
     extract::{Path, State},
     response::{Redirect, Result},
 };
+use multi_tier_cache::CacheStrategy;
 use sqlx::types::chrono::{DateTime, Utc};
 use tracing::error;
 
-use crate::{handlers::AppError, state::AppState};
+use crate::{cache, handlers::AppError, state::AppState};
 
 pub async fn handle(
     Path(short_code): Path<String>,
@@ -21,25 +22,23 @@ pub async fn handle(
         .map_err(|err| AppError::Internal(err))?;
 
     if let Some(cached_url) = url {
-        if let serde_json::Value::String(destination_url) = cached_url {
-            return Ok(Redirect::temporary(&destination_url));
-        }
+        return Ok(Redirect::temporary(&cached_url.to_string()));
     }
 
-    #[derive(sqlx::FromRow)]
     struct Url {
         destination_url: String,
         expires_at: Option<DateTime<Utc>>,
     }
 
-    let url = sqlx::query_as::<_, Url>(
+    let url = sqlx::query_as!(
+        Url,
         "
         select destination_url, expires_at
         from urls 
         where short_code = $1 AND (status = 'active') AND (expires_at IS NULL OR expires_at > NOW())
         ",
+        &short_code
     )
-    .bind(&short_code)
     .fetch_one(state.db().pool())
     .await
     .map_err(|e| {
@@ -47,7 +46,7 @@ pub async fn handle(
             "Error fetching redirect for short code {}: {}",
             short_code, e
         );
-        AppError::Expired(format!("Expired redirect for short code: {}", short_code).to_string())
+        AppError::NotFound(format!("Url not found for short code: {}", short_code))
     })?;
 
     let cache_expiration = match url.expires_at {
@@ -59,7 +58,7 @@ pub async fn handle(
             }
             duration.num_seconds() as u64
         }
-        None => 3600, // Default to 1 hour if no expiration is set
+        None => cache::DEFAULT_TTL,
     };
 
     let _ = state
@@ -67,8 +66,8 @@ pub async fn handle(
         .get_cache_manager()
         .set_with_strategy(
             &get_redirect_cache_key(&short_code),
-            serde_json::Value::String(url.destination_url.clone()),
-            multi_tier_cache::CacheStrategy::Custom(Duration::from_secs(cache_expiration)),
+            url.destination_url.clone().into(),
+            CacheStrategy::Custom(Duration::from_secs(cache_expiration)),
         )
         .await
         .inspect_err(|e| {

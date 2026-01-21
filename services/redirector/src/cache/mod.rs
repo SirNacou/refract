@@ -5,6 +5,8 @@ use multi_tier_cache::{CacheManager, CacheSystem, CacheSystemBuilder, L1Cache, R
 
 use crate::config::RedisConfig;
 
+pub const DEFAULT_TTL: u64 = 3600;
+
 pub struct RedirectCache {
     cache: CacheSystem,
 }

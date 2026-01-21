@@ -8,7 +8,7 @@
 set shell := ["bash", "-euxo", "pipefail", "-c"]
 
 # Default DATABASE_URL if not set by env. Override by setting DATABASE_URL in your environment.
-DATABASE_URL := ${DATABASE_URL:-postgres://postgres:postgres@localhost:5432/refract?sslmode=disable}
+DATABASE_URL := ${DATABASE_URL:-postgres://postgres:postgres@localhost:5432/url_shortener?sslmode=disable}
 
 # Start services
 up:

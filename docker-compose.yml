@@ -14,8 +14,7 @@ services:
     ports:
       - 4000:${VITE_PORT}
     depends_on:
-      - postgres
-      - valkey
+      - api
 
   api:
     container_name: refract-api
@@ -28,25 +27,27 @@ services:
     ports:
       - 5000:8080
     depends_on:
-      - postgres
-      - valkey
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
 
-  redirector:
-    container_name: refract-redirector
-    build:
-      context: ./services/redirector
-      dockerfile: Dockerfile
-      additional_contexts:
-        root: .
-    env_file:
-      - .env
-    restart: always
-    ports:
-      - 3000:3000
-    volumes:
-      - ./services/redirector/data:/app/data
-    depends_on:
-      - postgres
+  # redirector:
+  #   container_name: refract-redirector
+  #   build:
+  #     context: ./services/redirector
+  #     dockerfile: Dockerfile
+  #     additional_contexts:
+  #       root: .
+  #   env_file:
+  #     - .env
+  #   restart: always
+  #   ports:
+  #     - 3000:3000
+  #   volumes:
+  #     - ./services/redirector/data:/app/data
+  #   depends_on:
+  #     - postgres
 
   postgres:
     container_name: refract-postgres
@@ -62,13 +63,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"] # Check DB readiness
       interval: 10s
       timeout: 5s
       retries: 5
 
   valkey:
-    container_name: valkey
+    container_name: refract-valkey
     image: valkey/valkey:9-alpine
     ports:
       - "6379:6379"

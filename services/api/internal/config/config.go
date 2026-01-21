@@ -198,12 +198,6 @@ func (c *Config) Validate() error {
 
 // GetDatabaseDSN returns the PostgreSQL connection string
 func (c *DatabaseConfig) GetDatabaseDSN() string {
-	// // If DATABASE_URL is set, use it directly
-	// if c.DatabaseURL != "" {
-	// 	return c.DatabaseURL
-	// }
-
-	// Otherwise, construct DSN from individual fields
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		c.Host,
