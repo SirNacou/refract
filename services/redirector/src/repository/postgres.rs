@@ -10,6 +10,7 @@ pub struct PostgresRepository {
 
 impl PostgresRepository {
     pub async fn new(cfg: &DatabaseConfig) -> Result<Self, sqlx::Error> {
+        print!("Connecting to Postgres at {}", cfg.url);
         let pool = PgPoolOptions::new()
             .max_connections(cfg.max_connections)
             .min_connections(cfg.min_connections)
@@ -20,5 +21,9 @@ impl PostgresRepository {
             .await?;
 
         Ok(Self { pool })
+    }
+
+    pub fn pool(&self) -> &PgPool {
+        &self.pool
     }
 }

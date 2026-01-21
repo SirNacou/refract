@@ -177,9 +177,9 @@
 
 ### Redirector Service (US1)
 
-- [ ] T077 [US1] Implement GET /:shortCode handler in services/redirector/src/handlers/redirect.rs (lookup URL, return 301 redirect, FR-015, FR-016)
-- [ ] T078 [US1] Add multi-tier cache lookup to redirect handler: L1 → L2 → DB fallback (FR-017)
-- [ ] T079 [US1] Add HTTP status logic: 301 (active), 404 (not found), 410 (expired/disabled), FR-018, FR-019
+- [X] T077 [US1] Implement GET /:shortCode handler in services/redirector/src/handlers/redirect.rs (lookup URL, return 301 redirect, FR-015, FR-016)
+- [X] T078 [US1] Add multi-tier cache lookup to redirect handler: L1 → L2 → DB fallback (FR-017)
+- [X] T079 [US1] Add HTTP status logic: 301 (active), 404 (not found), 410 (expired/disabled), FR-018, FR-019
 - [ ] T080 [US1] Generate HTML error pages for 404/410 in services/redirector/src/handlers/error_pages.rs
 - [ ] T081 [US1] Publish click event to Redis Stream asynchronously (non-blocking, FR-049)
 

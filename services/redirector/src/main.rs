@@ -2,21 +2,13 @@ use std::sync::Arc;
 
 use axum::{Router, routing::get};
 use envconfig::Envconfig;
+use redirector::{cache, config::Config, geo, handlers, parser, repository, state::AppState};
 use tokio::signal;
-
-use crate::{config::Config, state::AppState};
-
-mod cache;
-mod config;
-mod events;
-mod geo;
-mod handlers;
-mod parser;
-mod repository;
-mod state;
+use tracing::info;
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
     let config = Config::init_from_env().unwrap();
 
     let db = repository::postgres::PostgresRepository::new(&config.database)
@@ -36,13 +28,15 @@ async fn main() {
     let app_state = Arc::new(AppState::new(db, cache, geo_lookup, ua_parser));
 
     let app = Router::new()
-        .route("/:shortCode", get(handlers::redirect::handle))
+        .route("/{short_code}", get(handlers::redirect::handle))
         .with_state(app_state);
 
     let addr = format!("{}:{}", "0.0.0.0", config.port);
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .expect("Failed to bind to address");
+
+    info!("Redirector service running on port {}", config.port);
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())

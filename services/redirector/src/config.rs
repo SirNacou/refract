@@ -1,5 +1,3 @@
-use std::env;
-
 use envconfig::Envconfig;
 
 #[derive(Envconfig)]
@@ -30,10 +28,7 @@ pub struct Config {
 
 #[derive(Envconfig)]
 pub struct DatabaseConfig {
-    #[envconfig(
-        from = "REDIRECTOR_DATABASE_URL",
-        default = "postgres://user:password@localhost/db"
-    )]
+    #[envconfig(from = "REDIRECTOR_DATABASE_URL")]
     pub url: String,
     #[envconfig(from = "REDIRECTOR_DATABASE_MAX_CONNECTIONS", default = "25")]
     pub max_connections: u32,

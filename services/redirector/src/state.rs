@@ -1,8 +1,6 @@
 use crate::{
-    cache::{self, RedirectCache},
-    geo::{self, lookup::GeoLookup},
-    parser::{self, user_agent::UAParser},
-    repository::{self, postgres::PostgresRepository},
+    cache::RedirectCache, geo::lookup::GeoLookup, parser::user_agent::UAParser,
+    repository::postgres::PostgresRepository,
 };
 
 pub struct AppState {
