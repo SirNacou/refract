@@ -16,44 +16,15 @@ pub struct ClickEvent {
     pub ip_address: IpAddr,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub referrer: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub country_code: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub country_name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub city: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub latitude: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub longitude: Option<f64>,
-    pub device_type: String, // desktop, mobile, tablet, bot
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub browser: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub operating_system: Option<String>,
-    pub cache_tier: String, // l1, l2, db
-    pub latency_ms: f64,
-    pub request_id: String,
 }
 
 impl ClickEvent {
     pub fn new(
         url_id: i64,
-        short_code: String,
-        user_agent: String,
+        short_code: &str,
+        user_agent: &str,
         ip_address: IpAddr,
         referrer: Option<String>,
-        country_code: Option<String>,
-        country_name: Option<String>,
-        city: Option<String>,
-        latitude: Option<f64>,
-        longitude: Option<f64>,
-        device_type: String,
-        browser: Option<String>,
-        operating_system: Option<String>,
-        cache_tier: String,
-        latency_ms: f64,
-        request_id: String,
     ) -> Self {
         let event_id = Uuid::now_v7();
         let (s, n) = event_id.get_timestamp().unwrap().to_unix();
@@ -61,22 +32,11 @@ impl ClickEvent {
         Self {
             event_id,
             url_id,
-            short_code,
+            short_code: short_code.to_string(),
             timestamp,
-            user_agent,
+            user_agent: user_agent.to_string(),
             ip_address,
             referrer,
-            country_code,
-            country_name,
-            city,
-            latitude,
-            longitude,
-            device_type,
-            browser,
-            operating_system,
-            cache_tier,
-            latency_ms,
-            request_id,
         }
     }
 

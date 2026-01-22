@@ -1,27 +1,29 @@
-FROM rust:1-alpine AS builder
+FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
+
+ENV SQLX_OFFLINE=true
 
 WORKDIR /app
 
-COPY Cargo.toml ./services/redirector/
-COPY --from=root Cargo.toml Cargo.lock ./
-
-WORKDIR /app/services/redirector
-
-RUN mkdir src && touch src/lib.rs
-RUN cargo build --release
-
-# Copy actual source code and build
+FROM chef AS planner
 COPY . .
-RUN cargo build --release
 
-# Stage 2: Runtime
-FROM debian:bookworm-slim
-# Or alpine:latest, depending on glibc/musl requirements
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/target/release/redirector /usr/local/bin/redirector
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Use a non-root user
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
-USER appuser
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
 
-CMD ["redirector"]
+RUN cargo chef cook --release --recipe-path recipe.json
+
+COPY . .
+
+RUN cargo build --release --bin redirector
+
+FROM gcr.io/distroless/cc-debian12 AS runtime
+
+WORKDIR /app
+
+# Copy the binary from the builder
+COPY --from=builder /app/target/release/redirector /app/redirector
+
+# No shell, so we use vector form
+ENTRYPOINT ["/app/redirector"]

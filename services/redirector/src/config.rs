@@ -1,4 +1,12 @@
+use std::sync::OnceLock;
+
 use envconfig::Envconfig;
+
+pub static GLOBAL_CONFIG: OnceLock<Config> = OnceLock::new();
+
+pub fn get_config() -> &'static Config {
+    GLOBAL_CONFIG.get_or_init(|| Config::init_from_env().expect("Failed to load configuration"))
+}
 
 #[derive(Envconfig)]
 pub struct Config {
@@ -6,6 +14,8 @@ pub struct Config {
     pub port: i32,
     #[envconfig(from = "REDIRECTOR_BASE_URL", default = "http://localhost:3000")]
     pub base_url: String,
+    #[envconfig(from = "API_BASE_URL", default = "http://localhost:8000")]
+    pub api_base_url: String,
     #[envconfig(nested)]
     pub database: DatabaseConfig,
     #[envconfig(nested)]

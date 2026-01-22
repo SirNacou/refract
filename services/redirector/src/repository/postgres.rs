@@ -4,6 +4,10 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 
 use crate::config::DatabaseConfig;
 
+pub trait Repository {
+    fn pool(&self) -> &PgPool;
+}
+
 pub struct PostgresRepository {
     pool: PgPool,
 }
@@ -22,8 +26,10 @@ impl PostgresRepository {
 
         Ok(Self { pool })
     }
+}
 
-    pub fn pool(&self) -> &PgPool {
+impl Repository for PostgresRepository {
+    fn pool(&self) -> &PgPool {
         &self.pool
     }
 }

@@ -1,11 +1,14 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
-use multi_tier_cache::CacheManager;
+use multi_tier_cache::{CacheManager, RedisStreams};
 use tokio::sync::Mutex;
 use tracing::{debug, info, warn};
 
-use crate::{config::EventsConfig, events::ClickEvent};
+use crate::{
+    config::{EventsConfig, RedisConfig},
+    events::ClickEvent,
+};
 
 /// Publishes click events to Redis Stream asynchronously
 ///
@@ -14,9 +17,8 @@ use crate::{config::EventsConfig, events::ClickEvent};
 /// - Flushed when batch_size reached OR flush_interval expires
 /// - Buffer overflow protection: drops oldest when max_buffer_size exceeded
 /// - Graceful degradation: Redis failures logged, not propagated
-#[derive(Clone)]
 pub struct ClickEventPublisher {
-    cache_manager: Arc<CacheManager>,
+    redis_stream: Arc<RedisStreams>,
     stream_key: String,
     max_stream_len: usize,
     buffer: Arc<Mutex<Vec<ClickEvent>>>,
@@ -33,7 +35,7 @@ impl ClickEventPublisher {
     ///
     /// # Errors
     /// Returns error if Redis connection fails
-    pub async fn new(cache_manager: Arc<CacheManager>, events_cfg: &EventsConfig) -> Result<Self> {
+    pub async fn new(redis_config: &RedisConfig, events_cfg: &EventsConfig) -> Result<Self> {
         info!(
             stream_key = %events_cfg.stream_key,
             batch_size = events_cfg.batch_size,
@@ -42,8 +44,10 @@ impl ClickEventPublisher {
             "ClickEventPublisher initialized"
         );
 
+        let stream = Arc::new(RedisStreams::new(&redis_config.to_redis_url()).await?);
+
         Ok(Self {
-            cache_manager,
+            redis_stream: stream,
             stream_key: events_cfg.stream_key.clone(),
             max_stream_len: events_cfg.max_stream_len,
             buffer: Arc::new(Mutex::new(Vec::with_capacity(events_cfg.batch_size))),
@@ -56,7 +60,7 @@ impl ClickEventPublisher {
     ///
     /// Adds event to buffer. If buffer reaches batch_size, triggers async flush.
     /// If buffer exceeds max_buffer_size, oldest events are dropped.
-    pub fn publish(&self, event: ClickEvent) {
+    pub fn publish(self: &Arc<Self>, event: ClickEvent) {
         let publisher = self.clone();
         tokio::spawn(async move {
             let should_flush = {
@@ -84,7 +88,7 @@ impl ClickEventPublisher {
     /// Start background task that flushes buffer periodically
     ///
     /// Call this once after creating the publisher.
-    pub fn start_flush_task(&self) {
+    pub fn start_flush_task(self: &Arc<Self>) {
         let publisher = self.clone();
         tokio::spawn(async move {
             let mut interval =
@@ -115,8 +119,8 @@ impl ClickEventPublisher {
         for event in events {
             // Serialize entire event to JSON
             let json = serde_json::to_string(&event)?;
-            self.cache_manager
-                .publish_to_stream(
+            self.redis_stream
+                .stream_add(
                     &self.stream_key,
                     vec![("data".to_string(), json)],
                     Some(self.max_stream_len),

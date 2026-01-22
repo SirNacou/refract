@@ -32,22 +32,23 @@ services:
       valkey:
         condition: service_healthy
 
-  # redirector:
-  #   container_name: refract-redirector
-  #   build:
-  #     context: ./services/redirector
-  #     dockerfile: Dockerfile
-  #     additional_contexts:
-  #       root: .
-  #   env_file:
-  #     - .env
-  #   restart: always
-  #   ports:
-  #     - 3000:3000
-  #   volumes:
-  #     - ./services/redirector/data:/app/data
-  #   depends_on:
-  #     - postgres
+  redirector:
+    container_name: refract-redirector
+    build:
+      context: ./services/redirector
+      dockerfile: Dockerfile
+      additional_contexts:
+        root: .
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - 3000:3000
+    volumes:
+      - ./services/redirector/data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   postgres:
     container_name: refract-postgres

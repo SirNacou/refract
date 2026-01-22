@@ -1,11 +1,17 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use multi_tier_cache::{CacheManager, CacheSystem, CacheSystemBuilder, L1Cache, RedisCache};
+use multi_tier_cache::{
+    CacheManager, CacheSystem, CacheSystemBuilder, L1Cache, RedisCache, RedisStreams,
+};
 
 use crate::config::RedisConfig;
 
 pub const DEFAULT_TTL: u64 = 3600;
+
+pub trait Cache {
+    fn get_cache_manager(&self) -> &Arc<CacheManager>;
+}
 
 pub struct RedirectCache {
     cache: CacheSystem,
@@ -24,8 +30,9 @@ impl RedirectCache {
             .await?;
         Ok(Self { cache })
     }
-
-    pub fn get_cache_manager(&self) -> &Arc<CacheManager> {
+}
+impl Cache for RedirectCache {
+    fn get_cache_manager(&self) -> &Arc<CacheManager> {
         self.cache.cache_manager()
     }
 }
