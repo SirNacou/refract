@@ -53,7 +53,7 @@ func main() {
 	}
 	defer cache.Close()
 
-	sb, err := safebrowsing.NewGoogleSafeBrowsing(cfg.Security.SafeBrowsingAPIKey, cfg.Redis.GetRedisAddr(), cache)
+	sb, err := safebrowsing.NewGoogleSafeBrowsing(cfg.Security.SafeBrowsingAPIKey, cfg.Redis.GetRedisAddr())
 	if err != nil {
 		log.Fatalf("Failed to initialize SafeBrowsing: %v", err)
 	}
@@ -66,7 +66,7 @@ func main() {
 	// Create application service with all dependencies
 	app := application.NewApplication(generator, sb, store, cache)
 
-	authZ, err := auth.NewAuth(ctx, cfg.Zitadel.Issuer, "./keypath.json")
+	authZ, err := auth.NewAuth(ctx, cfg.Zitadel.Issuer, "/.config/key.json")
 	if err != nil {
 		log.Fatalf("Failed to initialize Auth: %v", err)
 	}

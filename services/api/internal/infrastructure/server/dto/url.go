@@ -5,8 +5,8 @@ import "time"
 // Requests
 type CreateURLRequest struct {
 	DestinationURL string     `json:"destination_url" validate:"required,url,max=2048"`
-	CustomAlias    *string    `json:"custom_alias,omitempty" validate:"omitempty,min=3,max=50"`
-	Title          *string    `json:"title,omitempty" validate:"omitempty,max=200"`
+	ShortCode      *string    `json:"short_code,omitempty" validate:"omitempty,min=3,max=50"`
+	Title          string     `json:"title" validate:"required,max=200"`
 	Notes          *string    `json:"notes,omitempty" validate:"omitempty,max=1000"`
 	ExpiresAt      *time.Time `json:"expires_at,omitempty"`
 }
@@ -27,7 +27,6 @@ type URLResponse struct {
 	ID             int64      `json:"id"`
 	ShortCode      string     `json:"short_code"`
 	ShortURL       string     `json:"short_url"`
-	CustomAlias    *string    `json:"custom_alias,omitempty"`
 	DestinationURL string     `json:"destination_url"`
 	Title          *string    `json:"title,omitempty"`
 	Notes          *string    `json:"notes,omitempty"`

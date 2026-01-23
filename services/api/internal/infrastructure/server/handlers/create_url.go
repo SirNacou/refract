@@ -36,9 +36,9 @@ func (h *Handlers) CreateURL(w http.ResponseWriter, r *http.Request) {
 
 	// Map DTO to command
 	cmd := commands.CreateURLCommand{
-		CustomAlias:    req.CustomAlias,
+		CustomAlias:    req.ShortCode,
 		DestinationURL: req.DestinationURL,
-		Title:          getStringValue(req.Title),
+		Title:          req.Title,
 		Notes:          getStringValue(req.Notes),
 		ExpiresAt:      req.ExpiresAt,
 		CreatorUserID:  userID,

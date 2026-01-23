@@ -26,9 +26,11 @@ type GoogleSafeBrowsing struct {
 	cache  valkeyaside.TypedCacheAsideClient[pb.SearchHashesResponse]
 }
 
-func NewGoogleSafeBrowsing(apiKey, redisURL string, cache service.Cache) (service.SafeBrowsing, error) {
+func NewGoogleSafeBrowsing(apiKey, redisURL string) (service.SafeBrowsing, error) {
 	client, err := valkeyaside.NewClient(valkeyaside.ClientOption{
-		ClientOption: valkey.MustParseURL(redisURL),
+		ClientOption: valkey.ClientOption{
+			InitAddress: []string{redisURL},
+		},
 	})
 	if err != nil {
 		return nil, err

@@ -193,10 +193,10 @@
 
 ### Frontend (US1)
 
-- [ ] T087 [P] [US1] Create URL creation form component in frontend/src/components/URLForm.tsx (destination URL, optional custom alias, title, notes, expiration)
-- [ ] T088 [P] [US1] Create URL list component in frontend/src/components/URLList.tsx (display short URLs with click counts)
-- [ ] T089 [US1] Implement POST /api/v1/urls API call in frontend/src/utils/api-client.ts (with auth header)
-- [ ] T090 [US1] Update dashboard route in frontend/src/routes/dashboard.tsx (show URLForm + URLList, empty state if no URLs)
+- [X] T087 [P] [US1] Create URL creation form component in frontend/src/components/URLForm.tsx (destination URL, optional custom alias, title, notes, expiration)
+- [X] T088 [P] [US1] Create URL list component in frontend/src/components/URLList.tsx (display short URLs with click counts)
+- [X] T089 [US1] Implement POST /api/v1/urls API call in frontend/src/utils/api-client.ts (with auth header)
+- [X] T090 [US1] Update dashboard route in frontend/src/routes/dashboard.tsx (show URLForm + URLList, empty state if no URLs)
 - [ ] T091 [US1] Create URL creation page in frontend/src/routes/create.tsx (dedicated page with URLForm)
 - [ ] T092 [US1] Add TanStack Query mutation for URL creation (optimistic updates, error handling)
 
