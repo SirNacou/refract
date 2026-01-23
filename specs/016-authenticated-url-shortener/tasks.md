@@ -185,11 +185,11 @@
 
 ### Analytics Processor (US1)
 
-- [ ] T082 [US1] Implement click event consumption in services/analytics-processor/internal/consumer/click_events.go (read from Redis Stream, batch 100 events)
-- [ ] T083 [US1] Add IP anonymization logic (zero last octet IPv4, last 80 bits IPv6, FR-020)
-- [ ] T084 [US1] Add GeoIP enrichment (country, city, lat/lon, FR-021)
-- [ ] T085 [US1] Add user agent parsing (device type, browser, OS, FR-022)
-- [ ] T086 [US1] Batch insert enriched events into TimescaleDB click_events hypertable
+- [X] T082 [US1] Implement click event consumption in services/analytics-processor/internal/consumer/click_events.go (read from Redis Stream, batch 100 events)
+- [X] T083 [US1] Add IP anonymization logic (zero last octet IPv4, last 80 bits IPv6, FR-020)
+- [X] T084 [US1] Add GeoIP enrichment (country, city, lat/lon, FR-021)
+- [X] T085 [US1] Add user agent parsing (device type, browser, OS, FR-022)
+- [X] T086 [US1] Batch insert enriched events into TimescaleDB click_events hypertable
 
 ### Frontend (US1)
 

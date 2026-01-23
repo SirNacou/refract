@@ -38,6 +38,9 @@ type Config struct {
 	// Logging
 	LOG_LEVEL  string `env:"LOG_LEVEL" envDefault:"info"`
 	LOG_FORMAT string `env:"LOG_FORMAT" envDefault:"json"`
+
+	// Security
+	SECURITY_HMAC_SECRET string `env:"SECURITY_HMAC_SECRET" envDefault:"supersecretkey"`
 }
 
 func LoadConfig() (*Config, error) {

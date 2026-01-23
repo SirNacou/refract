@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{Router, routing::get};
 use axum_client_ip::ClientIpSource;
@@ -56,7 +56,12 @@ async fn main() {
         ua_parser,
     ));
 
-    let ip_source = ClientIpSource::ConnectInfo;
+    let ip_source = match config.ip_source {
+        config::IpSource::CfConnectingIp => ClientIpSource::CfConnectingIp,
+        config::IpSource::XRealIp => ClientIpSource::XRealIp,
+        config::IpSource::XForwardedFor => ClientIpSource::RightmostXForwardedFor,
+        config::IpSource::ConnectInfo => ClientIpSource::ConnectInfo,
+    };
     let app = Router::new()
         .route("/{short_code}", get(handlers::redirect::handle))
         .with_state(app_state)
@@ -69,10 +74,13 @@ async fn main() {
 
     info!("Redirector service running on port {}", config.port);
 
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await
-        .unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await
+    .unwrap();
 }
 
 async fn shutdown_signal() {

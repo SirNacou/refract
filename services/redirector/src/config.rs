@@ -1,6 +1,7 @@
 use std::sync::OnceLock;
 
 use envconfig::Envconfig;
+use strum_macros::EnumString;
 
 pub static GLOBAL_CONFIG: OnceLock<Config> = OnceLock::new();
 
@@ -22,6 +23,8 @@ pub struct Config {
     pub redis: RedisConfig,
     #[envconfig(nested)]
     pub events: EventsConfig,
+    #[envconfig(from = "REDIRECTOR_IP_SOURCE")]
+    pub ip_source: IpSource,
     #[envconfig(from = "REDIRECTOR_L1_CACHE_CAPACITY", default = "1000")]
     pub l1_cache_capacity: i32,
     #[envconfig(from = "REDIRECTOR_WORKER_ID", default = "worker-1")]
@@ -87,4 +90,16 @@ pub struct EventsConfig {
     pub max_stream_len: usize,
     #[envconfig(from = "EVENTS_MAX_BUFFER_SIZE", default = "10000")]
     pub max_buffer_size: usize,
+}
+
+#[derive(EnumString)]
+pub enum IpSource {
+    #[strum(serialize = "connect_info")]
+    ConnectInfo,
+    #[strum(serialize = "cf_connecting_ip")]
+    CfConnectingIp,
+    #[strum(serialize = "x_real_ip")]
+    XRealIp,
+    #[strum(serialize = "x_forwarded_for")]
+    XForwardedFor,
 }

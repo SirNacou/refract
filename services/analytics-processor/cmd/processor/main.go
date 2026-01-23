@@ -9,10 +9,11 @@ import (
 	"syscall"
 
 	"github.com/SirNacou/refract/services/analytics-processor/internal/config"
-	"github.com/SirNacou/refract/services/analytics-processor/internal/consumer"
 	"github.com/SirNacou/refract/services/analytics-processor/internal/geo"
+	"github.com/SirNacou/refract/services/analytics-processor/internal/processor"
 	"github.com/SirNacou/refract/services/analytics-processor/internal/redis"
 	"github.com/SirNacou/refract/services/analytics-processor/internal/repository"
+	"github.com/SirNacou/refract/services/analytics-processor/internal/useragent"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -36,12 +37,12 @@ func main() {
 		"batch_size", cfg.ANALYTICS_BATCH_SIZE,
 	)
 
-	// Create Redis client
-	client, err := redis.NewValkeyClient(cfg)
+	// Create Redis valkey
+	valkey, err := redis.NewValkeyClient(cfg)
 	if err != nil {
 		log.Fatalf("failed to initialize valkey client: %v", err)
 	}
-	defer client.Close()
+	defer valkey.Close()
 
 	// Create database connection pool
 	db, err := pgxpool.New(ctx, cfg.ANALYTICS_DATABASE_URL)
@@ -49,6 +50,11 @@ func main() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 	defer db.Close()
+
+	repo, err := repository.NewPostgresRepository(db)
+	if err != nil {
+		log.Fatalf("failed to initialize repo: %v", err)
+	}
 
 	logger.Info("database connection established", "url", cfg.ANALYTICS_DATABASE_URL)
 
@@ -65,14 +71,9 @@ func main() {
 		logger.Info("GeoIP database loaded", "path", cfg.GEOIP_DB_PATH)
 	}
 
-	// Create repository
-	repo := repository.NewTimescaleRepository(db, geoLookup)
+	uap := useragent.NewUserAgentParser()
 
-	// Create stream consumer
-	streamConsumer := consumer.NewStreamConsumer(
-		client,
-		cfg,
-	)
+	pro := processor.NewProcessor(valkey, repo, geoLookup, uap, cfg)
 
 	// Context with graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -87,20 +88,11 @@ func main() {
 		cancel()
 	}()
 
-	// Ensure consumer group exists
-	if err := streamConsumer.EnsureGroup(ctx); err != nil {
-		log.Fatalf("failed to ensure consumer group: %v", err)
-	}
-
-	// Handler: batch insert click events into TimescaleDB
-	handler := func(ctx context.Context, events []consumer.ClickEvent) error {
-		return repo.InsertClickEvents(ctx, events)
-	}
-
 	// Run consumer loop
 	logger.Info("starting consumer loop...")
-	if err := streamConsumer.Run(ctx, handler); err != nil && err != context.Canceled {
-		log.Fatalf("consumer loop failed: %v", err)
+
+	if err := pro.Run(ctx); err != nil {
+		logger.Error("processor encountered an error", "error", err)
 	}
 
 	logger.Info("analytics processor stopped gracefully")

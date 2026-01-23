@@ -13,7 +13,7 @@ CREATE TABLE click_events (
     url_id BIGINT NOT NULL,
     referrer TEXT,
     user_agent TEXT NOT NULL,
-    ip_address INET NOT NULL,
+    visitor_hash TEXT NOT NULL,
     country_code CHAR(2),
     country_name TEXT,
     city TEXT,
@@ -44,6 +44,8 @@ SELECT add_retention_policy('click_events', INTERVAL '5 years');
 -- Indexes for common queries
 CREATE INDEX idx_click_events_url_time ON click_events (url_id, time DESC);
 CREATE INDEX idx_click_events_country ON click_events (country_code, time DESC);
+CREATE INDEX idx_click_events_referrer ON click_events (referrer, time DESC);
+CREATE INDEX idx_click_events_browser ON click_events (browser, time DESC);
 
 -- Continuous Aggregate: Hourly summary
 CREATE MATERIALIZED VIEW click_summary_hourly
@@ -52,7 +54,7 @@ SELECT
     time_bucket('1 hour', time) AS hour,
     url_id,
     COUNT(*) AS total_clicks,
-    COUNT(DISTINCT ip_address) AS unique_visitors,
+    COUNT(DISTINCT visitor_hash) AS unique_visitors,
     COUNT(*) FILTER (WHERE device_type = 'mobile') AS mobile_clicks,
     COUNT(*) FILTER (WHERE device_type = 'desktop') AS desktop_clicks,
     COUNT(*) FILTER (WHERE device_type = 'tablet') AS tablet_clicks,
