@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"log/slog"
@@ -18,6 +19,10 @@ import (
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/server/middleware"
 	"github.com/SirNacou/refract/services/api/migrations"
 )
+
+func init() {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+}
 
 func main() {
 	ctx := context.Background()
@@ -66,7 +71,7 @@ func main() {
 	// Create application service with all dependencies
 	app := application.NewApplication(generator, sb, store, cache)
 
-	authZ, err := auth.NewAuth(ctx, cfg.Zitadel.Issuer, "/.config/key.json")
+	authZ, err := auth.NewAuth(ctx, cfg.Zitadel.Authority, "/.config/key.json")
 	if err != nil {
 		log.Fatalf("Failed to initialize Auth: %v", err)
 	}

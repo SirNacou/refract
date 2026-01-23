@@ -65,7 +65,9 @@ type RedisConfig struct {
 type ZitadelConfig struct {
 	// Issuer is the Zitadel issuer URL (e.g., https://zitadel.nacou.uk)
 	// Used for OIDC discovery and validating the 'iss' claim in JWTs
-	Issuer string `env:"ZITADEL_ISSUER" envDefault:"zitadel.nacou.uk"`
+	Issuer string `env:"ZITADEL_ISSUER" envDefault:"https://zitadel.nacou.uk"`
+
+	Authority string `env:"ZITADEL_AUTHORITY" envDefault:"zitadel.nacou.uk"`
 
 	// Audience is the expected 'aud' claim in JWTs (e.g., "refract-api")
 	Audience string `env:"ZITADEL_AUDIENCE"`

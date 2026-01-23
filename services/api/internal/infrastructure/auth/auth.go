@@ -11,6 +11,8 @@ import (
 type Auth = authorization.Authorizer[*oauth.IntrospectionContext]
 
 func NewAuth(ctx context.Context, domain, keyPath string) (*Auth, error) {
-	auth, err := authorization.New(ctx, zitadel.New(domain), oauth.DefaultAuthorization(keyPath))
+	auth, err := authorization.New(ctx,
+		zitadel.New(domain, zitadel.WithInsecureSkipVerifyTLS()),
+		oauth.DefaultAuthorization(keyPath))
 	return auth, err
 }
