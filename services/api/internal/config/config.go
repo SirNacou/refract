@@ -12,10 +12,10 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Redis    RedisConfig
-	Zitadel  ZitadelConfig
 	Worker   WorkerConfig
 	Security SecurityConfig
 	Logging  LoggingConfig
+	Appwrite AppwriteConfig
 }
 
 // ServerConfig holds HTTP server configuration
@@ -61,24 +61,6 @@ type RedisConfig struct {
 	ConnMaxIdleTime time.Duration `env:"REDIS_CONN_MAX_IDLE_TIME" envDefault:"5m"`
 }
 
-// ZitadelConfig holds Zitadel OIDC provider configuration
-type ZitadelConfig struct {
-	// Issuer is the Zitadel issuer URL (e.g., https://zitadel.nacou.uk)
-	// Used for OIDC discovery and validating the 'iss' claim in JWTs
-	Issuer string `env:"ZITADEL_ISSUER" envDefault:"https://zitadel.nacou.uk"`
-
-	Authority string `env:"ZITADEL_AUTHORITY" envDefault:"zitadel.nacou.uk"`
-
-	// Audience is the expected 'aud' claim in JWTs (e.g., "refract-api")
-	Audience string `env:"ZITADEL_AUDIENCE"`
-
-	// ClientID from Zitadel application configuration
-	ClientID string `env:"ZITADEL_CLIENT_ID"`
-
-	// ClientSecret from Zitadel application configuration (if needed)
-	ClientSecret string `env:"ZITADEL_CLIENT_SECRET"`
-}
-
 // WorkerConfig holds Snowflake ID generator configuration
 type WorkerConfig struct {
 	// WorkerID must be unique per API service instance (0-1023)
@@ -107,6 +89,12 @@ type SecurityConfig struct {
 type LoggingConfig struct {
 	Level  string `env:"LOG_LEVEL" envDefault:"info"`
 	Format string `env:"LOG_FORMAT" envDefault:"json"` // json or text
+}
+
+type AppwriteConfig struct {
+	Endpoint string `env:"APPWRITE_ENDPOINT"`
+	APIKey    string `env:"APPWRITE_API_KEY"`
+	ProjectID string `env:"APPWRITE_PROJECT_ID"`
 }
 
 // Load reads configuration from environment variables
@@ -157,15 +145,6 @@ func (c *Config) Validate() error {
 
 	if c.Redis.Port < 1 || c.Redis.Port > 65535 {
 		return fmt.Errorf("invalid Redis port: %d (must be 1-65535)", c.Redis.Port)
-	}
-
-	// Validate Zitadel configuration
-	if c.Zitadel.Issuer == "" {
-		return fmt.Errorf("ZITADEL_ISSUER is required")
-	}
-
-	if c.Zitadel.Audience == "" {
-		return fmt.Errorf("ZITADEL_AUDIENCE is required")
 	}
 
 	// Validate worker ID (must be 0-1023 for Snowflake IDs)

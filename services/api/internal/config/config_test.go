@@ -47,11 +47,6 @@ func TestLoad_DefaultValues(t *testing.T) {
 	if cfg.Logging.Format != "json" {
 		t.Errorf("expected Logging.Format=json, got %s", cfg.Logging.Format)
 	}
-
-	// Verify Zitadel default issuer
-	if cfg.Zitadel.Issuer != "https://zitadel.nacou.uk" {
-		t.Errorf("expected Zitadel.Issuer default, got %s", cfg.Zitadel.Issuer)
-	}
 }
 
 func TestLoad_CustomValues(t *testing.T) {
@@ -99,14 +94,6 @@ func TestLoad_CustomValues(t *testing.T) {
 
 	if cfg.Redis.Port != 6380 {
 		t.Errorf("expected Redis.Port=6380, got %d", cfg.Redis.Port)
-	}
-
-	if cfg.Zitadel.Issuer != "https://auth.example.com" {
-		t.Errorf("expected Zitadel.Issuer=https://auth.example.com, got %s", cfg.Zitadel.Issuer)
-	}
-
-	if cfg.Zitadel.Audience != "custom-audience" {
-		t.Errorf("expected Zitadel.Audience=custom-audience, got %s", cfg.Zitadel.Audience)
 	}
 
 	if cfg.Worker.WorkerID != 42 {
@@ -316,37 +303,6 @@ func TestSecurityConfig_CORSArrayParsing(t *testing.T) {
 	}
 }
 
-func TestZitadelConfig_AllFields(t *testing.T) {
-	clearEnv(t)
-
-	os.Setenv("ZITADEL_ISSUER", "https://zitadel.example.com")
-	os.Setenv("ZITADEL_AUDIENCE", "my-api")
-	os.Setenv("ZITADEL_CLIENT_ID", "my-client-id")
-	os.Setenv("ZITADEL_CLIENT_SECRET", "my-client-secret")
-	defer clearEnv(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() failed: %v", err)
-	}
-
-	if cfg.Zitadel.Issuer != "https://zitadel.example.com" {
-		t.Errorf("expected Zitadel.Issuer=https://zitadel.example.com, got %s", cfg.Zitadel.Issuer)
-	}
-
-	if cfg.Zitadel.Audience != "my-api" {
-		t.Errorf("expected Zitadel.Audience=my-api, got %s", cfg.Zitadel.Audience)
-	}
-
-	if cfg.Zitadel.ClientID != "my-client-id" {
-		t.Errorf("expected Zitadel.ClientID=my-client-id, got %s", cfg.Zitadel.ClientID)
-	}
-
-	if cfg.Zitadel.ClientSecret != "my-client-secret" {
-		t.Errorf("expected Zitadel.ClientSecret=my-client-secret, got %s", cfg.Zitadel.ClientSecret)
-	}
-}
-
 func TestValidate_MissingZitadelIssuer(t *testing.T) {
 	// Test that validation correctly rejects empty Zitadel.Issuer
 	cfg := &Config{
@@ -364,10 +320,6 @@ func TestValidate_MissingZitadelIssuer(t *testing.T) {
 		Redis: RedisConfig{
 			Host: "localhost",
 			Port: 6379,
-		},
-		Zitadel: ZitadelConfig{
-			Issuer:   "", // Empty - should fail
-			Audience: "my-api",
 		},
 		Worker: WorkerConfig{
 			WorkerID: 0,

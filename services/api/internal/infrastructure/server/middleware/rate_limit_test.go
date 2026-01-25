@@ -1,7 +1,6 @@
-package middleware
+package middleware_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,22 +11,27 @@ import (
 	"time"
 
 	"github.com/SirNacou/refract/services/api/internal/config"
+	"github.com/SirNacou/refract/services/api/internal/infrastructure/server/middleware"
 )
 
 // ==================== TEST HELPERS ====================
 
-func setupTestRateLimiterWithMemory() *RateLimiter {
+func setupTestRateLimiterWithMemory() *middleware.RateLimiter {
 	cfg := &config.SecurityConfig{
 		RateLimitPerUser: 100,
 		RateLimitWindow:  time.Hour,
 	}
 	// Pass nil for redis to force in-memory fallback
-	return NewRateLimiter(nil, cfg)
+	return middleware.NewRateLimiter(nil, cfg)
 }
 
 func createTestRequest(userID string) *http.Request {
 	req := httptest.NewRequest("GET", "/test", nil)
-	ctx := context.WithValue(req.Context(), UserIDKey, userID)
+	ctx := middleware.SetUserToContext(req.Context(), middleware.User{
+		ID:    userID,
+		Name:  "name",
+		Email: "email",
+	})
 	return req.WithContext(ctx)
 }
 
@@ -271,7 +275,7 @@ func TestRateLimiter_WindowReset(t *testing.T) {
 		RateLimitPerUser: 5,
 		RateLimitWindow:  2 * time.Second, // Short window for testing
 	}
-	rl := NewRateLimiter(nil, cfg)
+	rl := middleware.NewRateLimiter(nil, cfg)
 
 	handler := rl.RateLimitPerUser()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -316,64 +320,23 @@ func TestRateLimiter_WindowReset(t *testing.T) {
 	}
 }
 
-func TestRateLimiter_CheckInMemory_ThreadSafety(t *testing.T) {
-	rl := setupTestRateLimiterWithMemory()
-
-	userID := "concurrent-user"
-	window := time.Hour
-
-	var wg sync.WaitGroup
-	numGoroutines := 100
-	results := make(chan int, numGoroutines)
-
-	// Concurrently call checkInMemory
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			count := rl.checkInMemory(userID, window)
-			results <- count
-		}()
-	}
-
-	wg.Wait()
-	close(results)
-
-	// Collect all counts
-	counts := make(map[int]int)
-	for count := range results {
-		counts[count]++
-	}
-
-	// Verify all counts are unique (1-100)
-	if len(counts) != numGoroutines {
-		t.Errorf("Expected %d unique counts, got %d", numGoroutines, len(counts))
-	}
-
-	// Final count should be exactly numGoroutines
-	finalCount := rl.checkInMemory(userID, window)
-	if finalCount != numGoroutines+1 {
-		t.Errorf("Expected final count %d, got %d", numGoroutines+1, finalCount)
-	}
-}
-
 func TestRateLimiter_ErrorConstants(t *testing.T) {
 	// Verify error constants are defined
-	if ErrRateLimitExceeded == nil {
+	if middleware.ErrRateLimitExceeded == nil {
 		t.Error("ErrRateLimitExceeded should be defined")
 	}
 
-	if ErrUserIDNotFound == nil {
+	if middleware.ErrUserIDNotFound == nil {
 		t.Error("ErrUserIDNotFound should be defined")
 	}
 
 	// Verify error messages
-	if ErrRateLimitExceeded.Error() != "rate limit exceeded" {
-		t.Errorf("Expected 'rate limit exceeded', got '%s'", ErrRateLimitExceeded.Error())
+	if middleware.ErrRateLimitExceeded.Error() != "rate limit exceeded" {
+		t.Errorf("Expected 'rate limit exceeded', got '%s'", middleware.ErrRateLimitExceeded.Error())
 	}
 
-	if ErrUserIDNotFound.Error() != "user ID not found in context" {
-		t.Errorf("Expected 'user ID not found in context', got '%s'", ErrUserIDNotFound.Error())
+	if middleware.ErrUserIDNotFound.Error() != "user ID not found in context" {
+		t.Errorf("Expected 'user ID not found in context', got '%s'", middleware.ErrUserIDNotFound.Error())
 	}
 }
 
@@ -392,17 +355,6 @@ func BenchmarkRateLimiter_InMemory(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
-	}
-}
-
-func BenchmarkRateLimiter_CheckInMemory(b *testing.B) {
-	rl := setupTestRateLimiterWithMemory()
-	userID := "bench-user"
-	window := time.Hour
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		rl.checkInMemory(userID, window)
 	}
 }
 

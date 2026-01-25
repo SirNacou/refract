@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	github.com/appwrite/sdk-for-go v0.16.0 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.9.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect

@@ -71,10 +71,7 @@ func main() {
 	// Create application service with all dependencies
 	app := application.NewApplication(generator, sb, store, cache)
 
-	authZ, err := auth.NewAuth(ctx, cfg.Zitadel.Authority, "/.config/key.json")
-	if err != nil {
-		log.Fatalf("Failed to initialize Auth: %v", err)
-	}
+	authZ := auth.NewAuth(&cfg.Appwrite)
 	authMw := middleware.NewAuthMiddleware(authZ)
 
 	rateLimiter := middleware.NewRateLimiter(

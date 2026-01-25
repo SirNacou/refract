@@ -12,7 +12,7 @@ import (
 )
 
 func NewRouter(
-	authMw *middleware.AuthMiddleware,
+	authMw *middleware.AuthMiddeware,
 	rateLimiter *middleware.RateLimiter,
 	logging *middleware.LoggingMiddleware,
 	securityCfg *config.SecurityConfig,

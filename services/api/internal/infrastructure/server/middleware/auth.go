@@ -3,37 +3,70 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/SirNacou/refract/services/api/internal/infrastructure/auth"
-	"github.com/zitadel/zitadel-go/v3/pkg/authorization"
-	"github.com/zitadel/zitadel-go/v3/pkg/authorization/oauth"
-	"github.com/zitadel/zitadel-go/v3/pkg/http/middleware"
 )
 
 type contextKey string
 
 const (
-	UserIDKey    contextKey = "user_id"
-	UserEmailKey contextKey = "user_email"
-	TokenTypeKey contextKey = "token_type"
-	ClaimsKey    contextKey = "claims"
+	userContextKey contextKey = "user"
 )
 
-type AuthMiddleware struct {
-	Interceptor *middleware.Interceptor[*oauth.IntrospectionContext]
+type User struct {
+	ID    string
+	Name  string
+	Email string
 }
 
-// NewAuthMiddleware creates a new authentication middleware using the OIDC verifier.
-func NewAuthMiddleware(auth *auth.Auth) *AuthMiddleware {
-	return &AuthMiddleware{
-		Interceptor: middleware.New(auth),
+type AuthMiddeware struct {
+	auth *auth.Auth
+}
+
+func NewAuthMiddleware(auth *auth.Auth) *AuthMiddeware {
+	return &AuthMiddeware{
+		auth: auth,
 	}
 }
 
-func (am *AuthMiddleware) RequireAuthorization(options ...authorization.CheckOption) func(next http.Handler) http.Handler {
-	return am.Interceptor.RequireAuthorization(options...)
+func (am *AuthMiddeware) RequireAuthorization() func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			jwt := r.Header.Get("Authorization")
+			if jwt == "" || !strings.HasPrefix(jwt, "Bearer ") {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			jwt = strings.TrimPrefix(jwt, "Bearer ")
+
+			ac := am.auth.WithJWT(jwt)
+
+			u, err := ac.Get()
+			if err != nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			ctx := r.Context()
+
+			ctx = context.WithValue(ctx, userContextKey, User{
+				ID:    u.Id,
+				Name:  u.Name,
+				Email: u.Email,
+			})
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
 
-func (am *AuthMiddleware) Context(ctx context.Context) *oauth.IntrospectionContext {
-	return am.Interceptor.Context(ctx)
+func GetUserFromContext(ctx context.Context) (User, bool) {
+	user, ok := ctx.Value(userContextKey).(User)
+	return user, ok
+}
+
+func SetUserToContext(ctx context.Context, user User) context.Context {
+	return context.WithValue(ctx, userContextKey, user)
 }

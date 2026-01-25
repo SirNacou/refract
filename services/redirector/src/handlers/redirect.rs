@@ -27,7 +27,7 @@ pub async fn handle(
         .get_cache_manager()
         .get(&get_redirect_cache_key(&short_code))
         .await
-        .map_err(|err| AppError::Internal(err))?;
+        .map_err(AppError::Internal)?;
 
     if let Some(cached_url) = url {
         return Ok(Redirect::temporary(&cached_url.to_string()));
@@ -63,7 +63,7 @@ pub async fn handle(
             let now = Utc::now();
             let duration = exp.signed_duration_since(now);
             if duration.num_seconds() <= 0 {
-                return Err(AppError::Expired(format!("Expired url")));
+                return Err(AppError::Expired("Expired url".to_string()));
             }
             duration.num_seconds() as u64
         }

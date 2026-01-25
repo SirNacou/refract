@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use anyhow::Result;
-use multi_tier_cache::{CacheManager, RedisStreams};
+use multi_tier_cache::RedisStreams;
 use tokio::sync::Mutex;
 use tracing::{debug, info, warn};
 
@@ -78,10 +78,8 @@ impl ClickEventPublisher {
                 buf.push(event);
                 buf.len() >= publisher.batch_size
             };
-            if should_flush {
-                if let Err(e) = publisher.flush().await {
-                    warn!(error = %e, "Failed to flush click events to Redis");
-                }
+            if should_flush && let Err(e) = publisher.flush().await {
+                warn!(error = %e, "Failed to flush click events to Redis");
             }
         });
     }

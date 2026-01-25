@@ -1,18 +1,31 @@
 package auth
 
 import (
-	"context"
-
-	"github.com/zitadel/zitadel-go/v3/pkg/authorization"
-	"github.com/zitadel/zitadel-go/v3/pkg/authorization/oauth"
-	"github.com/zitadel/zitadel-go/v3/pkg/zitadel"
+	"github.com/SirNacou/refract/services/api/internal/config"
+	"github.com/appwrite/sdk-for-go/account"
+	"github.com/appwrite/sdk-for-go/appwrite"
 )
 
-type Auth = authorization.Authorizer[*oauth.IntrospectionContext]
+type Auth struct {
+	endpoint  string
+	apiKey    string
+	projectID string
+}
 
-func NewAuth(ctx context.Context, domain, keyPath string) (*Auth, error) {
-	auth, err := authorization.New(ctx,
-		zitadel.New(domain, zitadel.WithInsecureSkipVerifyTLS()),
-		oauth.DefaultAuthorization(keyPath))
-	return auth, err
+func NewAuth(cfg *config.AppwriteConfig) *Auth {
+	return &Auth{
+		endpoint:  cfg.Endpoint,
+		apiKey:    cfg.APIKey,
+		projectID: cfg.ProjectID,
+	}
+}
+
+func (a *Auth) WithJWT(jwt string) *account.Account {
+	clt := appwrite.NewClient(
+		appwrite.WithEndpoint(a.endpoint),
+		appwrite.WithProject(a.projectID),
+		appwrite.WithKey(a.apiKey),
+		appwrite.WithJWT(jwt),
+	)
+	return appwrite.NewAccount(clt)
 }
