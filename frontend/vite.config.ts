@@ -1,6 +1,7 @@
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
+import Icons from 'unplugin-icons/vite'
 import { fileURLToPath, URL } from 'url'
 import { defineConfig } from 'vite'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
@@ -23,14 +24,16 @@ const config = defineConfig({
     }),
     tailwindcss(),
     tanstackStart({
-      spa: {
-        enabled: true
-      }
     }),
     viteReact({
       babel: {
         plugins: ['babel-plugin-react-compiler'],
       },
+    }),
+    Icons({
+      autoInstall: true,
+      compiler: 'jsx',
+      jsx: 'react',
     }),
   ],
 })

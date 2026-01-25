@@ -1,24 +1,19 @@
-import { getZitadel } from '@/lib/auth'
-import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { account } from '@/lib/appwrite'
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_authenticated')({
   component: RouteComponent,
-  ssr: false,
+  beforeLoad: async () => {
+    try {
+      await account.get()
+    } catch (error) {
+      throw redirect({
+        to: '/login'
+      })
+    }
+  }
 })
 
 function RouteComponent() {
-  useEffect(() => {
-    // Only initialize on client side
-    const auth = getZitadel()
-
-    // Check for existing user session
-    auth.userManager.getUser().then((user) => {
-      console.log(user)
-      if (!user || user.expired) {
-        auth.authorize()
-      }
-    })
-  }, [])
   return <Outlet />
 }

@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use multi_tier_cache::{
-    CacheManager, CacheSystem, CacheSystemBuilder, L1Cache, RedisCache, RedisStreams,
-};
+use multi_tier_cache::{CacheManager, CacheSystem, CacheSystemBuilder, L1Cache, RedisCache};
 
 use crate::config::RedisConfig;
 

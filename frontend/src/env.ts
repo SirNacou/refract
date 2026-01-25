@@ -15,12 +15,9 @@ export const env = createEnv({
   client: {
     VITE_API_URL: z.url(),
     VITE_APP_TITLE: z.string().min(1).optional(),
-    VITE_ZITADEL_ISSUER: z.url(),
-    VITE_ZITADEL_CLIENT_ID: z.string(),
-    VITE_ZITADEL_REDIRECT_URI: z.url(),
-    VITE_ZITADEL_POST_LOGOUT_URL: z.url(),
-    VITE_ZITADEL_SCOPES: z.string(),
-    VITE_POST_LOGIN_URL: z.string()
+    VITE_POST_LOGIN_URL: z.string(),
+    VITE_APPWRITE_ENDPOINT: z.url(),
+    VITE_APPWRITE_PROJECT: z.string()
   },
 
   /**

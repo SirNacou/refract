@@ -1,18 +1,18 @@
 import { env } from '@/env'
 import ky from 'ky'
-import { getZitadel } from './auth'
+import { account } from './appwrite'
 
 const api = ky.create({
   prefixUrl: env.VITE_API_URL,
   hooks: {
     beforeRequest: [
-      (request) => {
-        const auth = getZitadel()
-        auth.userManager.getUser().then((user) => {
-          if (user && !user.expired) {
-            request.headers.set('Authorization', 'Bearer ' + user.access_token)
-          }
-        })
+      async (request: any) => {
+        const jwt = await account.createJWT()
+        console.log("JWT:", jwt)
+
+        if (jwt) {
+          request.headers.set('Authorization', 'Bearer ' + jwt.jwt)
+        }
       }
     ]
   }

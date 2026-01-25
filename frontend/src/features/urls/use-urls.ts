@@ -37,6 +37,7 @@ const fetchUrls = async (): Promise<ShortURL[]> => {
       id: '1',
       original_url: 'https://google.com',
       short_code: 'gg',
+      title: "Google",
       click_count: 10,
       is_active: true,
       created_at: new Date().toISOString()

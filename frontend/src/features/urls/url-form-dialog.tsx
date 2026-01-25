@@ -1,9 +1,9 @@
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useForm } from "@tanstack/react-form"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import z from "zod"
 import { Button } from "../../components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../components/ui/card"
 import { FieldGroup, FieldLabel } from "../../components/ui/field"
 import { Input } from "../../components/ui/input"
 import { Textarea } from "../../components/ui/textarea"
@@ -16,7 +16,7 @@ const urlFormSchema = z.object({
     .regex(/^[a-zA-Z0-9-_]+$/, 'Only letters, numbers, hyphens, and underscores allowed')
     .optional()
     .or(z.literal('')),
-  title: z.string(),
+  title: z.string().min(1, 'Title is required'),
   notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional(),
   expiration: z.string().optional(),
 })
@@ -25,7 +25,7 @@ type URLFormValues = z.infer<typeof urlFormSchema>
 
 type Props = {}
 
-const URLForm = (props: Props) => {
+const URLFormDialog = (props: Props) => {
   const form = useForm({
     defaultValues: {
       destination: '',
@@ -46,22 +46,27 @@ const URLForm = (props: Props) => {
 
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
-      <CardHeader>
-        <CardTitle>Create Short Link</CardTitle>
-        <CardDescription>
-          Enter your destination details below to generate a shortened URL.
-        </CardDescription>
-      </CardHeader>
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button>Create New</Button>
+      </DialogTrigger>
 
-      <form onSubmit={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        form.handleSubmit()
-      }}>
-        <CardContent className="space-y-4">
+      <DialogContent>
 
-          <FieldGroup>
+        <form onSubmit={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          form.handleSubmit()
+        }}>
+
+          <DialogHeader>
+            <DialogTitle>Create Short Link</DialogTitle>
+            <DialogDescription>
+              Enter your destination details below to generate a shortened URL.
+            </DialogDescription>
+          </DialogHeader>
+
+          <FieldGroup className="my-6">
             {/* Destination URL Field */}
             <form.Field
               name="destination"
@@ -79,7 +84,7 @@ const URLForm = (props: Props) => {
                   />
                   {field.state.meta.errors ? (
                     <p className="text-xs text-red-500 font-medium">
-                      {field.state.meta.errors.join(', ')}
+                      {field.state.meta.errors[0]?.message}
                     </p>
                   ) : null}
                 </div>
@@ -107,7 +112,7 @@ const URLForm = (props: Props) => {
                     </div>
                     {field.state.meta.errors ? (
                       <p className="text-xs text-red-500 font-medium">
-                        {field.state.meta.errors.join(', ')}
+                        {field.state.meta.errors[0]?.message}
                       </p>
                     ) : null}
                   </div>
@@ -119,7 +124,7 @@ const URLForm = (props: Props) => {
                 name="title"
                 children={(field) => (
                   <div className="space-y-2">
-                    <FieldLabel htmlFor={field.name}>Title (Optional)</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Title</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -128,6 +133,11 @@ const URLForm = (props: Props) => {
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="Marketing Campaign Q1"
                     />
+                    {field.state.meta.errors ? (
+                      <p className="text-xs text-red-500 font-medium">
+                        {field.state.meta.errors[0]?.message}
+                      </p>
+                    ) : null}
                   </div>
                 )}
               />
@@ -183,35 +193,36 @@ const URLForm = (props: Props) => {
               )}
             />
           </FieldGroup>
-        </CardContent>
 
-        <CardFooter className="flex justify-between border-t pt-6">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => form.reset()}
-          >
-            Reset
-          </Button>
-          <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting]}
-            children={([canSubmit, isSubmitting]) => (
-              <Button type="submit" disabled={!canSubmit}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  'Create Short URL'
-                )}
-              </Button>
-            )}
-          />
-        </CardFooter>
-      </form>
-    </Card>
+          <DialogFooter className="flex justify-between border-t pt-6">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => form.reset()}
+            >
+              Reset
+            </Button>
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
+              children={([canSubmit, isSubmitting]) => (
+                <Button type="submit" disabled={!canSubmit}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Short URL'
+                  )}
+                </Button>
+              )}
+            />
+          </DialogFooter>
+        </form>
+      </DialogContent>
+
+    </Dialog>
   )
 }
 
-export default URLForm
+export default URLFormDialog

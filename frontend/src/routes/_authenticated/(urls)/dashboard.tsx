@@ -1,11 +1,11 @@
 import { Skeleton } from '@/components/ui/skeleton'
-import URLForm from '@/features/urls/url-form'
+import URLFormDialog from '@/features/urls/url-form-dialog'
 import URLList from '@/features/urls/url-list'
 import { useUrls } from '@/features/urls/use-urls'
 import { createFileRoute } from '@tanstack/react-router'
 import { Ghost, LayoutDashboard } from 'lucide-react'
 
-export const Route = createFileRoute('/_authenticated/dashboard')({
+export const Route = createFileRoute('/_authenticated/(urls)/dashboard')({
     component: RouteComponent,
 })
 
@@ -27,30 +27,25 @@ function RouteComponent() {
                     </div>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-[350px_1fr]">
-
-                    {/* Left Column: Input Form (Always visible) */}
-                    <aside className="md:sticky md:top-8 h-fit">
-                        <URLForm />
-                    </aside>
-
-                    {/* Right Column: List or Empty State */}
-                    <main className="space-y-4">
+                <main className="space-y-4">
+                    <div className='flex flex-row justify-between'>
                         <h2 className="text-lg font-semibold">Your Recent Links</h2>
 
-                        {isLoading ? (
-                            <DashboardSkeleton />
-                        ) : isError ? (
-                            <div className="p-4 border border-red-200 bg-red-50 text-red-600 rounded-md">
-                                Error loading data. Please try again.
-                            </div>
-                        ) : urls.length === 0 ? (
-                            <EmptyState />
-                        ) : (
-                            <URLList data={urls} />
-                        )}
-                    </main>
-                </div>
+                        <URLFormDialog />
+                    </div>
+
+                    {isLoading ? (
+                        <DashboardSkeleton />
+                    ) : isError ? (
+                        <div className="p-4 border border-red-200 bg-red-50 text-red-600 rounded-md">
+                            Error loading data. Please try again.
+                        </div>
+                    ) : urls.length === 0 ? (
+                        <EmptyState />
+                    ) : (
+                        <URLList data={urls} />
+                    )}
+                </main>
             </div>
         </div>
     )
