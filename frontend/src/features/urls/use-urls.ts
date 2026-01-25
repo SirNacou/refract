@@ -1,5 +1,6 @@
 import { api } from '@/lib/api-client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import ky from 'ky'
 
 // Define types here (or import from a shared types file)
 export type ShortURL = {
@@ -29,8 +30,10 @@ const createURL = async (data: CreateURLPayload): Promise<{ short_code: string }
 }
 
 const fetchUrls = async (): Promise<ShortURL[]> => {
-  // Mock API - replace with real fetch
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  const res = await api.get<ShortURL[]>('/api/v1/urls')
+  if (res.status === 200) {
+    return res.json()
+  }
   // Return empty array [] to test the Empty State
   return [
     {

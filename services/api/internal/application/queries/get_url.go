@@ -15,10 +15,11 @@ type GetURLByShortCodeQuery struct {
 type GetURLByShortCodeResult struct {
 	ShortCode   string     `json:"short_code"`
 	OriginalURL string     `json:"original_url"`
+	Title       string     `json:"title"`
+	Notes       string     `json:"notes,omitempty"`
 	CreatedAt   time.Time  `json:"created_at,omitempty"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
 	OwnerID     string     `json:"owner_id,omitempty"`
-	IsCustom    bool       `json:"is_custom"`
 }
 
 type GetURLByShortCodeHandler struct {

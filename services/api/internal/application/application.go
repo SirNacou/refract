@@ -22,6 +22,7 @@ type Commands struct {
 // Queries holds all query handlers
 type Queries struct {
 	GetURL *queries.GetURLByShortCodeHandler
+	ListURLs *queries.ListURLsHandler
 }
 
 // NewApplication creates a new Application instance with all dependencies

@@ -97,7 +97,7 @@ const URLFormDialog = (props: Props) => {
                 name="shortCode"
                 children={(field) => (
                   <div className="space-y-2">
-                    <FieldLabel htmlFor={field.name}>Custom Alias (Optional)</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Short Code (Optional)</FieldLabel>
                     <div className="relative">
                       <span className="absolute left-3 top-2.5 text-muted-foreground text-sm">/</span>
                       <Input

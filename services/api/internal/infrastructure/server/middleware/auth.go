@@ -62,8 +62,8 @@ func (am *AuthMiddeware) RequireAuthorization() func(next http.Handler) http.Han
 	}
 }
 
-func GetUserFromContext(ctx context.Context) (User, bool) {
-	user, ok := ctx.Value(userContextKey).(User)
+func GetUserFromContext(ctx context.Context) (user User, ok bool) {
+	user, ok = ctx.Value(userContextKey).(User)
 	return user, ok
 }
 

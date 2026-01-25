@@ -29,16 +29,6 @@ async fn main() {
             .expect("Failed to initialize Cache"),
     );
 
-    let geo_lookup = Arc::new(
-        geo::lookup::GeoLookup::new(&config.geoip_db_path)
-            .expect("Failed to initialize Geo Lookup"),
-    );
-
-    let ua_parser = Arc::new(
-        parser::user_agent::UAParser::new(&config.ua_regexes_path)
-            .expect("Failed to initialize User Agent Parser"),
-    );
-
     let click_event_publisher = Arc::new(
         publisher::ClickEventPublisher::new(&config.redis, &config.events)
             .await
@@ -48,13 +38,7 @@ async fn main() {
 
     click_event_publisher.start_flush_task();
 
-    let app_state = Arc::new(AppState::new(
-        db,
-        cache,
-        click_event_publisher,
-        geo_lookup,
-        ua_parser,
-    ));
+    let app_state = Arc::new(AppState::new(db, cache, click_event_publisher));
 
     let ip_source = match config.ip_source {
         config::IpSource::CfConnectingIp => ClientIpSource::CfConnectingIp,

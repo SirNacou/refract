@@ -29,10 +29,6 @@ pub struct Config {
     pub l1_cache_capacity: i32,
     #[envconfig(from = "REDIRECTOR_WORKER_ID", default = "worker-1")]
     pub worker_id: String,
-    #[envconfig(from = "GEOIP_DB_PATH", default = "/path/to/geoip.db")]
-    pub geoip_db_path: String,
-    #[envconfig(from = "UA_REGEXES_PATH", default = "./data/user_agent/regexes.yaml")]
-    pub ua_regexes_path: String,
     #[envconfig(from = "LOG_LEVEL", default = "info")]
     pub log_level: String,
     #[envconfig(from = "LOG_FORMAT", default = "json")]

@@ -10,8 +10,6 @@ pub struct AppState {
     pub db: Arc<dyn Repository + Send + Sync>,
     pub cache: Arc<dyn Cache + Send + Sync>,
     pub publisher: Arc<ClickEventPublisher>,
-    pub geo_lookup: Arc<GeoLookup>,
-    pub ua_parser: Arc<UAParser>,
 }
 
 impl AppState {
@@ -19,15 +17,11 @@ impl AppState {
         db: Arc<dyn Repository + Send + Sync>,
         cache: Arc<dyn Cache + Send + Sync>,
         publisher: Arc<ClickEventPublisher>,
-        geo_lookup: Arc<GeoLookup>,
-        ua_parser: Arc<UAParser>,
     ) -> Self {
         AppState {
             db,
             cache,
             publisher,
-            geo_lookup,
-            ua_parser,
         }
     }
 }
