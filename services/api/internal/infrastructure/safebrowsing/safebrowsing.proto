@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package safebrowsing;
+
+import "google/protobuf/duration.proto";
+
+option go_package = "./sbproto";
+
+message SearchHashesResponse {
+  repeated FullHash full_hashes = 1;
+
+  google.protobuf.Duration cache_duration = 2;
+}
+
+message FullHash {
+  bytes full_hash = 1;
+
+  repeated string attributes = 2;
+}

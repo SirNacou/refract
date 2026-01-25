@@ -1,0 +1,32 @@
+# Go service ignore - services/analytics-processor
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test and build output
+*.test
+*.out
+bin/
+_build/
+
+# Vendor
+vendor/
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Environment
+.env
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Logs
+*.log

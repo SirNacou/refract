@@ -1,0 +1,445 @@
+openapi: 3.1.0
+info:
+  title: URL Shortener Redirector Service
+  version: 1.0.0
+  description: |
+    High-performance redirect service optimized for <50ms p95 latency.
+    Handles short URL lookups and redirects to destination URLs while capturing analytics events.
+    
+    **Features**:
+    - Multi-tier caching (L1 in-memory LRU + L2 Redis)
+    - Asynchronous click event publishing (Redis Streams)
+    - Zero authentication (public redirects)
+    
+    **Base URL**: `https://short.link` (production) | `http://localhost:3000` (development)
+    
+    **Performance Goals**:
+    - p95 latency: <50ms
+    - p99 latency: <100ms
+    - Throughput: 10,000 concurrent requests
+  contact:
+    name: Refract Team
+    url: https://github.com/refract/url-shortener
+  license:
+    name: MIT
+
+servers:
+  - url: https://short.link
+    description: Production redirect server
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Redirects
+    description: Short URL redirection
+  - name: Health
+    description: Service health monitoring
+
+paths:
+  # Health Check
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Service health check
+      description: Returns service status and dependency health (database, L1/L2 cache)
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service unhealthy (degraded or down)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  # Readiness Check (Kubernetes)
+  /ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      description: Returns 200 when service is ready to accept traffic (cache warmed, DB connected)
+      operationId: getReadiness
+      responses:
+        '200':
+          description: Service ready
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "ready"
+        '503':
+          description: Service not ready (warming cache, waiting for DB)
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "not ready"
+
+  # Metrics (Prometheus)
+  /metrics:
+    get:
+      tags:
+        - Health
+      summary: Prometheus metrics
+      description: |
+        Expose metrics for monitoring:
+        - redirect_requests_total (counter)
+        - redirect_latency_seconds (histogram)
+        - cache_hits_total (counter, labeled by tier: l1, l2, db)
+        - active_connections (gauge)
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: |
+                  # HELP redirect_requests_total Total redirect requests
+                  # TYPE redirect_requests_total counter
+                  redirect_requests_total{status="success"} 123456
+                  redirect_requests_total{status="not_found"} 234
+                  
+                  # HELP redirect_latency_seconds Redirect latency histogram
+                  # TYPE redirect_latency_seconds histogram
+                  redirect_latency_seconds_bucket{le="0.01"} 98234
+                  redirect_latency_seconds_bucket{le="0.05"} 123000
+                  redirect_latency_seconds_sum 1234.56
+                  redirect_latency_seconds_count 123456
+
+  # Main Redirect Endpoint
+  /{shortCode}:
+    get:
+      tags:
+        - Redirects
+      summary: Redirect to destination URL
+      description: |
+        Lookup short code (Base62 or custom alias), redirect to destination URL, capture click event.
+        
+        **Lookup Flow**:
+        1. Decode Base62 short code → Snowflake ID (or use custom alias)
+        2. L1 cache lookup (in-memory LRU, <1ms)
+        3. L2 cache lookup (Redis, 2-5ms)
+        4. Database fallback (PostgreSQL, 10-20ms)
+        5. Redirect with HTTP 301/302
+        6. Publish click event to Redis Stream (async)
+        
+        **Status Code Logic**:
+        - 301 Moved Permanently: Active URL, cache for 1 hour
+        - 302 Found: Temporary (testing mode, not implemented in v1.0.0)
+        - 404 Not Found: Short code doesn't exist
+        - 410 Gone: URL expired, disabled, or deleted
+        - 429 Too Many Requests: Rate limit exceeded (per IP)
+      operationId: redirect
+      parameters:
+        - name: shortCode
+          in: path
+          required: true
+          description: |
+            Short code (Base62-encoded Snowflake ID) or custom alias.
+            Examples: "dBvJIX9uyO" (auto-generated), "my-blog" (custom alias)
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9-]{3,50}$'
+            minLength: 3
+            maxLength: 50
+            example: "dBvJIX9uyO"
+      responses:
+        '301':
+          description: Permanent redirect to destination URL (active URL)
+          headers:
+            Location:
+              description: Destination URL
+              schema:
+                type: string
+                format: uri
+                example: "https://example.com/article"
+            Cache-Control:
+              description: Cache directive for browsers/CDNs
+              schema:
+                type: string
+                example: "public, max-age=3600"
+            X-Short-Code:
+              description: Original short code (for debugging)
+              schema:
+                type: string
+                example: "dBvJIX9uyO"
+            X-Request-ID:
+              description: Unique request ID for tracing
+              schema:
+                type: string
+                format: uuid
+                example: "550e8400-e29b-41d4-a716-446655440000"
+
+        '302':
+          description: Temporary redirect (testing mode, not implemented in v1.0.0)
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+            Cache-Control:
+              schema:
+                type: string
+                example: "no-cache, no-store, must-revalidate"
+
+        '404':
+          description: Short code not found
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                  <html>
+                  <head><title>404 Not Found</title></head>
+                  <body>
+                    <h1>404 - Short URL Not Found</h1>
+                    <p>The short URL you're looking for doesn't exist.</p>
+                    <a href="https://short.link">Create your own short URL</a>
+                  </body>
+                  </html>
+
+        '410':
+          description: URL expired, disabled, or deleted
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                  <html>
+                  <head><title>410 Gone</title></head>
+                  <body>
+                    <h1>410 - Link Unavailable</h1>
+                    <p>This short URL has expired or been disabled by its owner.</p>
+                    <a href="https://short.link">Create your own short URL</a>
+                  </body>
+                  </html>
+
+        '429':
+          description: Too many requests (rate limit exceeded)
+          headers:
+            Retry-After:
+              description: Seconds until rate limit resets
+              schema:
+                type: integer
+                example: 60
+            X-RateLimit-Limit:
+              description: Request limit per minute (per IP)
+              schema:
+                type: integer
+                example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+                example: 0
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                  <html>
+                  <head><title>429 Too Many Requests</title></head>
+                  <body>
+                    <h1>429 - Too Many Requests</h1>
+                    <p>You've exceeded the rate limit. Please try again in 60 seconds.</p>
+                  </body>
+                  </html>
+
+        '500':
+          description: Internal server error
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                  <html>
+                  <head><title>500 Internal Server Error</title></head>
+                  <body>
+                    <h1>500 - Internal Server Error</h1>
+                    <p>Something went wrong. Please try again later.</p>
+                  </body>
+                  </html>
+
+        '503':
+          description: Service unavailable (database down, cache unavailable)
+          content:
+            text/html:
+              schema:
+                type: string
+                example: |
+                  <!DOCTYPE html>
+                  <html>
+                  <head><title>503 Service Unavailable</title></head>
+                  <body>
+                    <h1>503 - Service Unavailable</h1>
+                    <p>The redirect service is temporarily unavailable. Please try again shortly.</p>
+                  </body>
+                  </html>
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall service status
+          example: "healthy"
+        version:
+          type: string
+          description: Redirector version
+          example: "1.0.0"
+        uptime_seconds:
+          type: integer
+          format: int64
+          description: Service uptime in seconds
+          example: 86400
+        dependencies:
+          type: object
+          properties:
+            database:
+              $ref: '#/components/schemas/DependencyStatus'
+            cache_l1:
+              $ref: '#/components/schemas/CacheStatus'
+            cache_l2:
+              $ref: '#/components/schemas/DependencyStatus'
+            event_stream:
+              $ref: '#/components/schemas/DependencyStatus'
+
+    DependencyStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [up, down, degraded]
+          example: "up"
+        response_time_ms:
+          type: number
+          format: float
+          description: Health check response time
+          example: 2.5
+        last_error:
+          type: string
+          nullable: true
+          description: Most recent error message (if status is down/degraded)
+          example: null
+
+    CacheStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [up, down]
+          example: "up"
+        size:
+          type: integer
+          format: int64
+          description: Number of entries in cache
+          example: 8234
+        capacity:
+          type: integer
+          format: int64
+          description: Maximum cache capacity
+          example: 10000
+        hit_rate:
+          type: number
+          format: float
+          description: Cache hit rate (0.0 - 1.0)
+          example: 0.87
+        evictions:
+          type: integer
+          format: int64
+          description: Total evictions since startup
+          example: 1234
+
+# Performance Notes (non-OpenAPI metadata)
+x-performance:
+  latency_targets:
+    p50: "5ms"
+    p95: "50ms"
+    p99: "100ms"
+  
+  cache_strategy:
+    l1:
+      type: "in-memory LRU"
+      capacity: 10000
+      ttl: "no expiration (LRU eviction)"
+      hit_rate_target: 0.70
+    l2:
+      type: "Redis"
+      capacity: 1000000
+      ttl: "1 hour"
+      hit_rate_target: 0.20
+    database:
+      fallback: true
+      expected_hit_rate: 0.10
+
+  rate_limiting:
+    per_ip: "100 requests/minute"
+    per_short_code: "1000 requests/minute (DDoS protection)"
+
+  click_event_publishing:
+    method: "Redis Streams (async)"
+    batch_size: 100
+    flush_interval: "1 second"
+    max_latency: "5 seconds (FR-024)"
+
+# Security Configuration
+x-security:
+  ddos_protection:
+    enabled: true
+    rate_limit_per_ip: 100
+    rate_limit_window: "1 minute"
+    burst_allowance: 20
+  
+  blocked_user_agents:
+    - pattern: "^curl/.*"
+      reason: "Block simple curl bots"
+      enabled: false  # Disabled by default (allow curl for testing)
+    - pattern: ".*bot.*"
+      reason: "Block generic bots"
+      enabled: false  # Disabled by default (analytics track bots separately)
+
+  cors:
+    enabled: false  # No CORS needed (redirects only, no API)
+
+# Operational Metadata
+x-operations:
+  deployment:
+    container_image: "ghcr.io/refract/redirector:1.0.0"
+    min_replicas: 3
+    max_replicas: 20
+    target_cpu_utilization: 70
+    
+  resource_requirements:
+    cpu: "500m (request), 2000m (limit)"
+    memory: "256Mi (request), 1Gi (limit)"
+    
+  monitoring:
+    metrics_endpoint: "/metrics"
+    health_endpoint: "/health"
+    readiness_endpoint: "/ready"
+    
+  logging:
+    format: "json"
+    level: "info"
+    fields:
+      - request_id
+      - short_code
+      - destination_url
+      - cache_tier (l1, l2, db)
+      - latency_ms
+      - ip_address (anonymized)
