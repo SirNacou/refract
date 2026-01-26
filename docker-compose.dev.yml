@@ -10,14 +10,39 @@ services:
       - "3000:3000"
     env_file:
       - .env
-      - ./frontend/.env.local
+      - ./frontend/.env
     environment:
       - CHOKIDAR_USEPOLLING=true
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/refract
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      # - /app/node_modules
+    develop:
+      watch:
+        - path: ./frontend
+          action: sync
+          target: /app
+          initial_sync: true
+          ignore:
+            - node_modules
+        - path: ./frontend/package.json
+          action: rebuild
+
+  api:
+    container_name: refract-api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+      - ./api/.env
+    volumes:
+      - ./api:/app
+    depends_on:
+      - postgres
 
   postgres:
     container_name: refract-postgres

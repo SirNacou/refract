@@ -8,6 +8,11 @@ import { routeTree } from './routeTree.gen'
 // Create a new router instance
 export const getRouter = () => {
   const rqContext = TanstackQuery.getContext()
+  rqContext.queryClient.setDefaultOptions({
+    queries: {
+      staleTime: 1000 * 60, // 1 minute
+    }
+  })
 
   const router = createRouter({
     routeTree,

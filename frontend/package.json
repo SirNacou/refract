@@ -10,6 +10,7 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
+    "openapi-ts": "openapi-ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -17,6 +18,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@daveyplate/better-auth-ui": "^3.3.15",
     "@faker-js/faker": "^10.0.0",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",
@@ -41,6 +43,7 @@
     "clsx": "^2.1.1",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.0",
+    "ky": "^1.14.3",
     "lucide-react": "^0.561.0",
     "nitro": "npm:nitro-nightly@latest",
     "pg": "^8.16.3",
@@ -54,6 +57,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
+    "@hey-api/openapi-ts": "0.90.10",
     "@tanstack/devtools-vite": "^0.3.11",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/react": "^16.2.0",

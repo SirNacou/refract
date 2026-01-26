@@ -1,18 +1,30 @@
+import { TanStackDevtools } from '@tanstack/react-devtools'
 import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
 
-import Header from '../components/Header'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import appCss from '../styles.css?url'
 
+import { client } from '@/gen/api/client.gen'
+import { authClient } from '@/lib/auth-client'
+import { Providers } from '@/providers'
 import type { QueryClient } from '@tanstack/react-query'
+
+client.interceptors.request.use(async (req, _) => {
+  const { data } = await authClient.token()
+
+  if (data) {
+    req.headers.set('Authorization', `Bearer ${data?.token}`)
+  }
+
+  return req
+})
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -50,8 +62,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <Header />
-        {children}
+        <Providers>
+          {children}
+        </Providers>
         <TanStackDevtools
           config={{
             position: 'bottom-right',
