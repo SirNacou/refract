@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/MicahParks/keyfunc/v3"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/lestrrat-go/httprc/v3"
 	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/rs/cors"
 )
 
@@ -49,8 +49,9 @@ func NewRouter(port int) *Router {
 		fmt.Sscanf(bearer, "Bearer %s", &tokenString)
 
 		jwksURL := "http://localhost:3000/api/auth/jwks"
-		cache, err := jwk.NewCache(ctx.Context(), http.DefaultClient)
+		cache, err := jwk.NewCache(ctx.Context(), httprc.NewClient())
 		if err != nil {
+			slog.Error("Failed to create JWK cache", slog.AnyValue(err))
 			huma.WriteErr(api, ctx, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
@@ -61,28 +62,21 @@ func NewRouter(port int) *Router {
 			return
 		}
 
-		_, err = cache.Refresh(ctx.Context(), jwksURL)
+		keyset, err := cache.Lookup(ctx.Context(), jwksURL)
 		if err != nil {
 			huma.WriteErr(api, ctx, http.StatusInternalServerError, "Internal Server Error")
 			return
 		}
 
-		keyF, err := keyfunc.NewDefaultCtx(ctx.Context(), []string{jwksURL})
+		token, err := jwt.Parse([]byte(tokenString), jwt.WithKeySet(keyset))
+
 		if err != nil {
-			slog.Error("Failed to create JWKs from URL", slog.String("url", jwksURL), slog.AnyValue(err))
-			huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized request")
-			return
-		}
-
-		token, err := jwt.Parse(tokenString, keyF.KeyfuncCtx(ctx.Context()))
-
-		if err != nil || !token.Valid {
 			slog.Error("Failed to parse or validate JWT", slog.Any("error", err))
 			huma.WriteErr(api, ctx, http.StatusUnauthorized, "Unauthorized request")
 			return
 		}
 
-		slog.Info("Successfully authenticated request", slog.Any("claims", token.Claims))
+		slog.Info("Successfully authenticated request", slog.Any("claims", token.Keys()))
 
 		next(ctx)
 	})
