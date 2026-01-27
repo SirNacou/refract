@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/SirNacou/refract/api/internal/infrastructure/auth"
@@ -72,16 +73,17 @@ func (am *AuthMiddleware) HandlerHuma(ctx huma.Context, next func(huma.Context))
 		return
 	}
 
-	token, err := jwt.ParseHeader(r.Header, "Authorization", jwt.WithKeySet(keyset))
+	tokenString := strings.TrimPrefix(ctx.Header("Authorization"), "Bearer ")
+
+	token, err := jwt.ParseString(tokenString, jwt.WithKeySet(keyset))
 	if err != nil {
-		slog.ErrorContext(r.Context(), "Failed to parse jwt", slog.Any("error", err))
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		slog.ErrorContext(ctx.Context(), "Failed to parse jwt", slog.Any("error", err))
+		huma.WriteErr(am.api, ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	slog.InfoContext(r.Context(), "Authenticated request", slog.Any("token", token.Keys()))
+	slog.InfoContext(ctx.Context(), "Authenticated request", slog.Any("token", token.Keys()))
+	authCtx := auth.SetClaimsToContext(ctx.Context(), &auth.Claims{Token: token})
 
-	ctx := auth.SetClaimsToContext(r.Context(), &auth.Claims{Token: token})
-
-	next.ServeHTTP(w, r.WithContext(ctx))
+	next(huma.WithContext(ctx, authCtx))
 }

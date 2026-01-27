@@ -57,18 +57,16 @@ func NewRouter(ctx context.Context, cfg *config.Config) (*Router, error) {
 	</html>`))
 	}))
 
+	api := humachi.New(router, humaCfg)
+
+	grp := huma.NewGroup(api, "/api")
+
 	authMw, err := middleware.NewAuthMiddleware(ctx, cfg.JwksURL)
 	if err != nil {
 		return nil, err
 	}
 
-	r := router.Group(func(r chi.Router) {
-		r.Use(authMw.Handler)
-	})
-
-	api := humachi.New(r, humaCfg)
-
-	api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {})
+	grp.UseMiddleware(authMw.HandlerHuma)
 
 	huma.Get(api, "/", func(ctx context.Context, i *struct {
 		Authorication string `header:"Authorization"`
@@ -77,7 +75,7 @@ func NewRouter(ctx context.Context, cfg *config.Config) (*Router, error) {
 			Body: "Welcome to the Refract API!",
 		}, nil
 	})
-	return &Router{api, router, cfg.Port}, nil
+	return &Router{grp, router, cfg.Port}, nil
 }
 
 func (r *Router) SetUp(db *persistence.DB) (err error) {
