@@ -10,4 +10,4 @@ RUN go mod download
 
 COPY . .
 
-CMD [ "air", "--build.cmd", "go run ./cmd/api/main.go" ]
+CMD [ "air", "--build.cmd", "go build -o ./tmp/main ./cmd/api/main.go", "--build.entrypoint", "./tmp/main" ]

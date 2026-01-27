@@ -1,6 +1,10 @@
 package listurls
 
-import "context"
+import (
+	"context"
+
+	"github.com/SirNacou/refract/api/internal/infrastructure/auth"
+)
 
 type Request struct{}
 
@@ -17,7 +21,13 @@ func NewHandler(query *QueryHandler) *Handler {
 }
 
 func (h *Handler) Handle(ctx context.Context, req *Request) (*Response, error) {
-	res, err := h.query.Handle(ctx, &Query{})
+	claims := auth.GetClaimsFromContext(ctx)
+	userID, err := claims.GetUserID()
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := h.query.Handle(ctx, &Query{userID})
 	if err != nil {
 		return nil, err
 	}

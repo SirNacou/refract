@@ -11,6 +11,7 @@ export const auth = betterAuth({
     provider: 'pg',
     schema: authSchema,
   }),
+  baseURL: env.BETTER_AUTH_URL,
   emailAndPassword: {
     enabled: true,
   },
@@ -21,4 +22,7 @@ export const auth = betterAuth({
     }
   },
   plugins: [jwt(), tanstackStartCookies()],
+  advanced: {
+    disableCSRFCheck: true, // Disable CSRF to allow backend server-to-server JWKS requests
+  },
 })

@@ -2,7 +2,9 @@ package listurls
 
 import "context"
 
-type Query struct{}
+type Query struct{
+	userID string
+}
 
 type QueryResponse struct{}
 

@@ -4,6 +4,7 @@ import "github.com/caarlos0/env/v11"
 
 type Config struct {
 	Port int `env:"PORT"`
+	JwksURL string `env:"JWKS_URL"`
 }
 
 func LoadConfig() (*Config, error) {

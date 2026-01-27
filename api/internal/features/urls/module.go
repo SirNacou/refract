@@ -15,8 +15,9 @@ func (m *Module) RegisterRoutes(api huma.API) error {
 	grp := huma.NewGroup(api, "/urls")
 
 	huma.Register(grp, huma.Operation{
-		Method: "GET",
-		Path:   "/",
+		OperationID: "list-urls",
+		Method:      "GET",
+		Path:        "/",
 	}, listurls.NewHandler(listurls.NewQueryHandler()).Handle)
 
 	return nil
