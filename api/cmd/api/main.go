@@ -7,23 +7,33 @@ import (
 	"os"
 
 	"github.com/SirNacou/refract/api/internal/config"
+	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
 	"github.com/SirNacou/refract/api/internal/infrastructure/server"
 )
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{})))
 
-	slog.Debug("Test")
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	ctx := context.Background()
 
+	db, err := persistence.NewDB(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to initialize DB: %v", err)
+	}
+	defer db.Close()
+
 	router, err := server.NewRouter(ctx, cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize router: %v", err)
+	}
+
+	if err := router.SetUp(db); err != nil {
+		log.Fatalf("Failed to set up routes: %v", err)
 	}
 
 	log.Printf("Starting server on port %d", cfg.Port)

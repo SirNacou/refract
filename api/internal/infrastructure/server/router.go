@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/SirNacou/refract/api/internal/config"
+	"github.com/SirNacou/refract/api/internal/features/urls"
+	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
 	"github.com/SirNacou/refract/api/internal/infrastructure/server/middleware"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
@@ -66,6 +68,8 @@ func NewRouter(ctx context.Context, cfg *config.Config) (*Router, error) {
 
 	api := humachi.New(r, humaCfg)
 
+	api.UseMiddleware(func(ctx huma.Context, next func(huma.Context)) {})
+
 	huma.Get(api, "/", func(ctx context.Context, i *struct {
 		Authorication string `header:"Authorization"`
 	}) (*struct{ Body string }, error) {
@@ -76,8 +80,10 @@ func NewRouter(ctx context.Context, cfg *config.Config) (*Router, error) {
 	return &Router{api, router, cfg.Port}, nil
 }
 
-func (r *Router) Handler() huma.API {
-	return r.api
+func (r *Router) SetUp(db *persistence.DB) (err error) {
+	err = urls.NewModule(db).RegisterRoutes(r.api)
+
+	return err
 }
 
 func (r *Router) Run() error {

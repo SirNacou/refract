@@ -1,0 +1,39 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    # Adjust paths to match your project structure
+    queries: "sql/queries"
+    schema: "sql/schema"
+    gen:
+      go:
+        package: "db"
+        out: "internal/db"
+        # CRITICAL: Tells sqlc to use pgx/v5 imports and interfaces
+        sql_package: "pgx/v5"
+
+        # Best Practice: Generate an interface for mocking in unit tests
+        emit_interface: true
+
+        # Best Practice: Add JSON tags to structs for easy API serialization
+        emit_json_tags: true
+
+        # Best Practice: Use pointers for nulls (e.g., *string) instead of sql.NullString
+        # This makes the API cleaner to consume in your business logic.
+        emit_pointers_for_null_types: true
+
+        # Type Overrides: Map DB types to standard Go types for better DX
+        overrides:
+          - db_type: "uuid"
+            go_type: "github.com/google/uuid.UUID"
+          - db_type: "timestamptz"
+            go_type: "time.Time"
+          - db_type: "timestamptz"
+            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+          - db_type: "timestamp"
+            go_type: "time.Time"
+          - db_type: "jsonb"
+            go_type: "github.com/jackc/pgtype.JSONB"

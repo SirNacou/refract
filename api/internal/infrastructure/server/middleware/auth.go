@@ -63,3 +63,25 @@ func (am *AuthMiddleware) Handler(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+func (am *AuthMiddleware) HandlerHuma(ctx huma.Context, next func(huma.Context)) {
+
+	keyset, err := am.cache.Lookup(ctx.Context(), am.url)
+	if err != nil {
+		slog.Error("Failed to fetch JWK set", slog.Any("error", err))
+		huma.WriteErr(am.api, ctx, http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+
+	token, err := jwt.ParseHeader(r.Header, "Authorization", jwt.WithKeySet(keyset))
+	if err != nil {
+		slog.ErrorContext(r.Context(), "Failed to parse jwt", slog.Any("error", err))
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	slog.InfoContext(r.Context(), "Authenticated request", slog.Any("token", token.Keys()))
+
+	ctx := auth.SetClaimsToContext(r.Context(), &auth.Claims{Token: token})
+
+	next.ServeHTTP(w, r.WithContext(ctx))
+}

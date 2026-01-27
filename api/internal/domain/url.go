@@ -1,19 +1,33 @@
 package domain
 
-import "time"
+import (
+	"context"
+	"time"
+)
+
+type Status = string
+
+const (
+	Active   Status = "active"
+	Expired  Status = "expired"
+	Disabled Status = "disabled"
+)
+
+type SnowflakeID uint64
 
 type URL struct {
-	ID          uint64
+	ID          SnowflakeID
 	OriginalURL string
 	ShortCode   string
 	Title       string
 	Notes       string
 	UserID      string
-	ExpiryDate  *time.Time
+	ExpiresAt   *time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Status      Status
 }
 
 type URLRepository interface {
-	ListByUser(userID string) ([]URL, error)
+	ListByUser(ctx context.Context, userID string) ([]URL, error)
 }
