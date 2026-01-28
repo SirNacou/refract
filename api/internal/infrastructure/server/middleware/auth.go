@@ -20,7 +20,7 @@ type AuthMiddleware struct {
 	url   string
 }
 
-func NewAuthMiddleware(ctx context.Context, jwksURL string) (*AuthMiddleware, error) {
+func NewAuthMiddleware(ctx context.Context, api huma.API, jwksURL string) (*AuthMiddleware, error) {
 	cache, err := jwk.NewCache(ctx, httprc.NewClient(httprc.WithHTTPClient(&http.Client{
 		Timeout: 5 * time.Second,
 	})))
@@ -37,6 +37,7 @@ func NewAuthMiddleware(ctx context.Context, jwksURL string) (*AuthMiddleware, er
 
 	return &AuthMiddleware{
 		cache: cache,
+		api:   api,
 		url:   jwksURL,
 	}, nil
 }
@@ -57,8 +58,6 @@ func (am *AuthMiddleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		slog.InfoContext(r.Context(), "Authenticated request", slog.Any("token", token.Keys()))
-
 		ctx := auth.SetClaimsToContext(r.Context(), &auth.Claims{Token: token})
 
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -74,6 +73,11 @@ func (am *AuthMiddleware) HandlerHuma(ctx huma.Context, next func(huma.Context))
 	}
 
 	tokenString := strings.TrimPrefix(ctx.Header("Authorization"), "Bearer ")
+	if tokenString == "" {
+		slog.ErrorContext(ctx.Context(), "Authorization header missing")
+		huma.WriteErr(am.api, ctx, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 
 	token, err := jwt.ParseString(tokenString, jwt.WithKeySet(keyset))
 	if err != nil {
@@ -82,7 +86,6 @@ func (am *AuthMiddleware) HandlerHuma(ctx huma.Context, next func(huma.Context))
 		return
 	}
 
-	slog.InfoContext(ctx.Context(), "Authenticated request", slog.Any("token", token.Keys()))
 	authCtx := auth.SetClaimsToContext(ctx.Context(), &auth.Claims{Token: token})
 
 	next(huma.WithContext(ctx, authCtx))

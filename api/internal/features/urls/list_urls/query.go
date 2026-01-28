@@ -11,7 +11,7 @@ type Query struct {
 }
 
 type QueryResponse struct {
-	URLs []domain.URL `json:"urls"`
+	URLs []domain.URL `json:"urls" default:"[]"`
 }
 
 type QueryHandler struct {

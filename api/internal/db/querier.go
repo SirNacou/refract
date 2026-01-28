@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	CreateURL(ctx context.Context, arg CreateURLParams) (Url, error)
 	ListURLs(ctx context.Context, userID string) ([]Url, error)
 }
 

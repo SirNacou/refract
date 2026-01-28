@@ -1,0 +1,2 @@
+ALTER TABLE urls
+ADD domain TEXT NOT NULL;

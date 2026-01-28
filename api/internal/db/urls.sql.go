@@ -7,10 +7,50 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
+const createURL = `-- name: CreateURL :one
+INSERT INTO urls (id, short_code, original_url, user_id, domain, expires_at)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, short_code, original_url, user_id, created_at, updated_at, expires_at, status, domain
+`
+
+type CreateURLParams struct {
+	ID          int64      `json:"id"`
+	ShortCode   string     `json:"short_code"`
+	OriginalUrl string     `json:"original_url"`
+	UserID      string     `json:"user_id"`
+	Domain      string     `json:"domain"`
+	ExpiresAt   *time.Time `json:"expires_at"`
+}
+
+func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (Url, error) {
+	row := q.db.QueryRow(ctx, createURL,
+		arg.ID,
+		arg.ShortCode,
+		arg.OriginalUrl,
+		arg.UserID,
+		arg.Domain,
+		arg.ExpiresAt,
+	)
+	var i Url
+	err := row.Scan(
+		&i.ID,
+		&i.ShortCode,
+		&i.OriginalUrl,
+		&i.UserID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExpiresAt,
+		&i.Status,
+		&i.Domain,
+	)
+	return i, err
+}
+
 const listURLs = `-- name: ListURLs :many
-SELECT id, short_code, original_url, user_id, created_at, updated_at, expires_at, status FROM urls
+SELECT id, short_code, original_url, user_id, created_at, updated_at, expires_at, status, domain FROM urls
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -21,7 +61,7 @@ func (q *Queries) ListURLs(ctx context.Context, userID string) ([]Url, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Url
+	items := []Url{}
 	for rows.Next() {
 		var i Url
 		if err := rows.Scan(
@@ -33,6 +73,7 @@ func (q *Queries) ListURLs(ctx context.Context, userID string) ([]Url, error) {
 			&i.UpdatedAt,
 			&i.ExpiresAt,
 			&i.Status,
+			&i.Domain,
 		); err != nil {
 			return nil, err
 		}

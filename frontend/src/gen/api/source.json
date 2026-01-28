@@ -38,7 +38,7 @@
 						"items": {
 							"$ref": "#/components/schemas/ErrorDetail"
 						},
-						"type": ["array", "null"]
+						"type": "array"
 					},
 					"instance": {
 						"description": "A URI reference that identifies the specific occurrence of the problem.",
@@ -67,6 +67,127 @@
 				},
 				"type": "object"
 			},
+			"QueryResponse": {
+				"additionalProperties": false,
+				"properties": {
+					"$schema": {
+						"description": "A URL to the JSON Schema for this object.",
+						"examples": ["http://localhost:8080/schemas/QueryResponse.json"],
+						"format": "uri",
+						"readOnly": true,
+						"type": "string"
+					},
+					"urls": {
+						"default": [],
+						"items": {
+							"$ref": "#/components/schemas/URL"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["urls"],
+				"type": "object"
+			},
+			"ShortenRequest": {
+				"additionalProperties": false,
+				"properties": {
+					"$schema": {
+						"description": "A URL to the JSON Schema for this object.",
+						"examples": ["http://localhost:8080/schemas/ShortenRequest.json"],
+						"format": "uri",
+						"readOnly": true,
+						"type": "string"
+					},
+					"domain": {
+						"type": "string"
+					},
+					"original_url": {
+						"format": "uri",
+						"type": "string"
+					}
+				},
+				"required": ["original_url"],
+				"type": "object"
+			},
+			"ShortenResponseBody": {
+				"additionalProperties": false,
+				"properties": {
+					"$schema": {
+						"description": "A URL to the JSON Schema for this object.",
+						"examples": [
+							"http://localhost:8080/schemas/ShortenResponseBody.json"
+						],
+						"format": "uri",
+						"readOnly": true,
+						"type": "string"
+					},
+					"domain": {
+						"type": "string"
+					},
+					"short_code": {
+						"type": "string"
+					}
+				},
+				"required": ["short_code", "domain"],
+				"type": "object"
+			},
+			"URL": {
+				"additionalProperties": false,
+				"properties": {
+					"CreatedAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"Domain": {
+						"type": "string"
+					},
+					"ExpiresAt": {
+						"format": "date-time",
+						"type": ["string", "null"]
+					},
+					"ID": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"Notes": {
+						"type": "string"
+					},
+					"OriginalURL": {
+						"type": "string"
+					},
+					"ShortCode": {
+						"type": "string"
+					},
+					"Status": {
+						"type": "string"
+					},
+					"Title": {
+						"type": "string"
+					},
+					"UpdatedAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"UserID": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"ID",
+					"OriginalURL",
+					"ShortCode",
+					"Domain",
+					"Title",
+					"Notes",
+					"UserID",
+					"ExpiresAt",
+					"CreatedAt",
+					"UpdatedAt",
+					"Status"
+				],
+				"type": "object"
+			},
 			"ErrorModelWritable": {
 				"additionalProperties": false,
 				"properties": {
@@ -80,7 +201,7 @@
 						"items": {
 							"$ref": "#/components/schemas/ErrorDetail"
 						},
-						"type": ["array", "null"]
+						"type": "array"
 					},
 					"instance": {
 						"description": "A URI reference that identifies the specific occurrence of the problem.",
@@ -108,6 +229,54 @@
 					}
 				},
 				"type": "object"
+			},
+			"QueryResponseWritable": {
+				"additionalProperties": false,
+				"properties": {
+					"urls": {
+						"default": [],
+						"items": {
+							"$ref": "#/components/schemas/URL"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["urls"],
+				"type": "object"
+			},
+			"ShortenRequestWritable": {
+				"additionalProperties": false,
+				"properties": {
+					"domain": {
+						"type": "string"
+					},
+					"original_url": {
+						"format": "uri",
+						"type": "string"
+					}
+				},
+				"required": ["original_url"],
+				"type": "object"
+			},
+			"ShortenResponseBodyWritable": {
+				"additionalProperties": false,
+				"properties": {
+					"domain": {
+						"type": "string"
+					},
+					"short_code": {
+						"type": "string"
+					}
+				},
+				"required": ["short_code", "domain"],
+				"type": "object"
+			}
+		},
+		"securitySchemes": {
+			"bearer": {
+				"bearerFormat": "JWT",
+				"scheme": "bearer",
+				"type": "http"
 			}
 		}
 	},
@@ -120,6 +289,15 @@
 		"/": {
 			"get": {
 				"operationId": "get",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Authorization",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
 				"responses": {
 					"200": {
 						"content": {
@@ -143,6 +321,68 @@
 					}
 				},
 				"summary": "Get"
+			}
+		},
+		"/api/urls/": {
+			"get": {
+				"operationId": "list-urls",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QueryResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"default": {
+						"content": {
+							"application/problem+json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorModel"
+								}
+							}
+						},
+						"description": "Error"
+					}
+				}
+			},
+			"post": {
+				"operationId": "shorten-url",
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ShortenRequestWritable"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ShortenResponseBody"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"default": {
+						"content": {
+							"application/problem+json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorModel"
+								}
+							}
+						},
+						"description": "Error"
+					}
+				}
 			}
 		}
 	},

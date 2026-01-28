@@ -31,7 +31,7 @@ export type ErrorModel = {
 	/**
 	 * Optional list of individual error details
 	 */
-	errors?: Array<ErrorDetail> | null;
+	errors?: Array<ErrorDetail>;
 	/**
 	 * A URI reference that identifies the specific occurrence of the problem.
 	 */
@@ -48,6 +48,46 @@ export type ErrorModel = {
 	 * A URI reference to human-readable documentation for the error.
 	 */
 	type?: string;
+};
+
+export type QueryResponse = {
+	/**
+	 * A URL to the JSON Schema for this object.
+	 */
+	readonly $schema?: string;
+	urls: Array<Url>;
+};
+
+export type ShortenRequest = {
+	/**
+	 * A URL to the JSON Schema for this object.
+	 */
+	readonly $schema?: string;
+	domain?: string;
+	original_url: string;
+};
+
+export type ShortenResponseBody = {
+	/**
+	 * A URL to the JSON Schema for this object.
+	 */
+	readonly $schema?: string;
+	domain: string;
+	short_code: string;
+};
+
+export type Url = {
+	CreatedAt: Date;
+	Domain: string;
+	ExpiresAt: Date | null;
+	ID: bigint;
+	Notes: string;
+	OriginalURL: string;
+	ShortCode: string;
+	Status: string;
+	Title: string;
+	UpdatedAt: Date;
+	UserID: string;
 };
 
 export type ErrorModelWritable = {
@@ -58,7 +98,7 @@ export type ErrorModelWritable = {
 	/**
 	 * Optional list of individual error details
 	 */
-	errors?: Array<ErrorDetail> | null;
+	errors?: Array<ErrorDetail>;
 	/**
 	 * A URI reference that identifies the specific occurrence of the problem.
 	 */
@@ -77,8 +117,25 @@ export type ErrorModelWritable = {
 	type?: string;
 };
 
+export type QueryResponseWritable = {
+	urls: Array<Url>;
+};
+
+export type ShortenRequestWritable = {
+	domain?: string;
+	original_url: string;
+};
+
+export type ShortenResponseBodyWritable = {
+	domain: string;
+	short_code: string;
+};
+
 export type GetData = {
 	body?: never;
+	headers?: {
+		Authorization?: string;
+	};
 	path?: never;
 	query?: never;
 	url: "/";
@@ -101,3 +158,53 @@ export type GetResponses = {
 };
 
 export type GetResponse = GetResponses[keyof GetResponses];
+
+export type ListUrlsData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: "/api/urls/";
+};
+
+export type ListUrlsErrors = {
+	/**
+	 * Error
+	 */
+	default: ErrorModel;
+};
+
+export type ListUrlsError = ListUrlsErrors[keyof ListUrlsErrors];
+
+export type ListUrlsResponses = {
+	/**
+	 * OK
+	 */
+	200: QueryResponse;
+};
+
+export type ListUrlsResponse = ListUrlsResponses[keyof ListUrlsResponses];
+
+export type ShortenUrlData = {
+	body: ShortenRequestWritable;
+	path?: never;
+	query?: never;
+	url: "/api/urls/";
+};
+
+export type ShortenUrlErrors = {
+	/**
+	 * Error
+	 */
+	default: ErrorModel;
+};
+
+export type ShortenUrlError = ShortenUrlErrors[keyof ShortenUrlErrors];
+
+export type ShortenUrlResponses = {
+	/**
+	 * OK
+	 */
+	200: ShortenResponseBody;
+};
+
+export type ShortenUrlResponse = ShortenUrlResponses[keyof ShortenUrlResponses];

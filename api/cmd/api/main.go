@@ -9,6 +9,7 @@ import (
 	"github.com/SirNacou/refract/api/internal/config"
 	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
 	"github.com/SirNacou/refract/api/internal/infrastructure/server"
+	"github.com/SirNacou/refract/api/internal/infrastructure/snowflake"
 )
 
 func main() {
@@ -20,6 +21,11 @@ func main() {
 	}
 
 	ctx := context.Background()
+
+	err = snowflake.NewSnowflakeNode(cfg.NodeID)
+	if err != nil {
+		log.Fatalf("Failed to initialize Snowflake ID: %v", err)
+	}
 
 	db, err := persistence.NewDB(ctx, cfg.DatabaseURL)
 	if err != nil {

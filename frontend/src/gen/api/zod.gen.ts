@@ -11,7 +11,7 @@ export const zErrorDetail = z.object({
 export const zErrorModel = z.object({
 	$schema: z.optional(z.url().readonly()),
 	detail: z.optional(z.string()),
-	errors: z.optional(z.union([z.array(zErrorDetail), z.null()])),
+	errors: z.optional(z.array(zErrorDetail)),
 	instance: z.optional(z.url()),
 	status: z.optional(
 		z.coerce
@@ -25,11 +25,47 @@ export const zErrorModel = z.object({
 	),
 	title: z.optional(z.string()),
 	type: z.optional(z.url()).default("about:blank"),
+});
+
+export const zShortenRequest = z.object({
+	$schema: z.optional(z.url().readonly()),
+	domain: z.optional(z.string()),
+	original_url: z.url(),
+});
+
+export const zShortenResponseBody = z.object({
+	$schema: z.optional(z.url().readonly()),
+	domain: z.string(),
+	short_code: z.string(),
+});
+
+export const zUrl = z.object({
+	CreatedAt: z.iso.datetime(),
+	Domain: z.string(),
+	ExpiresAt: z.union([z.iso.datetime(), z.null()]),
+	ID: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	Notes: z.string(),
+	OriginalURL: z.string(),
+	ShortCode: z.string(),
+	Status: z.string(),
+	Title: z.string(),
+	UpdatedAt: z.iso.datetime(),
+	UserID: z.string(),
+});
+
+export const zQueryResponse = z.object({
+	$schema: z.optional(z.url().readonly()),
+	urls: z.array(zUrl).default([]),
 });
 
 export const zErrorModelWritable = z.object({
 	detail: z.optional(z.string()),
-	errors: z.optional(z.union([z.array(zErrorDetail), z.null()])),
+	errors: z.optional(z.array(zErrorDetail)),
 	instance: z.optional(z.url()),
 	status: z.optional(
 		z.coerce
@@ -45,7 +81,37 @@ export const zErrorModelWritable = z.object({
 	type: z.optional(z.url()).default("about:blank"),
 });
 
+export const zQueryResponseWritable = z.object({
+	urls: z.array(zUrl).default([]),
+});
+
+export const zShortenRequestWritable = z.object({
+	domain: z.optional(z.string()),
+	original_url: z.url(),
+});
+
+export const zShortenResponseBodyWritable = z.object({
+	domain: z.string(),
+	short_code: z.string(),
+});
+
 export const zGetData = z.object({
+	body: z.optional(z.never()),
+	path: z.optional(z.never()),
+	query: z.optional(z.never()),
+	headers: z.optional(
+		z.object({
+			Authorization: z.optional(z.string()),
+		}),
+	),
+});
+
+/**
+ * OK
+ */
+export const zGetResponse = z.string();
+
+export const zListUrlsData = z.object({
 	body: z.optional(z.never()),
 	path: z.optional(z.never()),
 	query: z.optional(z.never()),
@@ -54,4 +120,15 @@ export const zGetData = z.object({
 /**
  * OK
  */
-export const zGetResponse = z.string();
+export const zListUrlsResponse = zQueryResponse;
+
+export const zShortenUrlData = z.object({
+	body: zShortenRequestWritable,
+	path: z.optional(z.never()),
+	query: z.optional(z.never()),
+});
+
+/**
+ * OK
+ */
+export const zShortenUrlResponse = zShortenResponseBody;

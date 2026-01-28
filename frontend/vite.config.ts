@@ -7,6 +7,7 @@ import viteTsConfigPaths from 'vite-tsconfig-paths'
 
 import tailwindcss from '@tailwindcss/vite'
 import { nitro } from 'nitro/vite'
+import Icons from 'unplugin-icons/vite'
 
 const config = defineConfig({
   resolve: {
@@ -36,6 +37,11 @@ const config = defineConfig({
         plugins: ['babel-plugin-react-compiler'],
       },
     }),
+    Icons({
+      autoInstall: true, // Auto-detects npm/yarn/pnpm
+      compiler: 'jsx',
+      jsx: 'react'
+    })
   ],
 })
 

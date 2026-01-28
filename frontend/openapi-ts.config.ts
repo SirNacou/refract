@@ -3,7 +3,6 @@ import { defineConfig } from '@hey-api/openapi-ts'
 export default defineConfig({
   input: {
     path: 'http://localhost:8080/openapi.yaml',
-    watch: true,
   },
   output: {
     path: 'src/gen/api',

@@ -40,7 +40,7 @@ export const ErrorModelSchema = {
 			items: {
 				$ref: "#/components/schemas/ErrorDetail",
 			},
-			type: ["array", "null"],
+			type: "array",
 		},
 		instance: {
 			description:
@@ -73,6 +73,129 @@ export const ErrorModelSchema = {
 	type: "object",
 } as const;
 
+export const QueryResponseSchema = {
+	additionalProperties: false,
+	properties: {
+		$schema: {
+			description: "A URL to the JSON Schema for this object.",
+			examples: ["http://localhost:8080/schemas/QueryResponse.json"],
+			format: "uri",
+			readOnly: true,
+			type: "string",
+		},
+		urls: {
+			default: [],
+			items: {
+				$ref: "#/components/schemas/URL",
+			},
+			type: "array",
+		},
+	},
+	required: ["urls"],
+	type: "object",
+} as const;
+
+export const ShortenRequestSchema = {
+	additionalProperties: false,
+	properties: {
+		$schema: {
+			description: "A URL to the JSON Schema for this object.",
+			examples: ["http://localhost:8080/schemas/ShortenRequest.json"],
+			format: "uri",
+			readOnly: true,
+			type: "string",
+		},
+		domain: {
+			type: "string",
+		},
+		original_url: {
+			format: "uri",
+			type: "string",
+		},
+	},
+	required: ["original_url"],
+	type: "object",
+} as const;
+
+export const ShortenResponseBodySchema = {
+	additionalProperties: false,
+	properties: {
+		$schema: {
+			description: "A URL to the JSON Schema for this object.",
+			examples: ["http://localhost:8080/schemas/ShortenResponseBody.json"],
+			format: "uri",
+			readOnly: true,
+			type: "string",
+		},
+		domain: {
+			type: "string",
+		},
+		short_code: {
+			type: "string",
+		},
+	},
+	required: ["short_code", "domain"],
+	type: "object",
+} as const;
+
+export const URLSchema = {
+	additionalProperties: false,
+	properties: {
+		CreatedAt: {
+			format: "date-time",
+			type: "string",
+		},
+		Domain: {
+			type: "string",
+		},
+		ExpiresAt: {
+			format: "date-time",
+			type: ["string", "null"],
+		},
+		ID: {
+			format: "int64",
+			minimum: 0,
+			type: "integer",
+		},
+		Notes: {
+			type: "string",
+		},
+		OriginalURL: {
+			type: "string",
+		},
+		ShortCode: {
+			type: "string",
+		},
+		Status: {
+			type: "string",
+		},
+		Title: {
+			type: "string",
+		},
+		UpdatedAt: {
+			format: "date-time",
+			type: "string",
+		},
+		UserID: {
+			type: "string",
+		},
+	},
+	required: [
+		"ID",
+		"OriginalURL",
+		"ShortCode",
+		"Domain",
+		"Title",
+		"Notes",
+		"UserID",
+		"ExpiresAt",
+		"CreatedAt",
+		"UpdatedAt",
+		"Status",
+	],
+	type: "object",
+} as const;
+
 export const ErrorModelWritableSchema = {
 	additionalProperties: false,
 	properties: {
@@ -87,7 +210,7 @@ export const ErrorModelWritableSchema = {
 			items: {
 				$ref: "#/components/schemas/ErrorDetail",
 			},
-			type: ["array", "null"],
+			type: "array",
 		},
 		instance: {
 			description:
@@ -117,5 +240,49 @@ export const ErrorModelWritableSchema = {
 			type: "string",
 		},
 	},
+	type: "object",
+} as const;
+
+export const QueryResponseWritableSchema = {
+	additionalProperties: false,
+	properties: {
+		urls: {
+			default: [],
+			items: {
+				$ref: "#/components/schemas/URL",
+			},
+			type: "array",
+		},
+	},
+	required: ["urls"],
+	type: "object",
+} as const;
+
+export const ShortenRequestWritableSchema = {
+	additionalProperties: false,
+	properties: {
+		domain: {
+			type: "string",
+		},
+		original_url: {
+			format: "uri",
+			type: "string",
+		},
+	},
+	required: ["original_url"],
+	type: "object",
+} as const;
+
+export const ShortenResponseBodyWritableSchema = {
+	additionalProperties: false,
+	properties: {
+		domain: {
+			type: "string",
+		},
+		short_code: {
+			type: "string",
+		},
+	},
+	required: ["short_code", "domain"],
 	type: "object",
 } as const;

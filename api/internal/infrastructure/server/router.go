@@ -21,21 +21,32 @@ import (
 type Router struct {
 	api    huma.API
 	router *chi.Mux
-	port   int
+	cfg    *config.Config
 }
 
 func NewRouter(ctx context.Context, cfg *config.Config) (*Router, error) {
 	router := chi.NewRouter()
 
-	router.Use(slogchi.New(slog.Default()))
-	router.Use(chiMw.Recoverer)
-	router.Use(cors.AllowAll().Handler)
+	router.Use(
+		slogchi.New(slog.Default()),
+		chiMw.Recoverer,
+		cors.AllowAll().Handler,
+	)
 
 	humaCfg := huma.DefaultConfig("Refract API", "1.0.0")
 	humaCfg.DocsPath = ""
+	humaCfg.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
+		"bearer": {
+			Type:         "http",
+			Scheme:       "bearer",
+			BearerFormat: "JWT",
+		},
+	}
 	humaCfg.Servers = []*huma.Server{
 		{URL: fmt.Sprintf("http://localhost:%d", cfg.Port)},
 	}
+
+	huma.DefaultArrayNullable = false
 
 	router.Get("/docs", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
@@ -61,7 +72,7 @@ func NewRouter(ctx context.Context, cfg *config.Config) (*Router, error) {
 
 	grp := huma.NewGroup(api, "/api")
 
-	authMw, err := middleware.NewAuthMiddleware(ctx, cfg.JwksURL)
+	authMw, err := middleware.NewAuthMiddleware(ctx, grp, cfg.JwksURL)
 	if err != nil {
 		return nil, err
 	}
@@ -75,17 +86,17 @@ func NewRouter(ctx context.Context, cfg *config.Config) (*Router, error) {
 			Body: "Welcome to the Refract API!",
 		}, nil
 	})
-	return &Router{grp, router, cfg.Port}, nil
+	return &Router{grp, router, cfg}, nil
 }
 
 func (r *Router) SetUp(db *persistence.DB) (err error) {
-	err = urls.NewModule(db).RegisterRoutes(r.api)
+	err = urls.NewModule(db, r.cfg).RegisterRoutes(r.api)
 
 	return err
 }
 
 func (r *Router) Run() error {
-	addr := fmt.Sprintf(":%d", r.port)
+	addr := fmt.Sprintf(":%d", r.cfg.Port)
 
 	return http.ListenAndServe(addr, r.router)
 }

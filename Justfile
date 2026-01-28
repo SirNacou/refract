@@ -14,3 +14,6 @@ create-migration name:
 
 migrate name:
   @migrate -path ./api/sql/schema -database {{database_url}} {{name}}
+
+generate:
+  @sqlc generate -f ./api/sqlc.yaml

@@ -11,6 +11,7 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import appCss from '../styles.css?url'
 
+import { Toaster } from '@/components/ui/sonner'
 import { client } from '@/gen/api/client.gen'
 import { authClient } from '@/lib/auth-client'
 import { Providers } from '@/providers'
@@ -64,6 +65,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <Providers>
           {children}
+          <Toaster />
         </Providers>
         <TanStackDevtools
           config={{

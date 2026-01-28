@@ -21,6 +21,8 @@ sql:
         # This makes the API cleaner to consume in your business logic.
         emit_pointers_for_null_types: true
 
+        emit_empty_slices: true
+
         # Type Overrides: Map DB types to standard Go types for better DX
         overrides:
           - db_type: "uuid"

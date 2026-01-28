@@ -18,6 +18,11 @@ func NewDB(ctx context.Context, dsn string) (*DB, error) {
 		return nil, err
 	}
 
+	err = p.Ping(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	querier := db.New(p)
 
 	return &DB{Pool: p, Querier: querier}, nil

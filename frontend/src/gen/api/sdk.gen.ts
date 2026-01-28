@@ -2,8 +2,26 @@
 
 import type { Client, Options as Options2, TDataShape } from "./client";
 import { client } from "./client.gen";
-import type { GetData, GetErrors, GetResponses } from "./types.gen";
-import { zGetData, zGetResponse } from "./zod.gen";
+import { listUrlsResponseTransformer } from "./transformers.gen";
+import type {
+	GetData,
+	GetErrors,
+	GetResponses,
+	ListUrlsData,
+	ListUrlsErrors,
+	ListUrlsResponses,
+	ShortenUrlData,
+	ShortenUrlErrors,
+	ShortenUrlResponses,
+} from "./types.gen";
+import {
+	zGetData,
+	zGetResponse,
+	zListUrlsData,
+	zListUrlsResponse,
+	zShortenUrlData,
+	zShortenUrlResponse,
+} from "./zod.gen";
 
 export type Options<
 	TData extends TDataShape = TDataShape,
@@ -33,4 +51,38 @@ export const get = <ThrowOnError extends boolean = false>(
 		responseValidator: async (data) => await zGetResponse.parseAsync(data),
 		url: "/",
 		...options,
+	});
+
+export const listUrls = <ThrowOnError extends boolean = false>(
+	options?: Options<ListUrlsData, ThrowOnError>,
+) =>
+	(options?.client ?? client).get<
+		ListUrlsResponses,
+		ListUrlsErrors,
+		ThrowOnError
+	>({
+		requestValidator: async (data) => await zListUrlsData.parseAsync(data),
+		responseTransformer: listUrlsResponseTransformer,
+		responseValidator: async (data) => await zListUrlsResponse.parseAsync(data),
+		url: "/api/urls/",
+		...options,
+	});
+
+export const shortenUrl = <ThrowOnError extends boolean = false>(
+	options: Options<ShortenUrlData, ThrowOnError>,
+) =>
+	(options.client ?? client).post<
+		ShortenUrlResponses,
+		ShortenUrlErrors,
+		ThrowOnError
+	>({
+		requestValidator: async (data) => await zShortenUrlData.parseAsync(data),
+		responseValidator: async (data) =>
+			await zShortenUrlResponse.parseAsync(data),
+		url: "/api/urls/",
+		...options,
+		headers: {
+			"Content-Type": "application/json",
+			...options.headers,
+		},
 	});
