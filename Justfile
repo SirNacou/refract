@@ -1,4 +1,5 @@
 set shell := ["bash", "-c"]
+set windows-shell := ["powershell", "-NoLogo", "-Command"]
 
 database_url := "postgres://postgres:postgres@localhost:5432/refract?sslmode=disable"
 

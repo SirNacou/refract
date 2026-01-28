@@ -4,7 +4,11 @@ import (
 	"context"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/SirNacou/refract/api/internal/config"
 	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
@@ -20,7 +24,8 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
 
 	err = snowflake.NewSnowflakeNode(cfg.NodeID)
 	if err != nil {
@@ -33,20 +38,36 @@ func main() {
 	}
 	defer db.Close()
 
-	router, err := server.NewRouter(ctx, cfg)
+	router, err := server.NewRouter(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize router: %v", err)
 	}
 
-	if err := router.SetUp(db); err != nil {
+	if err := router.SetUp(ctx, db); err != nil {
 		log.Fatalf("Failed to set up routes: %v", err)
 	}
 
-	log.Printf("Starting server on port %d", cfg.Port)
+	// 2. Run the server in a goroutine so it doesn't block main
+	go func() {
+		if err := router.Run(); err != nil && err != http.ErrServerClosed {
+			slog.Error("Server forced to shutdown", "error", err)
+		}
+	}()
 
-	if err := router.Run(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	slog.Info("Server started", "port", cfg.Port)
+
+	// 3. Wait for the signal
+	<-ctx.Done()
+	slog.Info("Shutting down gracefully... Press Ctrl+C again to force")
+
+	// 4. Trigger the router's shutdown logic
+	// We create a second context with a timeout (e.g., 10 seconds)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := router.Shutdown(shutdownCtx); err != nil {
+		slog.Error("Server forced to shutdown", "error", err)
 	}
 
-	slog.Info("Server shut down")
+	slog.Info("Server exited properly")
 }
