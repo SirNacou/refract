@@ -34,7 +34,7 @@ func (p *PostgresURLRepository) ListByUser(ctx context.Context, userID string) (
 		result = append(result, domain.URL{
 			ID:          domain.SnowflakeID(u.ID),
 			OriginalURL: u.OriginalUrl,
-			ShortCode:   u.ShortCode,
+			ShortCode:   domain.ShortCode(u.ShortCode),
 			Domain:      u.Domain,
 			UserID:      u.UserID,
 			ExpiresAt:   u.ExpiresAt,
@@ -50,8 +50,8 @@ func (p *PostgresURLRepository) ListByUser(ctx context.Context, userID string) (
 // Create implements [domain.URLRepository].
 func (p *PostgresURLRepository) Create(ctx context.Context, url *domain.URL) error {
 	_, err := p.querier.CreateURL(ctx, db.CreateURLParams{
-		ID:          int64(url.ID),
-		ShortCode:   url.ShortCode,
+		ID:          url.ID.Int64(),
+		ShortCode:   url.ShortCode.String(),
 		OriginalUrl: url.OriginalURL,
 		UserID:      url.UserID,
 		Domain:      url.Domain,

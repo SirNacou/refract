@@ -37,14 +37,14 @@ func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*CommandResp
 	if cmd.Domain != "" {
 	}
 
-	url := domain.NewURL(cmd.OriginalURL, "", domainName, "", "", cmd.UserID, cmd.ExpiresAt)
+	url := domain.NewURL(cmd.OriginalURL, domainName, "", "", cmd.UserID, domain.NewShortCode(""), cmd.ExpiresAt)
 	err := h.repo.Create(ctx, url)
 	if err != nil {
 		return nil, huma.Error400BadRequest("Failed to shorten URL", err)
 	}
 
 	return &CommandResponse{
-		ShortCode: url.ShortCode,
+		ShortCode: url.ShortCode.String(),
 		Domain:    url.Domain,
 	}, nil
 }

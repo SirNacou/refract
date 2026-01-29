@@ -21,14 +21,26 @@ const (
 
 type ShortCode string
 
+func NewShortCode(s string) *ShortCode {
+	if s == "" {
+		return nil
+	}
+	sc := ShortCode(s)
+	return &sc
+}
+
+func (s ShortCode) String() string {
+	return string(s)
+}
+
 // Encode: Scramble -> Encode
-func GenerateShortcode(snowflakeID SnowflakeID) string {
+func GenerateShortcode(snowflakeID SnowflakeID) ShortCode {
 	// 1. Obfuscate (Scramble the bits so it looks random)
 	// We use integer overflow intentionally here for the modular arithmetic
 	scrambled := (uint64(snowflakeID) * prime) ^ xorKey
 
 	// 2. Base58 Encode
-	return encodeBase58(scrambled)
+	return ShortCode(encodeBase58(scrambled))
 }
 
 // Decode: Decode -> Unscramble

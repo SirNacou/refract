@@ -56,6 +56,13 @@ func NewRouter(cfg *config.Config) (*Router, error) {
 func (r *Router) SetUp(ctx context.Context, db *persistence.DB) (err error) {
 
 	grp := huma.NewGroup(r.api, "/api")
+	grp.DocumentOperation(&huma.Operation{
+		Security: []map[string][]string{
+			{
+				"bearer": {},
+			},
+		},
+	})
 
 	authMw, err := middleware.NewAuthMiddleware(ctx, grp, r.cfg.JwksURL)
 	if err != nil {

@@ -9,3 +9,7 @@ type SnowflakeID uint64
 func NewSnowflakeID() SnowflakeID {
 	return SnowflakeID(snowflake.Generator.Generate())
 }
+
+func (id SnowflakeID) Int64() int64 {
+	return int64(id)
+}

@@ -16,7 +16,7 @@ const (
 type URL struct {
 	ID          SnowflakeID
 	OriginalURL string
-	ShortCode   string
+	ShortCode   ShortCode
 	Domain      string
 	Title       string
 	Notes       string
@@ -27,11 +27,16 @@ type URL struct {
 	Status      Status
 }
 
-func NewURL(originalURL, shortCode, domain, title, notes, userID string, expiresAt *time.Time) *URL {
+func NewURL(originalURL, domain, title, notes, userID string, shortCode *ShortCode, expiresAt *time.Time) *URL {
+	id := NewSnowflakeID()
+	if shortCode == nil {
+		sc := GenerateShortcode(id)
+		shortCode = &sc
+	}
 	return &URL{
-		ID:          NewSnowflakeID(),
+		ID:          id,
 		OriginalURL: originalURL,
-		ShortCode:   shortCode,
+		ShortCode:   *shortCode,
 		Domain:      domain,
 		Title:       title,
 		Notes:       notes,
