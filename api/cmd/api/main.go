@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/SirNacou/refract/api/internal/config"
+	"github.com/SirNacou/refract/api/internal/infrastructure/cache"
 	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
 	"github.com/SirNacou/refract/api/internal/infrastructure/server"
 	"github.com/SirNacou/refract/api/internal/infrastructure/snowflake"
@@ -23,6 +24,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	log.Printf("Redirect Key: %s", cfg.Valkey.RedirectKey)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
@@ -38,12 +41,17 @@ func main() {
 	}
 	defer db.Close()
 
+	valkey, err := cache.NewCache(ctx, &cfg.Valkey)
+	if err != nil {
+		log.Fatalf("Failed to initialize Valkey: %v", err)
+	}
+
 	router, err := server.NewRouter(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize router: %v", err)
 	}
 
-	if err := router.SetUp(ctx, db); err != nil {
+	if err := router.SetUp(ctx, db, valkey); err != nil {
 		log.Fatalf("Failed to set up routes: %v", err)
 	}
 

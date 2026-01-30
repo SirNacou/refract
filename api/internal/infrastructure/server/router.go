@@ -17,6 +17,7 @@ import (
 	chiMw "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/cors"
 	slogchi "github.com/samber/slog-chi"
+	"github.com/valkey-io/valkey-go/valkeyaside"
 )
 
 type Router struct {
@@ -53,16 +54,9 @@ func NewRouter(cfg *config.Config) (*Router, error) {
 		}}, nil
 }
 
-func (r *Router) SetUp(ctx context.Context, db *persistence.DB) (err error) {
+func (r *Router) SetUp(ctx context.Context, db *persistence.DB, valkey valkeyaside.CacheAsideClient) (err error) {
 
 	grp := huma.NewGroup(r.api, "/api")
-	grp.DocumentOperation(&huma.Operation{
-		Security: []map[string][]string{
-			{
-				"bearer": {},
-			},
-		},
-	})
 
 	authMw, err := middleware.NewAuthMiddleware(ctx, grp, r.cfg.JwksURL)
 	if err != nil {
@@ -71,7 +65,7 @@ func (r *Router) SetUp(ctx context.Context, db *persistence.DB) (err error) {
 
 	grp.UseMiddleware(authMw.HandlerHuma)
 
-	if err = urls.NewModule(db, r.cfg).RegisterRoutes(grp); err != nil {
+	if err = urls.NewModule(db, valkey, r.cfg).RegisterRoutes(grp); err != nil {
 		return err
 	}
 
@@ -105,7 +99,7 @@ func getHumaCfg(cfg *config.Config) huma.Config {
 
 func handleDocs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(`<!doctype html>
+	_, err := w.Write([]byte(`<!doctype html>
 		<html>
 		  <head>
 		    <title>API Reference</title>
@@ -121,4 +115,8 @@ func handleDocs(w http.ResponseWriter, r *http.Request) {
 		    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
 		  </body>
 		</html>`))
+
+	if err != nil {
+		slog.Info("Failed to write docs response", slog.Any("error", err))
+	}
 }

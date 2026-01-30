@@ -1,15 +1,31 @@
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table"
+import { useMemo } from "react"
+import { Skeleton } from "./ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 
 type Props<TData, TValue> = {
   data: TData[]
   columns: ColumnDef<TData, TValue>[]
+  loading?: boolean
 }
 
-function DataTable<TData, TValue>({ data, columns }: Props<TData, TValue>) {
+function DataTable<TData, TValue>({ data, columns, loading = false }: Props<TData, TValue>) {
+  const tableColumns = useMemo(() => {
+    return loading
+      ? columns.map((col) => ({
+        ...col,
+        cell: () => <Skeleton className="h-4 w-full" />
+      }))
+      : columns
+  }, [loading, columns])
+
+  const tableData = useMemo(() => {
+    return loading ? new Array(5).fill({}) as TData[] : data
+  }, [loading, data])
+
   const table = useReactTable({
-    data,
-    columns,
+    data: tableData,
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
   })
 

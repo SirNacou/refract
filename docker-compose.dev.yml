@@ -28,21 +28,49 @@ services:
             - node_modules
         - path: ./frontend/package.json
           action: rebuild
+    depends_on:
+      api:
+        condition: service_started
 
   api:
     container_name: refract-api
     build:
       context: ./api
       dockerfile: Dockerfile.dev
+      target: api
     ports:
       - "8080:8080"
     env_file:
       - .env
       - ./api/.env
     volumes:
-      - ./api:/app
+      - ./api/internal:/app/internal
+      - ./api/cmd/api:/app/cmd/api
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+  redirector:
+    container_name: refract-redirector
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+      target: redirector
+    ports:
+      - "4000:8080"
+    env_file:
+      - .env
+      - ./api/.env
+    volumes:
+      - ./api/internal:/app/internal
+      - ./api/cmd/redirector:/app/cmd/redirector
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
 
   postgres:
     container_name: refract-postgres
@@ -54,6 +82,28 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    container_name: refract-valkey
+    image: valkey/valkey-bundle:9-alpine
+    ports:
+      - "6379:6379"
+    environment:
+      VALKEY_EXTRA_FLAGS: "--save 60 1 --loglevel warning"
+      # VALKEY_PASSWORD: "valkey"
+    volumes:
+      - valkeydata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
 
 volumes:
   pgdata:
+  valkeydata:

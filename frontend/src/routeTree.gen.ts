@@ -10,21 +10,16 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProtectedRouteRouteImport } from './routes/_protected/route'
-import { Route as ProtectedIndexRouteImport } from './routes/_protected/index'
 import { Route as OrganizationOrganizationViewRouteImport } from './routes/organization/$organizationView'
 import { Route as AuthAuthViewRouteImport } from './routes/auth/$authView'
-import { Route as AccountAccountViewRouteImport } from './routes/account/$accountView'
+import { Route as ProtectedmainIndexRouteImport } from './routes/_protected/(main)/index'
 import { Route as OrganizationSlugOrganizationViewRouteImport } from './routes/organization/$slug/$organizationView'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ProtectedAccountAccountViewRouteImport } from './routes/_protected/account/$accountView'
 
 const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
   id: '/_protected',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectedIndexRoute = ProtectedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedRouteRoute,
 } as any)
 const OrganizationOrganizationViewRoute =
   OrganizationOrganizationViewRouteImport.update({
@@ -37,10 +32,10 @@ const AuthAuthViewRoute = AuthAuthViewRouteImport.update({
   path: '/auth/$authView',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AccountAccountViewRoute = AccountAccountViewRouteImport.update({
-  id: '/account/$accountView',
-  path: '/account/$accountView',
-  getParentRoute: () => rootRouteImport,
+const ProtectedmainIndexRoute = ProtectedmainIndexRouteImport.update({
+  id: '/(main)/',
+  path: '/',
+  getParentRoute: () => ProtectedRouteRoute,
 } as any)
 const OrganizationSlugOrganizationViewRoute =
   OrganizationSlugOrganizationViewRouteImport.update({
@@ -53,64 +48,69 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProtectedAccountAccountViewRoute =
+  ProtectedAccountAccountViewRouteImport.update({
+    id: '/account/$accountView',
+    path: '/account/$accountView',
+    getParentRoute: () => ProtectedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof ProtectedIndexRoute
-  '/account/$accountView': typeof AccountAccountViewRoute
+  '/': typeof ProtectedmainIndexRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/organization/$organizationView': typeof OrganizationOrganizationViewRoute
+  '/account/$accountView': typeof ProtectedAccountAccountViewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/organization/$slug/$organizationView': typeof OrganizationSlugOrganizationViewRoute
 }
 export interface FileRoutesByTo {
-  '/account/$accountView': typeof AccountAccountViewRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/organization/$organizationView': typeof OrganizationOrganizationViewRoute
-  '/': typeof ProtectedIndexRoute
+  '/account/$accountView': typeof ProtectedAccountAccountViewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/organization/$slug/$organizationView': typeof OrganizationSlugOrganizationViewRoute
+  '/': typeof ProtectedmainIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_protected': typeof ProtectedRouteRouteWithChildren
-  '/account/$accountView': typeof AccountAccountViewRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/organization/$organizationView': typeof OrganizationOrganizationViewRoute
-  '/_protected/': typeof ProtectedIndexRoute
+  '/_protected/account/$accountView': typeof ProtectedAccountAccountViewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/organization/$slug/$organizationView': typeof OrganizationSlugOrganizationViewRoute
+  '/_protected/(main)/': typeof ProtectedmainIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/account/$accountView'
     | '/auth/$authView'
     | '/organization/$organizationView'
+    | '/account/$accountView'
     | '/api/auth/$'
     | '/organization/$slug/$organizationView'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/account/$accountView'
     | '/auth/$authView'
     | '/organization/$organizationView'
-    | '/'
+    | '/account/$accountView'
     | '/api/auth/$'
     | '/organization/$slug/$organizationView'
+    | '/'
   id:
     | '__root__'
     | '/_protected'
-    | '/account/$accountView'
     | '/auth/$authView'
     | '/organization/$organizationView'
-    | '/_protected/'
+    | '/_protected/account/$accountView'
     | '/api/auth/$'
     | '/organization/$slug/$organizationView'
+    | '/_protected/(main)/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   ProtectedRouteRoute: typeof ProtectedRouteRouteWithChildren
-  AccountAccountViewRoute: typeof AccountAccountViewRoute
   AuthAuthViewRoute: typeof AuthAuthViewRoute
   OrganizationOrganizationViewRoute: typeof OrganizationOrganizationViewRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -126,13 +126,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protected/': {
-      id: '/_protected/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof ProtectedIndexRouteImport
-      parentRoute: typeof ProtectedRouteRoute
-    }
     '/organization/$organizationView': {
       id: '/organization/$organizationView'
       path: '/organization/$organizationView'
@@ -147,12 +140,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAuthViewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/account/$accountView': {
-      id: '/account/$accountView'
-      path: '/account/$accountView'
-      fullPath: '/account/$accountView'
-      preLoaderRoute: typeof AccountAccountViewRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_protected/(main)/': {
+      id: '/_protected/(main)/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof ProtectedmainIndexRouteImport
+      parentRoute: typeof ProtectedRouteRoute
     }
     '/organization/$slug/$organizationView': {
       id: '/organization/$slug/$organizationView'
@@ -168,15 +161,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_protected/account/$accountView': {
+      id: '/_protected/account/$accountView'
+      path: '/account/$accountView'
+      fullPath: '/account/$accountView'
+      preLoaderRoute: typeof ProtectedAccountAccountViewRouteImport
+      parentRoute: typeof ProtectedRouteRoute
+    }
   }
 }
 
 interface ProtectedRouteRouteChildren {
-  ProtectedIndexRoute: typeof ProtectedIndexRoute
+  ProtectedAccountAccountViewRoute: typeof ProtectedAccountAccountViewRoute
+  ProtectedmainIndexRoute: typeof ProtectedmainIndexRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
-  ProtectedIndexRoute: ProtectedIndexRoute,
+  ProtectedAccountAccountViewRoute: ProtectedAccountAccountViewRoute,
+  ProtectedmainIndexRoute: ProtectedmainIndexRoute,
 }
 
 const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
@@ -185,7 +187,6 @@ const ProtectedRouteRouteWithChildren = ProtectedRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   ProtectedRouteRoute: ProtectedRouteRouteWithChildren,
-  AccountAccountViewRoute: AccountAccountViewRoute,
   AuthAuthViewRoute: AuthAuthViewRoute,
   OrganizationOrganizationViewRoute: OrganizationOrganizationViewRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

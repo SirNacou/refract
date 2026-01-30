@@ -48,5 +48,6 @@ func NewURL(originalURL, domain, title, notes, userID string, shortCode *ShortCo
 
 type URLRepository interface {
 	ListByUser(ctx context.Context, userID string) ([]URL, error)
+	GetURLByShortCode(ctx context.Context, shortCode ShortCode) (*URL, error)
 	Create(ctx context.Context, url *URL) error
 }

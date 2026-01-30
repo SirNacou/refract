@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils"
-import { Route as IndexRoute } from '@/routes/_protected/index'
+import { Route as IndexRoute } from '@/routes/_protected/(main)/index'
 import { AuthView } from "@daveyplate/better-auth-ui"
 import { createFileRoute } from "@tanstack/react-router"
 

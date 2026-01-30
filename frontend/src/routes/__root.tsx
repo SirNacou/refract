@@ -1,4 +1,5 @@
 import { TanStackDevtools } from '@tanstack/react-devtools'
+import { formDevtoolsPlugin } from '@tanstack/react-form-devtools'
 import {
   HeadContent,
   Scripts,
@@ -65,8 +66,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <Providers>
           {children}
-          <Toaster />
         </Providers>
+        <Toaster />
         <TanStackDevtools
           config={{
             position: 'bottom-right',
@@ -77,6 +78,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               render: <TanStackRouterDevtoolsPanel />,
             },
             TanStackQueryDevtools,
+            formDevtoolsPlugin(),
           ]}
         />
         <Scripts />

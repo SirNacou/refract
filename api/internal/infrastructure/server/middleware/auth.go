@@ -68,21 +68,21 @@ func (am *AuthMiddleware) HandlerHuma(ctx huma.Context, next func(huma.Context))
 	keyset, err := am.cache.Lookup(ctx.Context(), am.url)
 	if err != nil {
 		slog.Error("Failed to fetch JWK set", slog.Any("error", err))
-		huma.WriteErr(am.api, ctx, http.StatusInternalServerError, "Internal Server Error")
+		_ = huma.WriteErr(am.api, ctx, http.StatusInternalServerError, "Internal Server Error")
 		return
 	}
 
 	tokenString := strings.TrimPrefix(ctx.Header("Authorization"), "Bearer ")
 	if tokenString == "" {
 		slog.ErrorContext(ctx.Context(), "Authorization header missing")
-		huma.WriteErr(am.api, ctx, http.StatusUnauthorized, "Unauthorized")
+		_ = huma.WriteErr(am.api, ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	token, err := jwt.ParseString(tokenString, jwt.WithKeySet(keyset))
 	if err != nil {
 		slog.ErrorContext(ctx.Context(), "Failed to parse jwt", slog.Any("error", err))
-		huma.WriteErr(am.api, ctx, http.StatusUnauthorized, "Unauthorized")
+		_ = huma.WriteErr(am.api, ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 

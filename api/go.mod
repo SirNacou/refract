@@ -3,6 +3,7 @@ module github.com/SirNacou/refract/api
 go 1.25.5
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/danielgtaylor/huma/v2 v2.35.0
 	github.com/go-chi/chi/v5 v5.2.4
@@ -10,14 +11,15 @@ require (
 	github.com/lestrrat-go/httprc/v3 v3.0.3
 	github.com/lestrrat-go/jwx/v3 v3.0.13
 	github.com/rs/cors v1.11.1
+	github.com/valkey-io/valkey-glide/go/v2 v2.2.6
 )
 
 require (
-	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	golang.org/x/sync v0.19.0 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 )
 
 require (
@@ -30,11 +32,13 @@ require (
 	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
 	github.com/samber/slog-chi v1.18.0
 	github.com/segmentio/asm v1.2.1 // indirect
+	github.com/valkey-io/valkey-go v1.0.71
+	github.com/valkey-io/valkey-go/valkeyaside v1.0.71
 	github.com/valyala/fastjson v1.6.7 // indirect
 	go.opentelemetry.io/otel v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 )

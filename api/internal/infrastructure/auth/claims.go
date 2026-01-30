@@ -20,7 +20,7 @@ type Claims struct {
 func GetClaimsFromContext(ctx context.Context) (*Claims, error) {
 	token, ok := ctx.Value(claimsContextKey).(*Claims)
 	if !ok {
-		return nil, errors.New("User not found")
+		return nil, errors.New("user not found")
 	}
 	return token, nil
 }
@@ -40,7 +40,7 @@ func GetUserIDFromContext(ctx context.Context) (string, error) {
 func (c *Claims) GetUserID() (string, error) {
 	sub, ok := c.Subject()
 	if !ok {
-		return "", errors.New("User ID not found")
+		return "", errors.New("user ID not found")
 	}
 
 	return sub, nil

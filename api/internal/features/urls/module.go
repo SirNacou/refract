@@ -10,17 +10,19 @@ import (
 	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
 	"github.com/SirNacou/refract/api/internal/infrastructure/repository"
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/valkey-io/valkey-go/valkeyaside"
 )
 
 type Module struct {
-	repo domain.URLRepository
-	cfg  *config.Config
+	repo   domain.URLRepository
+	valkey valkeyaside.CacheAsideClient
+	cfg    *config.Config
 }
 
-func NewModule(db *persistence.DB, cfg *config.Config) *Module {
+func NewModule(db *persistence.DB, valkey valkeyaside.CacheAsideClient, cfg *config.Config) *Module {
 	repo := repository.NewPostgresURLRepository(db.Querier)
 
-	return &Module{repo, cfg}
+	return &Module{repo, valkey, cfg}
 }
 
 func (m *Module) RegisterRoutes(api huma.API) error {
@@ -37,7 +39,7 @@ func (m *Module) RegisterRoutes(api huma.API) error {
 		OperationID: "shorten-url",
 		Method:      http.MethodPost,
 		Path:        "/",
-	}, shortenurl.NewHandler(shortenurl.NewCommandHandler(m.repo, m.cfg.DefaultDomain)).Handle)
+	}, shortenurl.NewHandler(shortenurl.NewCommandHandler(m.repo, m.valkey, m.cfg.DefaultDomain, m.cfg.Valkey.RedirectKey)).Handle)
 
 	return nil
 }
