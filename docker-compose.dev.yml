@@ -12,12 +12,15 @@ services:
       - .env
       - ./frontend/.env
     environment:
-      - CHOKIDAR_USEPOLLING=true
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/refract
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      # Required for many React dev servers to work inside a container
+      WDS_SOCKET_PORT: "3000"
+      WDS_SOCKET_HOST: "localhost"
+      FAST_REFRESH: "true"
+      # Vite specific environment variable (if using Vite)
+      VITE_HOST: "0.0.0.0"
+      WATCHPACK_POLLING: true
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/refract
     develop:
       watch:
         - path: ./frontend
@@ -27,6 +30,8 @@ services:
           ignore:
             - node_modules
         - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/bun.lock
           action: rebuild
     depends_on:
       api:

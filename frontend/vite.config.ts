@@ -23,6 +23,11 @@ const config = defineConfig({
     },
     allowedHosts: true, // Allow all hosts for Docker container access
   },
+  ssr: {
+    optimizeDeps: {
+      include: ['dayjs']
+    }
+  },
   plugins: [
     devtools(),
     nitro(),
@@ -38,7 +43,7 @@ const config = defineConfig({
       },
     }),
     Icons({
-      autoInstall: true, // Auto-detects npm/yarn/pnpm
+      autoInstall: true,
       compiler: 'jsx',
       jsx: 'react'
     })

@@ -51,6 +51,14 @@ func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*CommandResp
 		return nil, huma.Error400BadRequest("Failed to shorten URL", err)
 	}
 
+	expiration := time.Hour * 24 * 365
+	if url.ExpiresAt != nil {
+		exp := time.Until(*url.ExpiresAt)
+		if exp < expiration {
+			expiration = exp
+		}
+	}
+
 	key := strings.Replace(h.redirectKey, "{short_code}", url.ShortCode.String(), 1)
 	err = h.valkey.Client().
 		Do(ctx,
@@ -59,6 +67,7 @@ func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*CommandResp
 				Set().
 				Key(key).
 				Value(url.OriginalURL).
+				Ex(expiration).
 				Build()).
 		Error()
 	if err != nil {

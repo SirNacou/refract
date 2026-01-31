@@ -3,7 +3,7 @@ import { formDevtoolsPlugin } from '@tanstack/react-form-devtools'
 import {
   HeadContent,
   Scripts,
-  createRootRouteWithContext,
+  createRootRouteWithContext
 } from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 

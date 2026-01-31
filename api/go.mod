@@ -11,7 +11,6 @@ require (
 	github.com/lestrrat-go/httprc/v3 v3.0.3
 	github.com/lestrrat-go/jwx/v3 v3.0.13
 	github.com/rs/cors v1.11.1
-	github.com/valkey-io/valkey-glide/go/v2 v2.2.6
 )
 
 require (
@@ -19,7 +18,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
 )
 
 require (

@@ -4,7 +4,7 @@ set windows-shell := ["powershell", "-NoLogo", "-Command"]
 database_url := "postgres://postgres:postgres@localhost:5432/refract?sslmode=disable"
 
 dev-up:
-  @docker compose -f docker-compose.dev.yml up --build -d
+  @docker compose -f docker-compose.dev.yml up --build --watch
 
 dev-down:
   @docker compose -f docker-compose.dev.yml down
