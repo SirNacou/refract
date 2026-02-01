@@ -14,13 +14,13 @@ import (
 	"github.com/SirNacou/refract/api/internal/features/urls/redirect"
 	"github.com/SirNacou/refract/api/internal/infrastructure/cache"
 	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
+	"github.com/SirNacou/refract/api/internal/infrastructure/publisher"
 	"github.com/SirNacou/refract/api/internal/infrastructure/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		fatal("Config", err)
@@ -41,6 +41,9 @@ func main() {
 	if err != nil {
 		fatal("Valkey", err)
 	}
+	defer valkey.Close()
+
+	clicksPublisher := publisher.NewClicksPublisher(valkey.Client(), cfg.Valkey.ClicksStreamKey)
 
 	r := chi.NewRouter()
 
@@ -48,7 +51,8 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/{shortCode}", redirect.NewRedirectHandler(valkey, repo, cfg).HandleRedirect)
+	redirectHandler := redirect.NewRedirectHandler(valkey, repo, clicksPublisher, cfg)
+	r.Get("/{shortCode}", redirectHandler.Handle)
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%v", cfg.RedirectorPort),

@@ -63,7 +63,6 @@ export type ShortenRequest = {
 	 * A URL to the JSON Schema for this object.
 	 */
 	readonly $schema?: string;
-	domain?: string;
 	original_url: string;
 };
 
@@ -72,13 +71,11 @@ export type ShortenResponseBody = {
 	 * A URL to the JSON Schema for this object.
 	 */
 	readonly $schema?: string;
-	domain: string;
-	short_code: string;
+	short_url: string;
 };
 
 export type Url = {
 	CreatedAt: Date;
-	Domain: string;
 	ExpiresAt: Date | null;
 	ID: bigint;
 	Notes: string;
@@ -122,42 +119,12 @@ export type QueryResponseWritable = {
 };
 
 export type ShortenRequestWritable = {
-	domain?: string;
 	original_url: string;
 };
 
 export type ShortenResponseBodyWritable = {
-	domain: string;
-	short_code: string;
+	short_url: string;
 };
-
-export type GetData = {
-	body?: never;
-	headers?: {
-		Authorization?: string;
-	};
-	path?: never;
-	query?: never;
-	url: "/";
-};
-
-export type GetErrors = {
-	/**
-	 * Error
-	 */
-	default: ErrorModel;
-};
-
-export type GetError = GetErrors[keyof GetErrors];
-
-export type GetResponses = {
-	/**
-	 * OK
-	 */
-	200: string;
-};
-
-export type GetResponse = GetResponses[keyof GetResponses];
 
 export type ListUrlsData = {
 	body?: never;

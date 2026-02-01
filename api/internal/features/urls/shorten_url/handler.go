@@ -8,7 +8,6 @@ import (
 
 type ShortenRequest struct {
 	OriginalURL string `json:"original_url" format:"uri" required:"true"`
-	Domain      string `json:"domain,omitempty"`
 }
 
 type ShortenResponse struct {
@@ -16,8 +15,7 @@ type ShortenResponse struct {
 }
 
 type ShortenResponseBody struct {
-	ShortCode string `json:"short_code"`
-	Domain    string `json:"domain"`
+	ShortURL string `json:"short_url"`
 }
 
 type Handler struct {
@@ -40,7 +38,6 @@ func (h *Handler) Handle(ctx context.Context, req *struct {
 
 	r, err := h.cmd.Handle(ctx, &Command{
 		OriginalURL: req.Body.OriginalURL,
-		Domain:      req.Body.Domain,
 		UserID:      u,
 	})
 	if err != nil {
@@ -49,8 +46,7 @@ func (h *Handler) Handle(ctx context.Context, req *struct {
 	// Implementation for shortening the URL and handling the domain
 	return &ShortenResponse{
 		Body: &ShortenResponseBody{
-			ShortCode: r.ShortCode,
-			Domain:    r.Domain,
+			ShortURL: r.ShortURL,
 		},
 	}, nil
 }

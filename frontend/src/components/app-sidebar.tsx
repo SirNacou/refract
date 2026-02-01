@@ -10,29 +10,29 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	useSidebar,
-} from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
-import { Link, type LinkOptions, useLocation } from "@tanstack/react-router";
-import LucideBarChart from "~icons/lucide/bar-chart-3";
-import LucideKey from "~icons/lucide/key";
-import LucideLink from "~icons/lucide/link";
-import LucideLink2 from "~icons/lucide/link-2";
-import LucideLogOut from "~icons/lucide/log-out";
-import LucideMousePointer2 from "~icons/lucide/mouse-pointer-2";
-import LucideSidebar from "~icons/lucide/sidebar";
-import LucideTrendingUp from "~icons/lucide/trending-up";
-import LucideUser from "~icons/lucide/user";
-import { Button } from "./ui/button";
+} from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
+import { Link, type LinkOptions, useLocation } from "@tanstack/react-router"
+import LucideBarChart from "~icons/lucide/bar-chart-3"
+import LucideKey from "~icons/lucide/key"
+import LucideLink from "~icons/lucide/link"
+import LucideLink2 from "~icons/lucide/link-2"
+import LucideLogOut from "~icons/lucide/log-out"
+import LucideMousePointer2 from "~icons/lucide/mouse-pointer-2"
+import LucideSidebar from "~icons/lucide/sidebar"
+import LucideTrendingUp from "~icons/lucide/trending-up"
+import LucideUser from "~icons/lucide/user"
+import { Button } from "./ui/button"
 
 type NavOptions = {
-	title: string;
-	icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-} & LinkOptions;
+	title: string
+	icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
+} & LinkOptions
 
 type LinkGroup = {
-	title: string;
-	items: NavOptions[];
-};
+	title: string
+	items: NavOptions[]
+}
 
 const navGroups: LinkGroup[] = [
 	{
@@ -82,16 +82,16 @@ const navGroups: LinkGroup[] = [
 			},
 		],
 	},
-];
+]
 
 const user = {
 	name: "John Doe",
 	email: "john@example.com",
 	avatar: "JD",
-};
+}
 
 export function AppSidebar() {
-	const location = useLocation();
+	const location = useLocation()
 
 	return (
 		<Sidebar>
@@ -110,7 +110,7 @@ export function AppSidebar() {
 						<SidebarGroupContent>
 							<SidebarMenu>
 								{group.items.map((item) => {
-									const isActive = location.pathname === item.to;
+									const isActive = location.pathname === item.to
 									return (
 										<SidebarMenuItem key={item.title}>
 											<SidebarMenuButton
@@ -131,7 +131,7 @@ export function AppSidebar() {
 												</Link>
 											</SidebarMenuButton>
 										</SidebarMenuItem>
-									);
+									)
 								})}
 							</SidebarMenu>
 						</SidebarGroupContent>
@@ -159,7 +159,7 @@ export function AppSidebar() {
 				</div>
 			</SidebarFooter>
 		</Sidebar>
-	);
+	)
 }
 
 export function CustomSidebarTrigger({
@@ -167,7 +167,7 @@ export function CustomSidebarTrigger({
 	onClick,
 	...props
 }: React.ComponentProps<typeof Button>) {
-	const { toggleSidebar } = useSidebar();
+	const { toggleSidebar } = useSidebar()
 
 	return (
 		<Button
@@ -177,13 +177,13 @@ export function CustomSidebarTrigger({
 			size="icon"
 			className={cn("size-10 md:size-12", className)}
 			onClick={(event) => {
-				onClick?.(event);
-				toggleSidebar();
+				onClick?.(event)
+				toggleSidebar()
 			}}
 			{...props}
 		>
 			<LucideSidebar className="w-5 h-5 md:w-6 md:h-6" />
 			<span className="sr-only">Toggle Sidebar</span>
 		</Button>
-	);
+	)
 }

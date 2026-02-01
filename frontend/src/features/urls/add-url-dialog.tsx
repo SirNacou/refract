@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
 	Dialog,
 	DialogContent,
@@ -7,42 +7,40 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from "@/components/ui/dialog";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+} from "@/components/ui/dialog"
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import {
 	InputGroup,
 	InputGroupAddon,
 	InputGroupInput,
-} from "@/components/ui/input-group";
-import { env } from "@/env";
+} from "@/components/ui/input-group"
 import {
 	type ShortenRequestWritable,
 	zShortenRequestWritable,
-} from "@/gen/api";
-import { shortenUrlMutation } from "@/gen/api/@tanstack/react-query.gen";
-import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
-import { Loader2, Plus } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import GridiconsDomains from "~icons/gridicons/domains";
-import LucideLink from "~icons/lucide/link";
+} from "@/gen/api"
+import { shortenUrlMutation } from "@/gen/api/@tanstack/react-query.gen"
+import { useForm } from "@tanstack/react-form"
+import { useMutation } from "@tanstack/react-query"
+import { Loader2, Plus } from "lucide-react"
+import { useState } from "react"
+import { toast } from "sonner"
+import LucideLink from "~icons/lucide/link"
 
-type Props = {};
+type Props = {}
 
 const AddURLDialog = (props: Props) => {
 	const mutation = useMutation({
 		...shortenUrlMutation(),
 		onSuccess: () => {
-			toast.success("URL shortened successfully!");
+			toast.success("URL shortened successfully!")
 		},
 		onError: (error) => {
 			toast.error(
 				`Error shortening URL: ${(error.errors && error.errors[0]?.message) || error.detail}`,
-			);
+			)
 		},
-	});
-	const [open, setOpen] = useState(false);
+	})
+	const [open, setOpen] = useState(false)
 	const form = useForm({
 		defaultValues: {
 			original_url: "",
@@ -56,11 +54,10 @@ const AddURLDialog = (props: Props) => {
 			await mutation.mutateAsync({
 				body: {
 					original_url: value.original_url,
-					domain: value.domain || undefined,
 				},
-			});
+			})
 		},
-	});
+	})
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
@@ -80,9 +77,9 @@ const AddURLDialog = (props: Props) => {
 				{/* 3. Form Render */}
 				<form
 					onSubmit={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						form.handleSubmit();
+						e.preventDefault()
+						e.stopPropagation()
+						form.handleSubmit()
 					}}
 					className="space-y-4"
 				>
@@ -120,41 +117,6 @@ const AddURLDialog = (props: Props) => {
 						)}
 					</form.Field>
 
-					<form.Field name="domain">
-						{(field) => (
-							<Field>
-								<FieldLabel
-									htmlFor={field.name}
-									className={
-										field.state.meta.errors.length ? "text-destructive" : ""
-									}
-								>
-									Domain
-								</FieldLabel>
-								<InputGroup>
-									<InputGroupAddon>
-										<GridiconsDomains />
-									</InputGroupAddon>
-									<InputGroupInput
-										id={field.name}
-										disabled
-										placeholder={env.VITE_DEFAULT_REDIRECT_URL}
-										value={field.state.value}
-										onBlur={field.handleBlur}
-										onChange={(e) => field.handleChange(e.target.value)}
-									/>
-								</InputGroup>
-
-								{/* Error Message */}
-								{field.state.meta.errors ? (
-									<FieldDescription className="text-destructive">
-										{field.state.meta.errors[0]?.message}
-									</FieldDescription>
-								) : null}
-							</Field>
-						)}
-					</form.Field>
-
 					<DialogFooter>
 						<Button
 							variant="outline"
@@ -180,7 +142,7 @@ const AddURLDialog = (props: Props) => {
 				</form>
 			</DialogContent>
 		</Dialog>
-	);
-};
+	)
+}
 
-export default AddURLDialog;
+export default AddURLDialog

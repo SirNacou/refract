@@ -38,8 +38,8 @@ func (p *PostgresURLRepository) ListByUser(ctx context.Context, userID string) (
 }
 
 // FirstByShortCode implements [domain.URLRepository].
-func (p *PostgresURLRepository) GetURLByShortCode(ctx context.Context, shortCode domain.ShortCode) (*domain.URL, error) {
-	url, err := p.querier.GetURLByShortCode(ctx, shortCode.String())
+func (p *PostgresURLRepository) GetActiveURLByShortCode(ctx context.Context, shortCode domain.ShortCode) (*domain.URL, error) {
+	url, err := p.querier.GetActiveURLByShortCode(ctx, shortCode.String())
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,6 @@ func (p *PostgresURLRepository) Create(ctx context.Context, url *domain.URL) err
 		ShortCode:   url.ShortCode.String(),
 		OriginalUrl: url.OriginalURL,
 		UserID:      url.UserID,
-		Domain:      url.Domain,
 		ExpiresAt:   url.ExpiresAt,
 	})
 	if err != nil {
@@ -69,7 +68,6 @@ func toDomainURL(u *db.Url) *domain.URL {
 		ID:          domain.SnowflakeID(u.ID),
 		OriginalURL: u.OriginalUrl,
 		ShortCode:   domain.ShortCode(u.ShortCode),
-		Domain:      u.Domain,
 		UserID:      u.UserID,
 		ExpiresAt:   u.ExpiresAt,
 		CreatedAt:   u.CreatedAt,

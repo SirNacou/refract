@@ -3,11 +3,8 @@
 import { queryOptions, type UseMutationOptions } from "@tanstack/react-query";
 
 import { client } from "../client.gen";
-import { get, listUrls, type Options, shortenUrl } from "../sdk.gen";
+import { listUrls, type Options, shortenUrl } from "../sdk.gen";
 import type {
-	GetData,
-	GetError,
-	GetResponse,
 	ListUrlsData,
 	ListUrlsError,
 	ListUrlsResponse,
@@ -55,31 +52,6 @@ const createQueryKey = <TOptions extends Options>(
 	}
 	return [params];
 };
-
-export const getQueryKey = (options?: Options<GetData>) =>
-	createQueryKey("get", options);
-
-/**
- * Get
- */
-export const getOptions = (options?: Options<GetData>) =>
-	queryOptions<
-		GetResponse,
-		GetError,
-		GetResponse,
-		ReturnType<typeof getQueryKey>
-	>({
-		queryFn: async ({ queryKey, signal }) => {
-			const { data } = await get({
-				...options,
-				...queryKey[0],
-				signal,
-				throwOnError: true,
-			});
-			return data;
-		},
-		queryKey: getQueryKey(options),
-	});
 
 export const listUrlsQueryKey = (options?: Options<ListUrlsData>) =>
 	createQueryKey("listUrls", options);

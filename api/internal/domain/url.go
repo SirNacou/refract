@@ -17,7 +17,6 @@ type URL struct {
 	ID          SnowflakeID
 	OriginalURL string
 	ShortCode   ShortCode
-	Domain      string
 	Title       string
 	Notes       string
 	UserID      string
@@ -27,7 +26,7 @@ type URL struct {
 	Status      Status
 }
 
-func NewURL(originalURL, domain, title, notes, userID string, shortCode *ShortCode, expiresAt *time.Time) *URL {
+func NewURL(originalURL, title, notes, userID string, shortCode *ShortCode, expiresAt *time.Time) *URL {
 	id := NewSnowflakeID()
 	if shortCode == nil {
 		sc := GenerateShortcode(id)
@@ -37,7 +36,6 @@ func NewURL(originalURL, domain, title, notes, userID string, shortCode *ShortCo
 		ID:          id,
 		OriginalURL: originalURL,
 		ShortCode:   *shortCode,
-		Domain:      domain,
 		Title:       title,
 		Notes:       notes,
 		UserID:      userID,
@@ -48,6 +46,6 @@ func NewURL(originalURL, domain, title, notes, userID string, shortCode *ShortCo
 
 type URLRepository interface {
 	ListByUser(ctx context.Context, userID string) ([]URL, error)
-	GetURLByShortCode(ctx context.Context, shortCode ShortCode) (*URL, error)
+	GetActiveURLByShortCode(ctx context.Context, shortCode ShortCode) (*URL, error)
 	Create(ctx context.Context, url *URL) error
 }

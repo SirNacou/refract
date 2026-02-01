@@ -4,9 +4,6 @@ import type { Client, Options as Options2, TDataShape } from "./client";
 import { client } from "./client.gen";
 import { listUrlsResponseTransformer } from "./transformers.gen";
 import type {
-	GetData,
-	GetErrors,
-	GetResponses,
 	ListUrlsData,
 	ListUrlsErrors,
 	ListUrlsResponses,
@@ -15,8 +12,6 @@ import type {
 	ShortenUrlResponses,
 } from "./types.gen";
 import {
-	zGetData,
-	zGetResponse,
 	zListUrlsData,
 	zListUrlsResponse,
 	zShortenUrlData,
@@ -39,19 +34,6 @@ export type Options<
 	 */
 	meta?: Record<string, unknown>;
 };
-
-/**
- * Get
- */
-export const get = <ThrowOnError extends boolean = false>(
-	options?: Options<GetData, ThrowOnError>,
-) =>
-	(options?.client ?? client).get<GetResponses, GetErrors, ThrowOnError>({
-		requestValidator: async (data) => await zGetData.parseAsync(data),
-		responseValidator: async (data) => await zGetResponse.parseAsync(data),
-		url: "/",
-		...options,
-	});
 
 export const listUrls = <ThrowOnError extends boolean = false>(
 	options?: Options<ListUrlsData, ThrowOnError>,

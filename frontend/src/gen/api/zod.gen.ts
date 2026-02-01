@@ -29,19 +29,16 @@ export const zErrorModel = z.object({
 
 export const zShortenRequest = z.object({
 	$schema: z.optional(z.url().readonly()),
-	domain: z.optional(z.string()),
 	original_url: z.url(),
 });
 
 export const zShortenResponseBody = z.object({
 	$schema: z.optional(z.url().readonly()),
-	domain: z.string(),
-	short_code: z.string(),
+	short_url: z.string(),
 });
 
 export const zUrl = z.object({
 	CreatedAt: z.iso.datetime(),
-	Domain: z.string(),
 	ExpiresAt: z.union([z.iso.datetime(), z.null()]),
 	ID: z.coerce
 		.bigint()
@@ -86,30 +83,12 @@ export const zQueryResponseWritable = z.object({
 });
 
 export const zShortenRequestWritable = z.object({
-	domain: z.optional(z.string()),
 	original_url: z.url(),
 });
 
 export const zShortenResponseBodyWritable = z.object({
-	domain: z.string(),
-	short_code: z.string(),
+	short_url: z.string(),
 });
-
-export const zGetData = z.object({
-	body: z.optional(z.never()),
-	path: z.optional(z.never()),
-	query: z.optional(z.never()),
-	headers: z.optional(
-		z.object({
-			Authorization: z.optional(z.string()),
-		}),
-	),
-});
-
-/**
- * OK
- */
-export const zGetResponse = z.string();
 
 export const zListUrlsData = z.object({
 	body: z.optional(z.never()),

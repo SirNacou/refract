@@ -54,8 +54,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      valkey:
-        condition: service_healthy
 
   redirector:
     container_name: refract-redirector
@@ -74,7 +72,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  worker:
+    container_name: refract-worker
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+      target: worker
+    env_file:
+      - .env
+      - ./api/.env
+    volumes:
+      - ./api/internal:/app/internal
+      - ./api/cmd/worker:/app/cmd/worker
+    depends_on:
       valkey:
+        condition: service_healthy
+      clickhouse:
         condition: service_healthy
 
   postgres:
@@ -108,7 +122,32 @@ services:
       interval: 1s
       timeout: 3s
       retries: 5
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-server
+    ports:
+      - "8123:8123" # HTTP Interface
+      - "9000:9000" # Native Client Interface
+      - "9009:9009" # Inter-server Replication
+    env_file:
+      - .env
+    environment:
+      - CLICKHOUSE_DB=${CLICKHOUSE_DATABASE_NAME:-refract}
+    volumes:
+      - ch_data:/var/lib/clickhouse # Persistent data storage
+      - ch_logs:/var/log/clickhouse-server # Logs
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   pgdata:
   valkeydata:
+  ch_data:
+  ch_logs:

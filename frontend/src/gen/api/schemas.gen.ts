@@ -105,9 +105,6 @@ export const ShortenRequestSchema = {
 			readOnly: true,
 			type: "string",
 		},
-		domain: {
-			type: "string",
-		},
 		original_url: {
 			format: "uri",
 			type: "string",
@@ -127,14 +124,11 @@ export const ShortenResponseBodySchema = {
 			readOnly: true,
 			type: "string",
 		},
-		domain: {
-			type: "string",
-		},
-		short_code: {
+		short_url: {
 			type: "string",
 		},
 	},
-	required: ["short_code", "domain"],
+	required: ["short_url"],
 	type: "object",
 } as const;
 
@@ -143,9 +137,6 @@ export const URLSchema = {
 	properties: {
 		CreatedAt: {
 			format: "date-time",
-			type: "string",
-		},
-		Domain: {
 			type: "string",
 		},
 		ExpiresAt: {
@@ -184,7 +175,6 @@ export const URLSchema = {
 		"ID",
 		"OriginalURL",
 		"ShortCode",
-		"Domain",
 		"Title",
 		"Notes",
 		"UserID",
@@ -261,9 +251,6 @@ export const QueryResponseWritableSchema = {
 export const ShortenRequestWritableSchema = {
 	additionalProperties: false,
 	properties: {
-		domain: {
-			type: "string",
-		},
 		original_url: {
 			format: "uri",
 			type: "string",
@@ -276,13 +263,10 @@ export const ShortenRequestWritableSchema = {
 export const ShortenResponseBodyWritableSchema = {
 	additionalProperties: false,
 	properties: {
-		domain: {
-			type: "string",
-		},
-		short_code: {
+		short_url: {
 			type: "string",
 		},
 	},
-	required: ["short_code", "domain"],
+	required: ["short_url"],
 	type: "object",
 } as const;

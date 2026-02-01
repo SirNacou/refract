@@ -98,9 +98,6 @@
 						"readOnly": true,
 						"type": "string"
 					},
-					"domain": {
-						"type": "string"
-					},
 					"original_url": {
 						"format": "uri",
 						"type": "string"
@@ -121,14 +118,11 @@
 						"readOnly": true,
 						"type": "string"
 					},
-					"domain": {
-						"type": "string"
-					},
-					"short_code": {
+					"short_url": {
 						"type": "string"
 					}
 				},
-				"required": ["short_code", "domain"],
+				"required": ["short_url"],
 				"type": "object"
 			},
 			"URL": {
@@ -136,9 +130,6 @@
 				"properties": {
 					"CreatedAt": {
 						"format": "date-time",
-						"type": "string"
-					},
-					"Domain": {
 						"type": "string"
 					},
 					"ExpiresAt": {
@@ -177,7 +168,6 @@
 					"ID",
 					"OriginalURL",
 					"ShortCode",
-					"Domain",
 					"Title",
 					"Notes",
 					"UserID",
@@ -247,9 +237,6 @@
 			"ShortenRequestWritable": {
 				"additionalProperties": false,
 				"properties": {
-					"domain": {
-						"type": "string"
-					},
 					"original_url": {
 						"format": "uri",
 						"type": "string"
@@ -261,14 +248,11 @@
 			"ShortenResponseBodyWritable": {
 				"additionalProperties": false,
 				"properties": {
-					"domain": {
-						"type": "string"
-					},
-					"short_code": {
+					"short_url": {
 						"type": "string"
 					}
 				},
-				"required": ["short_code", "domain"],
+				"required": ["short_url"],
 				"type": "object"
 			}
 		},
@@ -286,43 +270,6 @@
 	},
 	"openapi": "3.1.0",
 	"paths": {
-		"/": {
-			"get": {
-				"operationId": "get",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Authorization",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "string"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"default": {
-						"content": {
-							"application/problem+json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorModel"
-								}
-							}
-						},
-						"description": "Error"
-					}
-				},
-				"summary": "Get"
-			}
-		},
 		"/api/urls/": {
 			"get": {
 				"operationId": "list-urls",

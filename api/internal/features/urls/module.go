@@ -39,7 +39,7 @@ func (m *Module) RegisterRoutes(api huma.API) error {
 		OperationID: "shorten-url",
 		Method:      http.MethodPost,
 		Path:        "/",
-	}, shortenurl.NewHandler(shortenurl.NewCommandHandler(m.repo, m.valkey, m.cfg.DefaultDomain, m.cfg.Valkey.RedirectKey)).Handle)
+	}, shortenurl.NewHandler(shortenurl.NewCommandHandler(m.repo, m.valkey, m.cfg.DefaultBaseURL, m.cfg.Valkey.RedirectKey)).Handle)
 
 	return nil
 }

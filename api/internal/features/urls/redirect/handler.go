@@ -4,37 +4,41 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/SirNacou/refract/api/internal/config"
 	"github.com/SirNacou/refract/api/internal/domain"
+	"github.com/SirNacou/refract/api/internal/infrastructure/publisher"
 	"github.com/go-chi/chi/v5"
 	"github.com/valkey-io/valkey-go/valkeyaside"
 )
 
 type RedirectHandler struct {
-	repo        domain.URLRepository
-	valkey      valkeyaside.CacheAsideClient
-	redirectKey string
+	repo           domain.URLRepository
+	valkey         valkeyaside.CacheAsideClient
+	clickPublisher *publisher.ClicksPublisher
+	redirectKey    string
 }
 
-func NewRedirectHandler(valkey valkeyaside.CacheAsideClient, repo domain.URLRepository, cfg *config.Config) *RedirectHandler {
+func NewRedirectHandler(valkey valkeyaside.CacheAsideClient, repo domain.URLRepository, publisher *publisher.ClicksPublisher, cfg *config.Config) *RedirectHandler {
 	return &RedirectHandler{
-		valkey:      valkey,
-		repo:        repo,
-		redirectKey: cfg.Valkey.RedirectKey,
+		valkey:         valkey,
+		repo:           repo,
+		clickPublisher: publisher,
+		redirectKey:    cfg.Valkey.RedirectKey,
 	}
 }
 
-func (h *RedirectHandler) HandleRedirect(w http.ResponseWriter, r *http.Request) {
+func (h *RedirectHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	shortCode := chi.URLParam(r, "shortCode")
 	slog.Info("Handling redirect", "short_code", shortCode)
 
 	key := strings.Replace(h.redirectKey, "{short_code}", shortCode, 1)
 	url, err := h.valkey.Get(r.Context(), time.Minute, key, func(ctx context.Context, key string) (val string, err error) {
-		url, err := h.repo.GetURLByShortCode(ctx, domain.ShortCode(shortCode))
+		url, err := h.repo.GetActiveURLByShortCode(ctx, domain.ShortCode(shortCode))
 		if err != nil {
 			return "", err
 		}
@@ -54,6 +58,22 @@ func (h *RedirectHandler) HandleRedirect(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		WriteNotFoundPage(w)
 		return
+	}
+
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+
+	err = h.clickPublisher.Publish(r.Context(), &publisher.ClicksPublisherRequest{
+		ShortCode: shortCode,
+		IPAddress: host,
+		UserAgent: r.UserAgent(),
+		Referer:   r.Referer(),
+		ClickedAt: time.Now(),
+	})
+	if err != nil {
+		slog.ErrorContext(r.Context(), "Failed to track click", "error", err)
 	}
 
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
