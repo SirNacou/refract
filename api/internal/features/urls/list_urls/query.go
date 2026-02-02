@@ -2,6 +2,9 @@ package listurls
 
 import (
 	"context"
+	"fmt"
+	"net/url"
+	"time"
 
 	"github.com/SirNacou/refract/api/internal/domain"
 )
@@ -11,16 +14,31 @@ type Query struct {
 }
 
 type QueryResponse struct {
-	URLs []domain.URL `json:"urls" default:"[]"`
+	URLs []URL `json:"urls" default:"[]"`
+}
+
+type URL struct {
+	ID          string        `json:"id"`
+	OriginalURL string        `json:"original_url"`
+	ShortURL    string        `json:"short_url"`
+	Title       string        `json:"title"`
+	Notes       string        `json:"notes"`
+	UserID      string        `json:"user_id"`
+	ExpiresAt   *time.Time    `json:"expires_at"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
+	Status      domain.Status `json:"status"`
 }
 
 type QueryHandler struct {
-	repo domain.URLRepository
+	repo          domain.URLRepository
+	defaultBaseURL string
 }
 
-func NewQueryHandler(repo domain.URLRepository) *QueryHandler {
+func NewQueryHandler(repo domain.URLRepository, defaultBaseURL string) *QueryHandler {
 	return &QueryHandler{
-		repo: repo,
+		repo:          repo,
+		defaultBaseURL: defaultBaseURL,
 	}
 }
 
@@ -30,7 +48,27 @@ func (h *QueryHandler) Handle(ctx context.Context, req *Query) (*QueryResponse, 
 		return nil, err
 	}
 
+	converted := make([]URL, len(urls))
+	for i, u := range urls {
+		sURL, err := url.JoinPath(h.defaultBaseURL, u.ShortCode.String())
+		if err != nil {
+			return nil, err
+		}
+		converted[i] = URL{
+			ID:          fmt.Sprint(u.ID.Int64()),
+			OriginalURL: u.OriginalURL,
+			ShortURL:    sURL,
+			Title:       u.Title,
+			Notes:       u.Notes,
+			UserID:      u.UserID,
+			ExpiresAt:   u.ExpiresAt,
+			CreatedAt:   u.CreatedAt,
+			UpdatedAt:   u.UpdatedAt,
+			Status:      u.Status,
+		}
+	}
+
 	return &QueryResponse{
-		URLs: urls,
+		URLs: converted,
 	}, nil
 }

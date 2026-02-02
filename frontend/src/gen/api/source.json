@@ -128,53 +128,51 @@
 			"URL": {
 				"additionalProperties": false,
 				"properties": {
-					"CreatedAt": {
+					"created_at": {
 						"format": "date-time",
 						"type": "string"
 					},
-					"ExpiresAt": {
+					"expires_at": {
 						"format": "date-time",
 						"type": ["string", "null"]
 					},
-					"ID": {
-						"format": "int64",
-						"minimum": 0,
-						"type": "integer"
-					},
-					"Notes": {
+					"id": {
 						"type": "string"
 					},
-					"OriginalURL": {
+					"notes": {
 						"type": "string"
 					},
-					"ShortCode": {
+					"original_url": {
 						"type": "string"
 					},
-					"Status": {
+					"short_url": {
 						"type": "string"
 					},
-					"Title": {
+					"status": {
 						"type": "string"
 					},
-					"UpdatedAt": {
+					"title": {
+						"type": "string"
+					},
+					"updated_at": {
 						"format": "date-time",
 						"type": "string"
 					},
-					"UserID": {
+					"user_id": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"ID",
-					"OriginalURL",
-					"ShortCode",
-					"Title",
-					"Notes",
-					"UserID",
-					"ExpiresAt",
-					"CreatedAt",
-					"UpdatedAt",
-					"Status"
+					"id",
+					"original_url",
+					"short_url",
+					"title",
+					"notes",
+					"user_id",
+					"expires_at",
+					"created_at",
+					"updated_at",
+					"status"
 				],
 				"type": "object"
 			},

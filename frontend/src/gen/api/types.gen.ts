@@ -75,16 +75,16 @@ export type ShortenResponseBody = {
 };
 
 export type Url = {
-	CreatedAt: Date;
-	ExpiresAt: Date | null;
-	ID: bigint;
-	Notes: string;
-	OriginalURL: string;
-	ShortCode: string;
-	Status: string;
-	Title: string;
-	UpdatedAt: Date;
-	UserID: string;
+	created_at: Date;
+	expires_at: Date | null;
+	id: string;
+	notes: string;
+	original_url: string;
+	short_url: string;
+	status: string;
+	title: string;
+	updated_at: Date;
+	user_id: string;
 };
 
 export type ErrorModelWritable = {

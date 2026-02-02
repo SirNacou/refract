@@ -3,12 +3,11 @@
 import type { ListUrlsResponse } from "./types.gen";
 
 const urlSchemaResponseTransformer = (data: any) => {
-	data.CreatedAt = new Date(data.CreatedAt);
-	if (data.ExpiresAt) {
-		data.ExpiresAt = new Date(data.ExpiresAt);
+	data.created_at = new Date(data.created_at);
+	if (data.expires_at) {
+		data.expires_at = new Date(data.expires_at);
 	}
-	data.ID = BigInt(data.ID.toString());
-	data.UpdatedAt = new Date(data.UpdatedAt);
+	data.updated_at = new Date(data.updated_at);
 	return data;
 };
 

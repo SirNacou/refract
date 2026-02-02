@@ -38,21 +38,16 @@ export const zShortenResponseBody = z.object({
 });
 
 export const zUrl = z.object({
-	CreatedAt: z.iso.datetime(),
-	ExpiresAt: z.union([z.iso.datetime(), z.null()]),
-	ID: z.coerce
-		.bigint()
-		.gte(BigInt(0))
-		.max(BigInt("9223372036854775807"), {
-			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
-		}),
-	Notes: z.string(),
-	OriginalURL: z.string(),
-	ShortCode: z.string(),
-	Status: z.string(),
-	Title: z.string(),
-	UpdatedAt: z.iso.datetime(),
-	UserID: z.string(),
+	created_at: z.iso.datetime(),
+	expires_at: z.union([z.iso.datetime(), z.null()]),
+	id: z.string(),
+	notes: z.string(),
+	original_url: z.string(),
+	short_url: z.string(),
+	status: z.string(),
+	title: z.string(),
+	updated_at: z.iso.datetime(),
+	user_id: z.string(),
 });
 
 export const zQueryResponse = z.object({

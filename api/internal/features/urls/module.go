@@ -33,7 +33,7 @@ func (m *Module) RegisterRoutes(api huma.API) error {
 		OperationID: "list-urls",
 		Method:      http.MethodGet,
 		Path:        "/",
-	}, listurls.NewHandler(listurls.NewQueryHandler(m.repo)).Handle)
+	}, listurls.NewHandler(listurls.NewQueryHandler(m.repo, m.cfg.DefaultBaseURL)).Handle)
 
 	huma.Register(grp, huma.Operation{
 		OperationID: "shorten-url",
