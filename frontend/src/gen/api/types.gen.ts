@@ -4,6 +4,11 @@ export type ClientOptions = {
 	baseUrl: "http://localhost:8080" | (string & {});
 };
 
+export type ClickTrend = {
+	clicks: bigint;
+	date: Date;
+};
+
 export type ErrorDetail = {
 	/**
 	 * Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id'
@@ -58,6 +63,25 @@ export type QueryResponse = {
 	urls: Array<Url>;
 };
 
+export type QueryResult = {
+	/**
+	 * A URL to the JSON Schema for this object.
+	 */
+	readonly $schema?: string;
+	active_urls: bigint;
+	click_trends: Array<ClickTrend>;
+	clicks_this_week: bigint;
+	recent_activities: Array<RecentActivity>;
+	top_urls: Array<TopUrl>;
+	total_clicks: bigint;
+	total_urls: bigint;
+};
+
+export type RecentActivity = {
+	activity: string;
+	timestamp: Date;
+};
+
 export type ShortenRequest = {
 	/**
 	 * A URL to the JSON Schema for this object.
@@ -72,6 +96,13 @@ export type ShortenResponseBody = {
 	 */
 	readonly $schema?: string;
 	short_url: string;
+};
+
+export type TopUrl = {
+	clicks: bigint;
+	original_url: string;
+	short_url: string;
+	this_week_trends: Array<ClickTrend>;
 };
 
 export type Url = {
@@ -116,6 +147,16 @@ export type ErrorModelWritable = {
 
 export type QueryResponseWritable = {
 	urls: Array<Url>;
+};
+
+export type QueryResultWritable = {
+	active_urls: bigint;
+	click_trends: Array<ClickTrend>;
+	clicks_this_week: bigint;
+	recent_activities: Array<RecentActivity>;
+	top_urls: Array<TopUrl>;
+	total_clicks: bigint;
+	total_urls: bigint;
 };
 
 export type ShortenRequestWritable = {
@@ -175,3 +216,28 @@ export type ShortenUrlResponses = {
 };
 
 export type ShortenUrlResponse = ShortenUrlResponses[keyof ShortenUrlResponses];
+
+export type DashboardData = {
+	body?: never;
+	path?: never;
+	query?: never;
+	url: "/api/urls/dashboard";
+};
+
+export type DashboardErrors = {
+	/**
+	 * Error
+	 */
+	default: ErrorModel;
+};
+
+export type DashboardError = DashboardErrors[keyof DashboardErrors];
+
+export type DashboardResponses = {
+	/**
+	 * OK
+	 */
+	200: QueryResult;
+};
+
+export type DashboardResponse = DashboardResponses[keyof DashboardResponses];

@@ -2,6 +2,16 @@
 
 import { z } from "zod";
 
+export const zClickTrend = z.object({
+	clicks: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	date: z.iso.datetime(),
+});
+
 export const zErrorDetail = z.object({
 	location: z.optional(z.string()),
 	message: z.optional(z.string()),
@@ -27,6 +37,11 @@ export const zErrorModel = z.object({
 	type: z.optional(z.url()).default("about:blank"),
 });
 
+export const zRecentActivity = z.object({
+	activity: z.string(),
+	timestamp: z.iso.datetime(),
+});
+
 export const zShortenRequest = z.object({
 	$schema: z.optional(z.url().readonly()),
 	original_url: z.url(),
@@ -35,6 +50,49 @@ export const zShortenRequest = z.object({
 export const zShortenResponseBody = z.object({
 	$schema: z.optional(z.url().readonly()),
 	short_url: z.string(),
+});
+
+export const zTopUrl = z.object({
+	clicks: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	original_url: z.string(),
+	short_url: z.string(),
+	this_week_trends: z.array(zClickTrend),
+});
+
+export const zQueryResult = z.object({
+	$schema: z.optional(z.url().readonly()),
+	active_urls: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	click_trends: z.array(zClickTrend),
+	clicks_this_week: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	recent_activities: z.array(zRecentActivity),
+	top_urls: z.array(zTopUrl),
+	total_clicks: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	total_urls: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
 });
 
 export const zUrl = z.object({
@@ -77,6 +135,36 @@ export const zQueryResponseWritable = z.object({
 	urls: z.array(zUrl).default([]),
 });
 
+export const zQueryResultWritable = z.object({
+	active_urls: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	click_trends: z.array(zClickTrend),
+	clicks_this_week: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	recent_activities: z.array(zRecentActivity),
+	top_urls: z.array(zTopUrl),
+	total_clicks: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+	total_urls: z.coerce
+		.bigint()
+		.gte(BigInt(0))
+		.max(BigInt("9223372036854775807"), {
+			error: "Invalid value: Expected int64 to be <= 9223372036854775807",
+		}),
+});
+
 export const zShortenRequestWritable = z.object({
 	original_url: z.url(),
 });
@@ -106,3 +194,14 @@ export const zShortenUrlData = z.object({
  * OK
  */
 export const zShortenUrlResponse = zShortenResponseBody;
+
+export const zDashboardData = z.object({
+	body: z.optional(z.never()),
+	path: z.optional(z.never()),
+	query: z.optional(z.never()),
+});
+
+/**
+ * OK
+ */
+export const zDashboardResponse = zQueryResult;

@@ -1,6 +1,22 @@
 {
 	"components": {
 		"schemas": {
+			"ClickTrend": {
+				"additionalProperties": false,
+				"properties": {
+					"clicks": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"date": {
+						"format": "date-time",
+						"type": "string"
+					}
+				},
+				"required": ["date", "clicks"],
+				"type": "object"
+			},
 			"ErrorDetail": {
 				"additionalProperties": false,
 				"properties": {
@@ -88,6 +104,80 @@
 				"required": ["urls"],
 				"type": "object"
 			},
+			"QueryResult": {
+				"additionalProperties": false,
+				"properties": {
+					"$schema": {
+						"description": "A URL to the JSON Schema for this object.",
+						"examples": ["http://localhost:8080/schemas/QueryResult.json"],
+						"format": "uri",
+						"readOnly": true,
+						"type": "string"
+					},
+					"active_urls": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"click_trends": {
+						"items": {
+							"$ref": "#/components/schemas/ClickTrend"
+						},
+						"type": "array"
+					},
+					"clicks_this_week": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"recent_activities": {
+						"items": {
+							"$ref": "#/components/schemas/RecentActivity"
+						},
+						"type": "array"
+					},
+					"top_urls": {
+						"items": {
+							"$ref": "#/components/schemas/TopURL"
+						},
+						"type": "array"
+					},
+					"total_clicks": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"total_urls": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					}
+				},
+				"required": [
+					"total_urls",
+					"total_clicks",
+					"active_urls",
+					"clicks_this_week",
+					"click_trends",
+					"recent_activities",
+					"top_urls"
+				],
+				"type": "object"
+			},
+			"RecentActivity": {
+				"additionalProperties": false,
+				"properties": {
+					"activity": {
+						"type": "string"
+					},
+					"timestamp": {
+						"format": "date-time",
+						"type": "string"
+					}
+				},
+				"required": ["timestamp", "activity"],
+				"type": "object"
+			},
 			"ShortenRequest": {
 				"additionalProperties": false,
 				"properties": {
@@ -123,6 +213,30 @@
 					}
 				},
 				"required": ["short_url"],
+				"type": "object"
+			},
+			"TopURL": {
+				"additionalProperties": false,
+				"properties": {
+					"clicks": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"original_url": {
+						"type": "string"
+					},
+					"short_url": {
+						"type": "string"
+					},
+					"this_week_trends": {
+						"items": {
+							"$ref": "#/components/schemas/ClickTrend"
+						},
+						"type": "array"
+					}
+				},
+				"required": ["original_url", "short_url", "clicks", "this_week_trends"],
 				"type": "object"
 			},
 			"URL": {
@@ -232,6 +346,59 @@
 				"required": ["urls"],
 				"type": "object"
 			},
+			"QueryResultWritable": {
+				"additionalProperties": false,
+				"properties": {
+					"active_urls": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"click_trends": {
+						"items": {
+							"$ref": "#/components/schemas/ClickTrend"
+						},
+						"type": "array"
+					},
+					"clicks_this_week": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"recent_activities": {
+						"items": {
+							"$ref": "#/components/schemas/RecentActivity"
+						},
+						"type": "array"
+					},
+					"top_urls": {
+						"items": {
+							"$ref": "#/components/schemas/TopURL"
+						},
+						"type": "array"
+					},
+					"total_clicks": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					},
+					"total_urls": {
+						"format": "int64",
+						"minimum": 0,
+						"type": "integer"
+					}
+				},
+				"required": [
+					"total_urls",
+					"total_clicks",
+					"active_urls",
+					"clicks_this_week",
+					"click_trends",
+					"recent_activities",
+					"top_urls"
+				],
+				"type": "object"
+			},
 			"ShortenRequestWritable": {
 				"additionalProperties": false,
 				"properties": {
@@ -312,6 +479,33 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/ShortenResponseBody"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"default": {
+						"content": {
+							"application/problem+json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorModel"
+								}
+							}
+						},
+						"description": "Error"
+					}
+				}
+			}
+		},
+		"/api/urls/dashboard": {
+			"get": {
+				"operationId": "dashboard",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QueryResult"
 								}
 							}
 						},

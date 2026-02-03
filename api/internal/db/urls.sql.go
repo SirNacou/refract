@@ -10,6 +10,33 @@ import (
 	"time"
 )
 
+const countActiveURLsByUser = `-- name: CountActiveURLsByUser :one
+SELECT COUNT(*)
+FROM urls
+WHERE user_id = $1
+AND status = 'active'
+`
+
+func (q *Queries) CountActiveURLsByUser(ctx context.Context, userID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countActiveURLsByUser, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countURLsByUser = `-- name: CountURLsByUser :one
+SELECT COUNT(*)
+FROM urls
+WHERE user_id = $1
+`
+
+func (q *Queries) CountURLsByUser(ctx context.Context, userID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countURLsByUser, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createURL = `-- name: CreateURL :one
 INSERT INTO urls (id, short_code, original_url, user_id, expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, short_code, original_url, user_id, created_at, updated_at, expires_at, status
 `

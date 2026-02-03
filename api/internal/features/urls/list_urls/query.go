@@ -3,7 +3,7 @@ package listurls
 import (
 	"context"
 	"fmt"
-	"net/url"
+	"strings"
 	"time"
 
 	"github.com/SirNacou/refract/api/internal/domain"
@@ -31,13 +31,13 @@ type URL struct {
 }
 
 type QueryHandler struct {
-	repo          domain.URLRepository
+	repo           domain.URLRepository
 	defaultBaseURL string
 }
 
 func NewQueryHandler(repo domain.URLRepository, defaultBaseURL string) *QueryHandler {
 	return &QueryHandler{
-		repo:          repo,
+		repo:           repo,
 		defaultBaseURL: defaultBaseURL,
 	}
 }
@@ -50,10 +50,7 @@ func (h *QueryHandler) Handle(ctx context.Context, req *Query) (*QueryResponse, 
 
 	converted := make([]URL, len(urls))
 	for i, u := range urls {
-		sURL, err := url.JoinPath(h.defaultBaseURL, u.ShortCode.String())
-		if err != nil {
-			return nil, err
-		}
+		sURL := strings.Join([]string{h.defaultBaseURL, u.ShortCode.String()}, "/")
 		converted[i] = URL{
 			ID:          fmt.Sprint(u.ID.Int64()),
 			OriginalURL: u.OriginalURL,

@@ -3,8 +3,11 @@
 import { queryOptions, type UseMutationOptions } from "@tanstack/react-query";
 
 import { client } from "../client.gen";
-import { listUrls, type Options, shortenUrl } from "../sdk.gen";
+import { dashboard, listUrls, type Options, shortenUrl } from "../sdk.gen";
 import type {
+	DashboardData,
+	DashboardError,
+	DashboardResponse,
 	ListUrlsData,
 	ListUrlsError,
 	ListUrlsResponse,
@@ -98,3 +101,25 @@ export const shortenUrlMutation = (
 	};
 	return mutationOptions;
 };
+
+export const dashboardQueryKey = (options?: Options<DashboardData>) =>
+	createQueryKey("dashboard", options);
+
+export const dashboardOptions = (options?: Options<DashboardData>) =>
+	queryOptions<
+		DashboardResponse,
+		DashboardError,
+		DashboardResponse,
+		ReturnType<typeof dashboardQueryKey>
+	>({
+		queryFn: async ({ queryKey, signal }) => {
+			const { data } = await dashboard({
+				...options,
+				...queryKey[0],
+				signal,
+				throwOnError: true,
+			});
+			return data;
+		},
+		queryKey: dashboardQueryKey(options),
+	});

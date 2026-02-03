@@ -48,4 +48,6 @@ type URLRepository interface {
 	ListByUser(ctx context.Context, userID string) ([]URL, error)
 	GetActiveURLByShortCode(ctx context.Context, shortCode ShortCode) (*URL, error)
 	Create(ctx context.Context, url *URL) error
+	CountByUser(ctx context.Context, userID string) (int64, error)
+	CountActiveByUser(ctx context.Context, userID string) (int64, error)
 }

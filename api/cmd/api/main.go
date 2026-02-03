@@ -12,6 +12,7 @@ import (
 
 	"github.com/SirNacou/refract/api/internal/config"
 	"github.com/SirNacou/refract/api/internal/infrastructure/cache"
+	"github.com/SirNacou/refract/api/internal/infrastructure/clickhouse"
 	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
 	"github.com/SirNacou/refract/api/internal/infrastructure/server"
 	"github.com/SirNacou/refract/api/internal/infrastructure/snowflake"
@@ -45,13 +46,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize Valkey: %v", err)
 	}
+	defer valkey.Close()
+
+	clickhouseConn, err := clickhouse.NewClient(&cfg.ClickHouse)
+	if err != nil {
+		log.Fatalf("Failed to initialize Clickhouse: %v", err)
+	}
 
 	router, err := server.NewRouter(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize router: %v", err)
 	}
 
-	if err := router.SetUp(ctx, db, valkey); err != nil {
+	if err := router.SetUp(ctx, db, valkey, clickhouseConn); err != nil {
 		log.Fatalf("Failed to set up routes: %v", err)
 	}
 

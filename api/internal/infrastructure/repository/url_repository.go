@@ -63,6 +63,16 @@ func (p *PostgresURLRepository) Create(ctx context.Context, url *domain.URL) err
 	return nil
 }
 
+// CountByUser implements [domain.URLRepository].
+func (p *PostgresURLRepository) CountByUser(ctx context.Context, userID string) (int64, error) {
+	return p.querier.CountURLsByUser(ctx, userID)
+}
+
+// CountActiveByUser implements [domain.URLRepository].
+func (p *PostgresURLRepository) CountActiveByUser(ctx context.Context, userID string) (int64, error) {
+	return p.querier.CountActiveURLsByUser(ctx, userID)
+}
+
 func toDomainURL(u *db.Url) *domain.URL {
 	return &domain.URL{
 		ID:          domain.SnowflakeID(u.ID),

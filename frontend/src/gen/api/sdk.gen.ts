@@ -2,8 +2,14 @@
 
 import type { Client, Options as Options2, TDataShape } from "./client";
 import { client } from "./client.gen";
-import { listUrlsResponseTransformer } from "./transformers.gen";
+import {
+	dashboardResponseTransformer,
+	listUrlsResponseTransformer,
+} from "./transformers.gen";
 import type {
+	DashboardData,
+	DashboardErrors,
+	DashboardResponses,
 	ListUrlsData,
 	ListUrlsErrors,
 	ListUrlsResponses,
@@ -12,6 +18,8 @@ import type {
 	ShortenUrlResponses,
 } from "./types.gen";
 import {
+	zDashboardData,
+	zDashboardResponse,
 	zListUrlsData,
 	zListUrlsResponse,
 	zShortenUrlData,
@@ -67,4 +75,20 @@ export const shortenUrl = <ThrowOnError extends boolean = false>(
 			"Content-Type": "application/json",
 			...options.headers,
 		},
+	});
+
+export const dashboard = <ThrowOnError extends boolean = false>(
+	options?: Options<DashboardData, ThrowOnError>,
+) =>
+	(options?.client ?? client).get<
+		DashboardResponses,
+		DashboardErrors,
+		ThrowOnError
+	>({
+		requestValidator: async (data) => await zDashboardData.parseAsync(data),
+		responseTransformer: dashboardResponseTransformer,
+		responseValidator: async (data) =>
+			await zDashboardResponse.parseAsync(data),
+		url: "/api/urls/dashboard",
+		...options,
 	});

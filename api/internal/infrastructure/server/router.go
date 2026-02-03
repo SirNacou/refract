@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SirNacou/refract/api/internal/config"
 	"github.com/SirNacou/refract/api/internal/features/urls"
 	"github.com/SirNacou/refract/api/internal/infrastructure/persistence"
@@ -54,7 +55,7 @@ func NewRouter(cfg *config.Config) (*Router, error) {
 		}}, nil
 }
 
-func (r *Router) SetUp(ctx context.Context, db *persistence.DB, valkey valkeyaside.CacheAsideClient) (err error) {
+func (r *Router) SetUp(ctx context.Context, db *persistence.DB, valkey valkeyaside.CacheAsideClient, clickhouse clickhouse.Conn) (err error) {
 
 	grp := huma.NewGroup(r.api, "/api")
 
@@ -65,7 +66,7 @@ func (r *Router) SetUp(ctx context.Context, db *persistence.DB, valkey valkeyasi
 
 	grp.UseMiddleware(authMw.HandlerHuma)
 
-	if err = urls.NewModule(db, valkey, r.cfg).RegisterRoutes(grp); err != nil {
+	if err = urls.NewModule(db, valkey, clickhouse, r.cfg).RegisterRoutes(grp); err != nil {
 		return err
 	}
 

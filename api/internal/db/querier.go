@@ -9,6 +9,8 @@ import (
 )
 
 type Querier interface {
+	CountActiveURLsByUser(ctx context.Context, userID string) (int64, error)
+	CountURLsByUser(ctx context.Context, userID string) (int64, error)
 	CreateURL(ctx context.Context, arg CreateURLParams) (Url, error)
 	GetActiveURLByShortCode(ctx context.Context, shortCode string) (Url, error)
 	ListURLs(ctx context.Context, userID string) ([]Url, error)
