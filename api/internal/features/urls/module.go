@@ -42,13 +42,13 @@ func (m *Module) RegisterRoutes(api huma.API) error {
 		OperationID: "shorten-url",
 		Method:      http.MethodPost,
 		Path:        "/",
-	}, shortenurl.NewHandler(shortenurl.NewCommandHandler(m.repo, m.valkey, m.cfg.DefaultBaseURL, m.cfg.Valkey.RedirectKey)).Handle)
+	}, shortenurl.NewHandler(shortenurl.NewCommandHandler(m.repo, m.valkey, m.ch, m.cfg.DefaultBaseURL, m.cfg.Valkey.RedirectKey)).Handle)
 
 	huma.Register(grp, huma.Operation{
 		OperationID: "dashboard",
 		Method:      http.MethodGet,
 		Path:        "/dashboard",
-	}, getdashboard.NewHandler(getdashboard.NewQueryHandler(m.repo, m.ch)).Handle)
+	}, getdashboard.NewHandler(getdashboard.NewQueryHandler(m.repo, m.ch, m.cfg.DefaultBaseURL)).Handle)
 
 	return nil
 }

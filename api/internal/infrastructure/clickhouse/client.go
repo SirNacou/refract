@@ -3,6 +3,7 @@ package clickhouse
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
@@ -27,11 +28,9 @@ func NewClient(cfg *config.ClickHouseConfig) (driver.Conn, error) {
 					{Name: "refract-worker", Version: "0.1"},
 				},
 			},
-			Debug: true,
-			Debugf: func(format string, v ...any) {
-				fmt.Printf(format, v)
-			},
-			TLS: nil,
+			Debug:  true,
+			Logger: slog.Default(),
+			TLS:    nil,
 		})
 	)
 

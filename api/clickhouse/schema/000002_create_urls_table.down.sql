@@ -1,1 +1,1 @@
-DROP IF EXISTS TABLE refract.urls;
+DROP TABLE IF EXISTS refract.urls;

@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS refract.urls (
   short_code String,
   original_url String,
-  created_at DateTime64(3) DEFAULT now64(3),
   updated_at DateTime64(3) DEFAULT now64(3),
   is_deleted Bool DEFAULT false,  -- Soft delete flag
   
