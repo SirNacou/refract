@@ -3,7 +3,7 @@ import dayjs from '@/lib/dayjs-config'
 import { Clock, MousePointer2, Plus } from 'lucide-react'
 import React from 'react'
 
-type Activity = {
+export type Activity = {
   id: string
   action: 'Created' | 'Clicked'
   url: string

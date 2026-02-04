@@ -33,6 +33,7 @@ const AddURLDialog = (props: Props) => {
 		...shortenUrlMutation(),
 		onSuccess: () => {
 			toast.success("URL shortened successfully!")
+			setOpen(false)
 		},
 		onError: (error) => {
 			toast.error(

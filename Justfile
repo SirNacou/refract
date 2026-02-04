@@ -12,7 +12,10 @@ default:
     @echo "  migrate name         Apply or revert database migrations"
     @echo "  generate             Generate code from SQL queries" 
 
-dev-up:
+dev-up name:
+    @docker compose -f docker-compose.dev.yml up --build -d {{ name }}
+
+dev-watch:
     @docker compose -f docker-compose.dev.yml up --build --watch
 
 dev-down:

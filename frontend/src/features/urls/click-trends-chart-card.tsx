@@ -2,11 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartConfig, ChartContainer } from "@/components/ui/chart"
 import { Area, AreaChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts"
 
-type ChartData = {
-  date: string
-  clicks: number
-}
-
 const chartConfig = {
   clicks: {
     label: 'Clicks',
@@ -14,8 +9,13 @@ const chartConfig = {
   }
 } as ChartConfig
 
+type ClickTrend = {
+  clicks: number
+  date: Date
+}
+
 type Props = {
-  data: ChartData[]
+  data: ClickTrend[]
 } & React.ComponentProps<typeof Card>
 
 const ClickTrendsChartCard = ({ data, ...props }: Props) => {
@@ -38,6 +38,7 @@ const ClickTrendsChartCard = ({ data, ...props }: Props) => {
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
             <XAxis
               dataKey="date"
+              tickFormatter={(v) => v instanceof Date ? Intl.DateTimeFormat("en-GB").format(v) : ''}
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#64748b', fontSize: 14 }}

@@ -64,10 +64,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <Toaster />
         <Providers>
           {children}
         </Providers>
-        <Toaster />
         <TanStackDevtools
           config={{
             position: 'bottom-right',
