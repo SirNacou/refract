@@ -176,7 +176,19 @@ export const QueryResultSchema = {
 export const RecentActivitySchema = {
 	additionalProperties: false,
 	properties: {
-		activity: {
+		device: {
+			type: "string",
+		},
+		ip_address: {
+			type: "string",
+		},
+		location: {
+			type: "string",
+		},
+		original_url: {
+			type: "string",
+		},
+		short_code: {
 			type: "string",
 		},
 		timestamp: {
@@ -184,7 +196,14 @@ export const RecentActivitySchema = {
 			type: "string",
 		},
 	},
-	required: ["timestamp", "activity"],
+	required: [
+		"timestamp",
+		"short_code",
+		"ip_address",
+		"original_url",
+		"location",
+		"device",
+	],
 	type: "object",
 } as const;
 

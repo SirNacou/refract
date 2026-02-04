@@ -78,7 +78,11 @@ export type QueryResult = {
 };
 
 export type RecentActivity = {
-	activity: string;
+	device: string;
+	ip_address: string;
+	location: string;
+	original_url: string;
+	short_code: string;
 	timestamp: Date;
 };
 

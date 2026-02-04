@@ -57,7 +57,9 @@ function DataTable<TData, TValue>({ data, columns, loading = false }: Props<TDat
               data-state={row.getIsSelected() && "selected"}
             >
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
+                <TableCell key={cell.id} style={{
+                  width: cell.column.getSize()
+                }}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}

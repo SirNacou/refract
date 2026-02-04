@@ -38,7 +38,11 @@ export const zErrorModel = z.object({
 });
 
 export const zRecentActivity = z.object({
-	activity: z.string(),
+	device: z.string(),
+	ip_address: z.string(),
+	location: z.string(),
+	original_url: z.string(),
+	short_code: z.string(),
 	timestamp: z.iso.datetime(),
 });
 

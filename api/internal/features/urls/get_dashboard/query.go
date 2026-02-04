@@ -31,8 +31,12 @@ type ClickTrend struct {
 }
 
 type RecentActivity struct {
-	Timestamp time.Time `json:"timestamp" ch:"timestamp"`
-	Activity  string    `json:"activity" ch:"activity"`
+	Timestamp   time.Time `json:"timestamp" ch:"timestamp"`
+	ShortCode   string    `json:"short_code" ch:"short_code"`
+	IPAddress   string    `json:"ip_address" ch:"ip_address"`
+	OriginalURL string    `json:"original_url" ch:"original_url"`
+	Location    string    `json:"location" ch:"location"`
+	Device      string    `json:"device" ch:"device"`
 }
 
 type TopURL struct {
@@ -103,8 +107,9 @@ func (h *QueryHandler) Handle(ctx context.Context, q *Query) (*QueryResult, erro
 	}
 
 	rows, err = h.ch.Query(ctx, `
-	SELECT short_code, clicked_at FROM refract.clicks
-	ORDER BY clicked_at DESC
+	SELECT c.short_code, u.original_url, c.ip_address, c.clicked_at FROM refract.clicks c
+	LEFT JOIN refract.urls u ON c.short_code = u.short_code
+	ORDER BY c.clicked_at DESC
 	LIMIT 5
 	`)
 	if err != nil {
@@ -114,11 +119,9 @@ func (h *QueryHandler) Handle(ctx context.Context, q *Query) (*QueryResult, erro
 	recentActivities := make([]RecentActivity, 0)
 	for rows.Next() {
 		var ra RecentActivity
-		var shortCode string
-		if err := rows.Scan(&shortCode, &ra.Timestamp); err != nil {
+		if err := rows.Scan(&ra.ShortCode, &ra.OriginalURL, &ra.IPAddress, &ra.Timestamp); err != nil {
 			return nil, err
 		}
-		ra.Activity = "Link " + strings.Join([]string{h.defaultBaseURL, shortCode}, "/") + " was clicked"
 
 		recentActivities = append(recentActivities, ra)
 	}
