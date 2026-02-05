@@ -6,6 +6,7 @@ type Props = {
   value: string | number
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
   iconColor: string
+  className?: string
   badge?: {
     text: string
     color: string
@@ -14,9 +15,9 @@ type Props = {
   }
 }
 
-const StatisticCard = ({ title, badge, icon: Icon, iconColor, value }: Props) => {
+const StatisticCard = ({ title, badge, icon: Icon, iconColor, value, className }: Props) => {
   return (
-    <Card>
+    <Card className={className}>
       <CardContent className="flex items-center h-full">
         {/* Title & Badge */}
 

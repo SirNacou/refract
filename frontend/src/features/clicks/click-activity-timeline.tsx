@@ -79,41 +79,41 @@ const ClickActivityTimeline = ({ events }: Props) => {
 							{getDeviceIcon(event.device)}
 						</TimelineIcon>
 
-						<TimelineContent>
-							<div className="flex flex-col gap-1.5">
+						<TimelineContent className="min-w-0">
+							<div className="flex min-w-0 flex-col gap-1.5">
 								{/* Header Row: Path + Time */}
-								<div className="flex items-center justify-between">
-									<span className="font-semibold text-sm text-foreground flex items-center gap-1.5">
-										<span className="text-indigo-600">{event.shortPath}</span>
+								<div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+									<span className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-foreground">
+										<span className="truncate text-indigo-600">{event.shortPath}</span>
 										<span className="text-muted-foreground text-[10px] font-normal px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">
 											Redirected
 										</span>
 									</span>
-									<span className="text-xs text-muted-foreground tabular-nums flex items-center gap-1">
+									<span className="flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
 										<LucideClock className="h-3 w-3" />
 										{dayjs(event.timestamp).fromNow()}
 									</span>
 								</div>
 
 								{/* Details Row: Location & Source */}
-								<div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-									<div className="flex items-center gap-1 bg-secondary/50 px-2 py-1 rounded">
+								<div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
+									<div className="flex min-w-0 items-center gap-1 rounded bg-secondary/50 px-2 py-1">
 										<LucideGlobe className="h-3 w-3" />
-										{event.location}
+										<span className="truncate">{event.location}</span>
 									</div>
 
-									<div className="flex items-center gap-1 bg-secondary/50 px-2 py-1 rounded capitalize">
+									<div className="flex items-center gap-1 rounded bg-secondary/50 px-2 py-1 capitalize">
 										{getSourceIcon(event.source)}
 										{event.source}
 									</div>
 
-									<div className="flex items-center gap-1 px-1 opacity-50">
-										IP: {event.ip}
+									<div className="flex min-w-0 items-center gap-1 px-1 opacity-50">
+										<span className="truncate">IP: {event.ip}</span>
 									</div>
 								</div>
 
 								{/* Destination Hint */}
-								<div className="text-[10px] text-muted-foreground/60 truncate max-w-62.5">
+								<div className="max-w-full truncate text-[10px] text-muted-foreground/60">
 									To: {event.destination}
 								</div>
 							</div>
