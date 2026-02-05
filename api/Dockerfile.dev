@@ -1,0 +1,21 @@
+FROM golang:1 AS base
+
+WORKDIR /app
+
+RUN go install github.com/air-verse/air@latest
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+FROM base AS api
+COPY . .
+CMD [ "air", "--build.cmd", "go build -o ./tmp/main ./cmd/api/main.go", "--build.entrypoint", "./tmp/main", "--build.poll", "true" ]
+
+FROM base AS redirector
+COPY . .
+CMD [ "air", "--build.cmd", "go build -o ./tmp/main ./cmd/redirector/main.go", "--build.entrypoint", "./tmp/main", "--build.poll", "true" ]
+
+FROM base AS worker
+COPY . .
+CMD [ "air", "--build.cmd", "go build -o ./tmp/main ./cmd/worker/main.go", "--build.entrypoint", "./tmp/main", "--build.poll", "true" ]
