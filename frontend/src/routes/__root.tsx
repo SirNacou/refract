@@ -1,28 +1,24 @@
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import { formDevtoolsPlugin } from '@tanstack/react-form-devtools'
+import { Toaster } from "@/components/ui/sonner"
+import { client } from "@/gen/api/client.gen"
+import { authClient } from "@/lib/auth-client"
+import { Providers } from "@/providers"
+import { TanStackDevtools } from "@tanstack/react-devtools"
+import { formDevtoolsPlugin } from "@tanstack/react-form-devtools"
+import type { QueryClient } from "@tanstack/react-query"
 import {
+  createRootRouteWithContext,
   HeadContent,
   Scripts,
-  createRootRouteWithContext
-} from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-
-
-import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
-
-import appCss from '../styles.css?url'
-
-import { Toaster } from '@/components/ui/sonner'
-import { client } from '@/gen/api/client.gen'
-import { authClient } from '@/lib/auth-client'
-import { Providers } from '@/providers'
-import type { QueryClient } from '@tanstack/react-query'
+} from "@tanstack/react-router"
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools"
+import appCss from "../styles.css?url"
 
 client.interceptors.request.use(async (req, _) => {
   const { data } = await authClient.token()
 
   if (data) {
-    req.headers.set('Authorization', `Bearer ${data?.token}`)
+    req.headers.set("Authorization", `Bearer ${data?.token}`)
   }
 
   return req
@@ -36,19 +32,19 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
     meta: [
       {
-        charSet: 'utf-8',
+        charSet: "utf-8",
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        name: "viewport",
+        content: "width=device-width, initial-scale=1",
       },
       {
-        title: 'TanStack Start Starter',
+        title: "TanStack Start Starter",
       },
     ],
     links: [
       {
-        rel: 'stylesheet',
+        rel: "stylesheet",
         href: appCss,
       },
     ],
@@ -64,17 +60,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <Toaster />
-        <Providers>
-          {children}
-        </Providers>
+        <Toaster richColors />
+        <Providers>{children}</Providers>
         <TanStackDevtools
           config={{
-            position: 'bottom-right',
+            position: "bottom-right",
           }}
           plugins={[
             {
-              name: 'Tanstack Router',
+              name: "Tanstack Router",
               render: <TanStackRouterDevtoolsPanel />,
             },
             TanStackQueryDevtools,

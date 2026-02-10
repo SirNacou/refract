@@ -49,6 +49,7 @@ export const zRecentActivity = z.object({
 export const zShortenRequest = z.object({
 	$schema: z.optional(z.url().readonly()),
 	original_url: z.url(),
+	title: z.string().max(255),
 });
 
 export const zShortenResponseBody = z.object({
@@ -171,6 +172,7 @@ export const zQueryResultWritable = z.object({
 
 export const zShortenRequestWritable = z.object({
 	original_url: z.url(),
+	title: z.string().max(255),
 });
 
 export const zShortenResponseBodyWritable = z.object({

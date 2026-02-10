@@ -210,9 +210,13 @@
 					"original_url": {
 						"format": "uri",
 						"type": "string"
+					},
+					"title": {
+						"maxLength": 255,
+						"type": "string"
 					}
 				},
-				"required": ["original_url"],
+				"required": ["title", "original_url"],
 				"type": "object"
 			},
 			"ShortenResponseBody": {
@@ -424,9 +428,13 @@
 					"original_url": {
 						"format": "uri",
 						"type": "string"
+					},
+					"title": {
+						"maxLength": 255,
+						"type": "string"
 					}
 				},
-				"required": ["original_url"],
+				"required": ["title", "original_url"],
 				"type": "object"
 			},
 			"ShortenResponseBodyWritable": {

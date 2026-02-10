@@ -25,6 +25,7 @@ import { Loader2, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import LucideLink from "~icons/lucide/link"
+import LucideTextCursorInput from "~icons/lucide/text-cursor-input"
 
 type Props = {}
 
@@ -37,15 +38,15 @@ const AddURLDialog = (props: Props) => {
 		},
 		onError: (error) => {
 			toast.error(
-				`Error shortening URL: ${(error.errors && error.errors[0]?.message) || error.detail}`,
+				`Error shortening URL: ${error.errors?.[0]?.message || error.detail}`,
 			)
 		},
 	})
 	const [open, setOpen] = useState(false)
 	const form = useForm({
 		defaultValues: {
+			title: "",
 			original_url: "",
-			domain: "",
 		} as ShortenRequestWritable,
 		validators: {
 			onSubmit: zShortenRequestWritable,
@@ -54,6 +55,7 @@ const AddURLDialog = (props: Props) => {
 		onSubmit: async ({ value }) => {
 			await mutation.mutateAsync({
 				body: {
+					title: value.title,
 					original_url: value.original_url,
 				},
 			})
@@ -103,6 +105,40 @@ const AddURLDialog = (props: Props) => {
 									<InputGroupInput
 										id={field.name}
 										placeholder="https://super-long-url.com/..."
+										value={field.state.value}
+										onBlur={field.handleBlur}
+										onChange={(e) => field.handleChange(e.target.value)}
+									/>
+								</InputGroup>
+								{/* Error Message */}
+								{field.state.meta.errors ? (
+									<FieldDescription className="text-destructive">
+										{field.state.meta.errors[0]?.message}
+									</FieldDescription>
+								) : null}
+							</Field>
+						)}
+					</form.Field>
+
+					{/* Title Field */}
+					<form.Field name="title">
+						{(field) => (
+							<Field>
+								<FieldLabel
+									htmlFor={field.name}
+									className={
+										field.state.meta.errors.length ? "text-destructive" : ""
+									}
+								>
+									Title
+								</FieldLabel>
+								<InputGroup>
+									<InputGroupAddon>
+										<LucideTextCursorInput />
+									</InputGroupAddon>
+									<InputGroupInput
+										id={field.name}
+										placeholder="My Awesome Link"
 										value={field.state.value}
 										onBlur={field.handleBlur}
 										onChange={(e) => field.handleChange(e.target.value)}

@@ -9,6 +9,7 @@ export default defineConfig({
     source: true,
     postProcess: ['biome:format']
   },
+  logs: undefined,
   plugins: [
     "@hey-api/typescript",
     {

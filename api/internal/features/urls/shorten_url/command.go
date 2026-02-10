@@ -8,14 +8,16 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SirNacou/refract/api/internal/domain"
+	"github.com/SirNacou/refract/api/internal/infrastructure/validator"
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/valkey-io/valkey-go/valkeyaside"
 )
 
 type Command struct {
-	OriginalURL string
-	UserID      string
-	ExpiresAt   *time.Time
+	Title       string     `validate:"required,max=255"`
+	OriginalURL string     `validate:"required,url,max=2048"`
+	UserID      string     `validate:"required"`
+	ExpiresAt   *time.Time `validate:"omitempty"`
 }
 
 type CommandResponse struct {
@@ -41,8 +43,13 @@ func NewCommandHandler(repo domain.URLRepository, valkey valkeyaside.CacheAsideC
 }
 
 func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*CommandResponse, error) {
-	u := domain.NewURL(cmd.OriginalURL, "", "", cmd.UserID, domain.NewShortCode(""), cmd.ExpiresAt)
-	err := h.repo.Create(ctx, u)
+	err := validator.GetValidator().StructCtx(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	u := domain.NewURL(cmd.OriginalURL, cmd.Title, "", cmd.UserID, domain.NewShortCode(""), cmd.ExpiresAt)
+	err = h.repo.Create(ctx, u)
 	if err != nil {
 		return nil, huma.Error400BadRequest("Failed to shorten URL", err)
 	}
@@ -79,10 +86,10 @@ func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*CommandResp
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		err := h.chConn.Exec(ctx, `
-	INSERT INTO refract.urls (short_code, original_url, created_by) VALUES (
-		?, ?, ?
+	INSERT INTO refract.urls (short_code, original_url, title, created_by) VALUES (
+		?, ?, ?, ?
 	)
-	`, u.ShortCode.String(), u.OriginalURL, u.UserID)
+	`, u.ShortCode.String(), u.OriginalURL, u.Title, u.UserID)
 		if err != nil {
 			slog.ErrorContext(ctx, "Failed to insert URL into ClickHouse", "error", err)
 		}

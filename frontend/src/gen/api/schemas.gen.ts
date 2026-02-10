@@ -221,8 +221,12 @@ export const ShortenRequestSchema = {
 			format: "uri",
 			type: "string",
 		},
+		title: {
+			maxLength: 255,
+			type: "string",
+		},
 	},
-	required: ["original_url"],
+	required: ["title", "original_url"],
 	type: "object",
 } as const;
 
@@ -444,8 +448,12 @@ export const ShortenRequestWritableSchema = {
 			format: "uri",
 			type: "string",
 		},
+		title: {
+			maxLength: 255,
+			type: "string",
+		},
 	},
-	required: ["original_url"],
+	required: ["title", "original_url"],
 	type: "object",
 } as const;
 

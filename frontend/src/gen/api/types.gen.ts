@@ -92,6 +92,7 @@ export type ShortenRequest = {
 	 */
 	readonly $schema?: string;
 	original_url: string;
+	title: string;
 };
 
 export type ShortenResponseBody = {
@@ -165,6 +166,7 @@ export type QueryResultWritable = {
 
 export type ShortenRequestWritable = {
 	original_url: string;
+	title: string;
 };
 
 export type ShortenResponseBodyWritable = {
