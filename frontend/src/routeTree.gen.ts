@@ -17,7 +17,6 @@ import { Route as OrganizationSlugOrganizationViewRouteImport } from './routes/o
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ProtectedAccountAccountViewRouteImport } from './routes/_protected/account/$accountView'
 import { Route as ProtectedmainUrlsRouteImport } from './routes/_protected/(main)/urls'
-import { Route as ProtectedmainUrlsIndexRouteImport } from './routes/_protected/(main)/urls/index'
 
 const ProtectedRouteRoute = ProtectedRouteRouteImport.update({
   id: '/_protected',
@@ -61,42 +60,35 @@ const ProtectedmainUrlsRoute = ProtectedmainUrlsRouteImport.update({
   path: '/urls',
   getParentRoute: () => ProtectedRouteRoute,
 } as any)
-const ProtectedmainUrlsIndexRoute = ProtectedmainUrlsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ProtectedmainUrlsRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof ProtectedmainIndexRoute
   '/auth/$authView': typeof AuthAuthViewRoute
   '/organization/$organizationView': typeof OrganizationOrganizationViewRoute
-  '/urls': typeof ProtectedmainUrlsRouteWithChildren
+  '/urls': typeof ProtectedmainUrlsRoute
   '/account/$accountView': typeof ProtectedAccountAccountViewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/organization/$slug/$organizationView': typeof OrganizationSlugOrganizationViewRoute
-  '/urls/': typeof ProtectedmainUrlsIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth/$authView': typeof AuthAuthViewRoute
   '/organization/$organizationView': typeof OrganizationOrganizationViewRoute
+  '/urls': typeof ProtectedmainUrlsRoute
   '/account/$accountView': typeof ProtectedAccountAccountViewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/organization/$slug/$organizationView': typeof OrganizationSlugOrganizationViewRoute
   '/': typeof ProtectedmainIndexRoute
-  '/urls': typeof ProtectedmainUrlsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_protected': typeof ProtectedRouteRouteWithChildren
   '/auth/$authView': typeof AuthAuthViewRoute
   '/organization/$organizationView': typeof OrganizationOrganizationViewRoute
-  '/_protected/(main)/urls': typeof ProtectedmainUrlsRouteWithChildren
+  '/_protected/(main)/urls': typeof ProtectedmainUrlsRoute
   '/_protected/account/$accountView': typeof ProtectedAccountAccountViewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/organization/$slug/$organizationView': typeof OrganizationSlugOrganizationViewRoute
   '/_protected/(main)/': typeof ProtectedmainIndexRoute
-  '/_protected/(main)/urls/': typeof ProtectedmainUrlsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,16 +100,15 @@ export interface FileRouteTypes {
     | '/account/$accountView'
     | '/api/auth/$'
     | '/organization/$slug/$organizationView'
-    | '/urls/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth/$authView'
     | '/organization/$organizationView'
+    | '/urls'
     | '/account/$accountView'
     | '/api/auth/$'
     | '/organization/$slug/$organizationView'
     | '/'
-    | '/urls'
   id:
     | '__root__'
     | '/_protected'
@@ -128,7 +119,6 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/organization/$slug/$organizationView'
     | '/_protected/(main)/'
-    | '/_protected/(main)/urls/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,35 +187,17 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedmainUrlsRouteImport
       parentRoute: typeof ProtectedRouteRoute
     }
-    '/_protected/(main)/urls/': {
-      id: '/_protected/(main)/urls/'
-      path: '/'
-      fullPath: '/urls/'
-      preLoaderRoute: typeof ProtectedmainUrlsIndexRouteImport
-      parentRoute: typeof ProtectedmainUrlsRoute
-    }
   }
 }
 
-interface ProtectedmainUrlsRouteChildren {
-  ProtectedmainUrlsIndexRoute: typeof ProtectedmainUrlsIndexRoute
-}
-
-const ProtectedmainUrlsRouteChildren: ProtectedmainUrlsRouteChildren = {
-  ProtectedmainUrlsIndexRoute: ProtectedmainUrlsIndexRoute,
-}
-
-const ProtectedmainUrlsRouteWithChildren =
-  ProtectedmainUrlsRoute._addFileChildren(ProtectedmainUrlsRouteChildren)
-
 interface ProtectedRouteRouteChildren {
-  ProtectedmainUrlsRoute: typeof ProtectedmainUrlsRouteWithChildren
+  ProtectedmainUrlsRoute: typeof ProtectedmainUrlsRoute
   ProtectedAccountAccountViewRoute: typeof ProtectedAccountAccountViewRoute
   ProtectedmainIndexRoute: typeof ProtectedmainIndexRoute
 }
 
 const ProtectedRouteRouteChildren: ProtectedRouteRouteChildren = {
-  ProtectedmainUrlsRoute: ProtectedmainUrlsRouteWithChildren,
+  ProtectedmainUrlsRoute: ProtectedmainUrlsRoute,
   ProtectedAccountAccountViewRoute: ProtectedAccountAccountViewRoute,
   ProtectedmainIndexRoute: ProtectedmainIndexRoute,
 }
@@ -244,3 +216,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

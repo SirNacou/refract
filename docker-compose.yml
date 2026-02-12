@@ -1,0 +1,125 @@
+name: refract
+
+services:
+  frontend:
+    container_name: refract-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+      - ./frontend/.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/refract
+    depends_on:
+      api:
+        condition: service_started
+
+  api:
+    container_name: refract-api
+    build:
+      context: ./api
+      dockerfile: Dockerfile.api
+      target: api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+      - ./api/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  redirector:
+    container_name: refract-redirector
+    build:
+      context: ./api
+      dockerfile: Dockerfile.redirector
+      target: redirector
+    ports:
+      - "4000:8080"
+    env_file:
+      - .env
+      - ./api/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    container_name: refract-worker
+    build:
+      context: ./api
+      dockerfile: Dockerfile.worker
+      target: worker
+    env_file:
+      - .env
+      - ./api/.env
+    depends_on:
+      valkey:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+
+  postgres:
+    container_name: refract-postgres
+    image: postgres:18-alpine
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    container_name: refract-valkey
+    image: valkey/valkey-bundle:9-alpine
+    ports:
+      - "6379:6379"
+    environment:
+      VALKEY_EXTRA_FLAGS: "--save 60 1 --loglevel warning"
+      # VALKEY_PASSWORD: "valkey"
+    volumes:
+      - valkeydata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: refract-clickhouse-server
+    ports:
+      - "8123:8123" # HTTP Interface
+      - "9000:9000" # Native Client Interface
+      - "9009:9009" # Inter-server Replication
+    env_file:
+      - .env
+    environment:
+      - CLICKHOUSE_DB=${CLICKHOUSE_DATABASE_NAME:-refract}
+    volumes:
+      - ch_data:/var/lib/clickhouse # Persistent data storage
+      - ch_logs:/var/log/clickhouse-server # Logs
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  pgdata:
+  valkeydata:
+  ch_data:
+  ch_logs:
