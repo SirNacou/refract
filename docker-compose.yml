@@ -6,14 +6,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+        VITE_DEFAULT_REDIRECT_URL: ${VITE_DEFAULT_REDIRECT_URL:-http://localhost:4000}
     ports:
       - "3000:3000"
     env_file:
       - .env
-      - ./frontend/.env
     environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/refract
+      PORT: 3000
     depends_on:
       api:
         condition: service_started
@@ -28,10 +29,21 @@ services:
       - "8080:8080"
     env_file:
       - .env
-      - ./api/.env
+    environment:
+      PORT: ${PORT:-8080}
+      REDIRECTOR_PORT: ${REDIRECTOR_PORT:-8080}
+      JWKS_URL: ${JWKS_URL:-http://frontend:3000/api/auth/jwks}
+      DEFAULT_BASE_URL: ${DEFAULT_BASE_URL:-localhost:4000}
+      VALKEY_HOST: ${VALKEY_HOST:-valkey}
+      VALKEY_PORT: ${VALKEY_PORT:-6379}
+      VALKEY_REDIRECT_KEY: ${VALKEY_REDIRECT_KEY:-redirect:{short_code}}
+      VALKEY_CLICKS_STREAM_KEY: ${VALKEY_CLICKS_STREAM_KEY:-stream:clicks}
+      VALKEY_READ_GROUP: ${VALKEY_READ_GROUP:-clicks_stream_group}
+      VALKEY_CONSUMER: ${VALKEY_CONSUMER:-clicks_stream_consumer_1}
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
 
   redirector:
     container_name: refract-redirector
@@ -43,10 +55,21 @@ services:
       - "4000:8080"
     env_file:
       - .env
-      - ./api/.env
+    environment:
+      PORT: ${PORT:-8080}
+      REDIRECTOR_PORT: ${REDIRECTOR_PORT:-8080}
+      JWKS_URL: ${JWKS_URL:-http://frontend:3000/api/auth/jwks}
+      DEFAULT_BASE_URL: ${DEFAULT_BASE_URL:-localhost:4000}
+      VALKEY_HOST: ${VALKEY_HOST:-valkey}
+      VALKEY_PORT: ${VALKEY_PORT:-6379}
+      VALKEY_REDIRECT_KEY: ${VALKEY_REDIRECT_KEY:-redirect:{short_code}}
+      VALKEY_CLICKS_STREAM_KEY: ${VALKEY_CLICKS_STREAM_KEY:-stream:clicks}
+      VALKEY_READ_GROUP: ${VALKEY_READ_GROUP:-clicks_stream_group}
+      VALKEY_CONSUMER: ${VALKEY_CONSUMER:-clicks_stream_consumer_1}
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
 
   worker:
     container_name: refract-worker
@@ -56,20 +79,29 @@ services:
       target: worker
     env_file:
       - .env
-      - ./api/.env
+    environment:
+      PORT: ${PORT:-8080}
+      REDIRECTOR_PORT: ${REDIRECTOR_PORT:-8080}
+      JWKS_URL: ${JWKS_URL:-http://frontend:3000/api/auth/jwks}
+      DEFAULT_BASE_URL: ${DEFAULT_BASE_URL:-localhost:4000}
+      VALKEY_HOST: ${VALKEY_HOST:-valkey}
+      VALKEY_PORT: ${VALKEY_PORT:-6379}
+      VALKEY_REDIRECT_KEY: ${VALKEY_REDIRECT_KEY:-redirect:{short_code}}
+      VALKEY_CLICKS_STREAM_KEY: ${VALKEY_CLICKS_STREAM_KEY:-stream:clicks}
+      VALKEY_READ_GROUP: ${VALKEY_READ_GROUP:-clicks_stream_group}
+      VALKEY_CONSUMER: ${VALKEY_CONSUMER:-clicks_stream_consumer_1}
     depends_on:
       valkey:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
+    restart: unless-stopped
 
   postgres:
     container_name: refract-postgres
     image: postgres:18-alpine
     env_file:
       - .env
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql
     restart: always
@@ -82,13 +114,12 @@ services:
   valkey:
     container_name: refract-valkey
     image: valkey/valkey-bundle:9-alpine
-    ports:
-      - "6379:6379"
     environment:
       VALKEY_EXTRA_FLAGS: "--save 60 1 --loglevel warning"
       # VALKEY_PASSWORD: "valkey"
     volumes:
       - valkeydata:/data
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
       interval: 1s
@@ -97,10 +128,6 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: refract-clickhouse-server
-    ports:
-      - "8123:8123" # HTTP Interface
-      - "9000:9000" # Native Client Interface
-      - "9009:9009" # Inter-server Replication
     env_file:
       - .env
     environment:
@@ -108,6 +135,7 @@ services:
     volumes:
       - ch_data:/var/lib/clickhouse # Persistent data storage
       - ch_logs:/var/log/clickhouse-server # Logs
+    restart: unless-stopped
     ulimits:
       nofile:
         soft: 262144

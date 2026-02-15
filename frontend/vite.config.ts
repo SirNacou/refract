@@ -16,6 +16,7 @@ const config = defineConfig({
     },
   },
   server: {
+    port: process.env.VITE_PORT ? parseInt(process.env.VITE_PORT) : 3000,
     host: true,
     cors: {
       origin: true, // Allow all origins

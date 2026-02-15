@@ -10,7 +10,6 @@ services:
       - "3000:3000"
     env_file:
       - .env
-      - ./frontend/.env
     environment:
       # Required for many React dev servers to work inside a container
       WDS_SOCKET_PORT: "3000"
@@ -18,8 +17,10 @@ services:
       FAST_REFRESH: "true"
       # Vite specific environment variable (if using Vite)
       VITE_HOST: "0.0.0.0"
+      VITE_PORT: "3000"
       WATCHPACK_POLLING: true
       NODE_ENV: development
+      PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/refract
     develop:
       watch:
@@ -47,7 +48,6 @@ services:
       - "8080:8080"
     env_file:
       - .env
-      - ./api/.env
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/api:/app/cmd/api
@@ -65,7 +65,6 @@ services:
       - "4000:8080"
     env_file:
       - .env
-      - ./api/.env
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/redirector:/app/cmd/redirector
@@ -81,7 +80,6 @@ services:
       target: worker
     env_file:
       - .env
-      - ./api/.env
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/worker:/app/cmd/worker
