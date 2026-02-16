@@ -9,6 +9,7 @@ import (
 type ShortenRequest struct {
 	Title       string `json:"title" maxLength:"255" required:"true"`
 	OriginalURL string `json:"original_url" format:"uri" required:"true"`
+	CustomAlias *string `json:"custom_alias" maxLength:"20" required:"false"`
 }
 
 type ShortenResponse struct {
@@ -41,6 +42,7 @@ func (h *Handler) Handle(ctx context.Context, req *struct {
 		OriginalURL: req.Body.OriginalURL,
 		UserID:      u,
 		Title:       req.Body.Title,
+		CustomAlias: req.Body.CustomAlias,
 	})
 	if err != nil {
 		return nil, err

@@ -7,7 +7,7 @@ ch_port := "9000"
 ch_user := "default"
 ch_password := "default"
 ch_database := "refract"
-ch_database_url := "clickhouse://{{ ch_user }}:{{ ch_password }}@{{ ch_host }}:{{ ch_port }}/{{ ch_database }}"
+ch_database_url := "clickhouse://" + ch_host + ":" + ch_port + "?username=" + ch_user + "'&'password=" + ch_password + "'&'database=" + ch_database + "'&'x-multi-statement=true"
 
 default:
     @echo "Available commands:"
@@ -57,7 +57,7 @@ migrate-ch-up:
 
 migrate-frontend:
     @echo "Running Frontend Drizzle migrations..."
-    @cd frontend && DATABASE_URL={{database_url}} bunx drizzle-kit push
+    @cd frontend && DATABASE_URL={{ database_url }} bunx drizzle-kit push
 
 generate:
     @sqlc generate -f ./api/sqlc.yaml

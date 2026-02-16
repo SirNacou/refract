@@ -38,13 +38,14 @@ func (q *Queries) CountURLsByUser(ctx context.Context, userID string) (int64, er
 }
 
 const createURL = `-- name: CreateURL :one
-INSERT INTO urls (id, short_code, original_url, user_id, expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, short_code, original_url, user_id, created_at, updated_at, expires_at, status
+INSERT INTO urls (id, short_code, original_url, title, user_id, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, short_code, original_url, user_id, created_at, updated_at, expires_at, status, title
 `
 
 type CreateURLParams struct {
 	ID          int64      `json:"id"`
 	ShortCode   string     `json:"short_code"`
 	OriginalUrl string     `json:"original_url"`
+	Title       string     `json:"title"`
 	UserID      string     `json:"user_id"`
 	ExpiresAt   *time.Time `json:"expires_at"`
 }
@@ -54,6 +55,7 @@ func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (Url, erro
 		arg.ID,
 		arg.ShortCode,
 		arg.OriginalUrl,
+		arg.Title,
 		arg.UserID,
 		arg.ExpiresAt,
 	)
@@ -67,12 +69,13 @@ func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (Url, erro
 		&i.UpdatedAt,
 		&i.ExpiresAt,
 		&i.Status,
+		&i.Title,
 	)
 	return i, err
 }
 
 const getActiveURLByShortCode = `-- name: GetActiveURLByShortCode :one
-SELECT  id, short_code, original_url, user_id, created_at, updated_at, expires_at, status
+SELECT  id, short_code, original_url, user_id, created_at, updated_at, expires_at, status, title
 FROM urls
 WHERE short_code = $1
 AND status = 'active'
@@ -90,12 +93,13 @@ func (q *Queries) GetActiveURLByShortCode(ctx context.Context, shortCode string)
 		&i.UpdatedAt,
 		&i.ExpiresAt,
 		&i.Status,
+		&i.Title,
 	)
 	return i, err
 }
 
 const listURLs = `-- name: ListURLs :many
-SELECT  id, short_code, original_url, user_id, created_at, updated_at, expires_at, status
+SELECT  id, short_code, original_url, user_id, created_at, updated_at, expires_at, status, title
 FROM urls
 WHERE user_id = $1
 ORDER BY created_at DESC
@@ -119,6 +123,7 @@ func (q *Queries) ListURLs(ctx context.Context, userID string) ([]Url, error) {
 			&i.UpdatedAt,
 			&i.ExpiresAt,
 			&i.Status,
+			&i.Title,
 		); err != nil {
 			return nil, err
 		}

@@ -21,12 +21,17 @@ const (
 
 type ShortCode string
 
-func NewShortCode(s string) *ShortCode {
+func NewShortCode(s string) (*ShortCode, error) {
 	if s == "" {
-		return nil
+		return nil, fmt.Errorf("short code cannot be empty")
 	}
+
+	if len(s) > 20 {
+		return nil, fmt.Errorf("short code cannot be longer than 20 characters")
+	}
+
 	sc := ShortCode(s)
-	return &sc
+	return &sc, nil
 }
 
 func (s ShortCode) String() string {

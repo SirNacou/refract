@@ -92,7 +92,10 @@ func (h *QueryHandler) Handle(ctx context.Context, q *Query) (*QueryResult, erro
 		FROM refract.url_daily_stats
 		WHERE date >= today() - INTERVAL 30 DAY
 		GROUP BY date
-		ORDER BY date ASC
+		ORDER BY date ASC WITH FILL
+			FROM today() - INTERVAL 30 DAY 
+			TO today() + 1 
+			STEP toDate(1)
 	`)
 	if err != nil {
 		return nil, err

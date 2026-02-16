@@ -17,4 +17,5 @@ type Url struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 	ExpiresAt   *time.Time `json:"expires_at"`
 	Status      string     `json:"status"`
+	Title       string     `json:"title"`
 }

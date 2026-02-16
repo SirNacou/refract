@@ -11,6 +11,14 @@ type Props = {
 
 const columnHelper = createColumnHelper<Url>()
 const columns = [
+  columnHelper.accessor("title", {
+    header: "Title",
+    cell: ({ getValue }) => (
+      <span className="block max-w-[320px] truncate sm:max-w-105 lg:max-w-130">
+        {getValue() || <span className="text-muted-foreground italic">No title</span>}
+      </span>
+    ),
+  }),
   columnHelper.accessor("original_url", {
     header: "Original URL",
     cell: ({ getValue }) => (
@@ -22,14 +30,14 @@ const columns = [
   columnHelper.accessor("short_url", {
     header: "Short URL",
     cell: ({ getValue }) => (
-      <p className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         {getValue()}
         <ButtonCopy
           onCopy={() => navigator.clipboard.writeText(getValue())}
           loadingDuration={0}
           duration={1000}
         />
-      </p>
+      </div>
     ),
   }),
   columnHelper.accessor("status", {

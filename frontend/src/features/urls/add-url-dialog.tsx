@@ -24,6 +24,7 @@ import { useMutation } from "@tanstack/react-query"
 import { Loader2, Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import FluentScreenCut20Regular from '~icons/fluent/screen-cut-20-regular'
 import LucideLink from "~icons/lucide/link"
 import LucideTextCursorInput from "~icons/lucide/text-cursor-input"
 
@@ -47,6 +48,7 @@ const AddURLDialog = (props: Props) => {
 		defaultValues: {
 			title: "",
 			original_url: "",
+			custom_alias: "",
 		} as ShortenRequestWritable,
 		validators: {
 			onSubmit: zShortenRequestWritable,
@@ -57,6 +59,7 @@ const AddURLDialog = (props: Props) => {
 				body: {
 					title: value.title,
 					original_url: value.original_url,
+					custom_alias: value.custom_alias,
 				},
 			})
 		},
@@ -153,6 +156,43 @@ const AddURLDialog = (props: Props) => {
 							</Field>
 						)}
 					</form.Field>
+					{/* Custom Alias Field */}
+					<form.Field name="custom_alias">
+						{(field) => (
+							<Field>
+								<FieldLabel
+									htmlFor={field.name}
+									className={
+										field.state.meta.errors.length ? "text-destructive" : ""
+									}
+								>
+									Custom Alias (optional)
+								</FieldLabel>
+								<InputGroup>
+									<InputGroupAddon>
+										<FluentScreenCut20Regular />
+									</InputGroupAddon>
+									<InputGroupInput
+										id={field.name}
+										placeholder="my-link"
+										value={field.state.value || ""}
+										onBlur={field.handleBlur}
+										onChange={(e) => field.handleChange(e.target.value)}
+									/>
+								</InputGroup>
+								<FieldDescription>
+									Choose a custom short code (max 20 characters)
+								</FieldDescription>
+								{/* Error Message */}
+								{field.state.meta.errors ? (
+									<FieldDescription className="text-destructive">
+										{field.state.meta.errors[0]?.message}
+									</FieldDescription>
+								) : null}
+							</Field>
+						)}
+					</form.Field>
+
 
 					<DialogFooter>
 						<Button

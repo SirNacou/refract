@@ -217,6 +217,10 @@ export const ShortenRequestSchema = {
 			readOnly: true,
 			type: "string",
 		},
+		custom_alias: {
+			maxLength: 20,
+			type: ["string", "null"],
+		},
 		original_url: {
 			format: "uri",
 			type: "string",
@@ -444,6 +448,10 @@ export const QueryResultWritableSchema = {
 export const ShortenRequestWritableSchema = {
 	additionalProperties: false,
 	properties: {
+		custom_alias: {
+			maxLength: 20,
+			type: ["string", "null"],
+		},
 		original_url: {
 			format: "uri",
 			type: "string",

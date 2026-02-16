@@ -17,6 +17,7 @@ type Command struct {
 	Title       string     `validate:"required,max=255"`
 	OriginalURL string     `validate:"required,url,max=2048"`
 	UserID      string     `validate:"required"`
+	CustomAlias *string    `validate:"omitempty,max=20"`
 	ExpiresAt   *time.Time `validate:"omitempty"`
 }
 
@@ -48,7 +49,18 @@ func (h *CommandHandler) Handle(ctx context.Context, cmd *Command) (*CommandResp
 		return nil, err
 	}
 
-	u := domain.NewURL(cmd.OriginalURL, cmd.Title, "", cmd.UserID, domain.NewShortCode(""), cmd.ExpiresAt)
+	var shortCode *domain.ShortCode
+
+	if cmd.CustomAlias != nil {
+		shortCode, err = domain.NewShortCode(*cmd.CustomAlias)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		shortCode = nil
+	}
+
+	u := domain.NewURL(cmd.OriginalURL, cmd.Title, "", cmd.UserID, shortCode, cmd.ExpiresAt)
 	err = h.repo.Create(ctx, u)
 	if err != nil {
 		return nil, huma.Error400BadRequest("Failed to shorten URL", err)

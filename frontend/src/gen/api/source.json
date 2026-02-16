@@ -207,6 +207,10 @@
 						"readOnly": true,
 						"type": "string"
 					},
+					"custom_alias": {
+						"maxLength": 20,
+						"type": ["string", "null"]
+					},
 					"original_url": {
 						"format": "uri",
 						"type": "string"
@@ -425,6 +429,10 @@
 			"ShortenRequestWritable": {
 				"additionalProperties": false,
 				"properties": {
+					"custom_alias": {
+						"maxLength": 20,
+						"type": ["string", "null"]
+					},
 					"original_url": {
 						"format": "uri",
 						"type": "string"

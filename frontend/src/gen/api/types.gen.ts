@@ -91,6 +91,7 @@ export type ShortenRequest = {
 	 * A URL to the JSON Schema for this object.
 	 */
 	readonly $schema?: string;
+	custom_alias?: string | null;
 	original_url: string;
 	title: string;
 };
@@ -165,6 +166,7 @@ export type QueryResultWritable = {
 };
 
 export type ShortenRequestWritable = {
+	custom_alias?: string | null;
 	original_url: string;
 	title: string;
 };

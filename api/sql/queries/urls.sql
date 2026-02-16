@@ -11,7 +11,7 @@ WHERE short_code = $1
 AND status = 'active';
 
 -- name: CreateURL :one 
-INSERT INTO urls (id, short_code, original_url, user_id, expires_at) VALUES ($1, $2, $3, $4, $5) RETURNING *;
+INSERT INTO urls (id, short_code, original_url, title, user_id, expires_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 
 -- name: CountURLsByUser :one
 SELECT COUNT(*)

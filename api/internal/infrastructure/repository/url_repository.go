@@ -53,6 +53,7 @@ func (p *PostgresURLRepository) Create(ctx context.Context, url *domain.URL) err
 		ID:          url.ID.Int64(),
 		ShortCode:   url.ShortCode.String(),
 		OriginalUrl: url.OriginalURL,
+		Title:       url.Title,
 		UserID:      url.UserID,
 		ExpiresAt:   url.ExpiresAt,
 	})
