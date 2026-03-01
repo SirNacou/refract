@@ -1,6 +1,32 @@
 name: refract
 
 services:
+  migrations:
+    container_name: refract-migrations
+    build:
+      context: .
+      dockerfile: Dockerfile.migrations
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-refract}
+      CLICKHOUSE_HOST: ${CLICKHOUSE_HOST:-clickhouse}
+      CLICKHOUSE_PORT: ${CLICKHOUSE_PORT:-9000}
+      CLICKHOUSE_HTTP_PORT: ${CLICKHOUSE_HTTP_PORT:-8123}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/refract}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    restart: on-failure
+
   frontend:
     container_name: refract-frontend
     build:
@@ -37,6 +63,8 @@ services:
         - path: ./frontend/bun.lock
           action: rebuild
     depends_on:
+      migrations:
+        condition: service_completed_successfully
       api:
         condition: service_started
 
@@ -54,6 +82,8 @@ services:
       - ./api/internal:/app/internal
       - ./api/cmd/api:/app/cmd/api
     depends_on:
+      migrations:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
 
@@ -71,6 +101,8 @@ services:
       - ./api/internal:/app/internal
       - ./api/cmd/redirector:/app/cmd/redirector
     depends_on:
+      migrations:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
 
@@ -86,6 +118,8 @@ services:
       - ./api/internal:/app/internal
       - ./api/cmd/worker:/app/cmd/worker
     depends_on:
+      migrations:
+        condition: service_completed_successfully
       valkey:
         condition: service_healthy
       clickhouse:
@@ -122,6 +156,7 @@ services:
       interval: 1s
       timeout: 3s
       retries: 5
+
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: refract-clickhouse-server
