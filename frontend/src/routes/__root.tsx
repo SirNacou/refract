@@ -48,6 +48,12 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         href: appCss,
       },
     ],
+    scripts: [
+      {
+        src: "config.js",
+        async: false,
+      }
+    ]
   }),
 
   shellComponent: RootDocument,

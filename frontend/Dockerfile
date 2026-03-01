@@ -20,7 +20,10 @@ WORKDIR /app
 
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json .
+COPY --from=builder /app/env.sh .
 
 EXPOSE 3000
 
-CMD ["bun", "run", "start"]
+RUN chmod +x ./env.sh
+
+CMD ["sh", "-c", "sh env.sh && bun run start"]

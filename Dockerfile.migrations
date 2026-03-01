@@ -1,7 +1,7 @@
 # Migrations Container - Runs all database migrations
 # Supports: PostgreSQL (golang-migrate), ClickHouse (golang-migrate), Frontend/BetterAuth (Drizzle)
 
-FROM golang:1.22-alpine AS migrate-builder
+FROM golang:1-alpine AS migrate-builder
 
 # Install build dependencies
 RUN apk add --no-cache git make gcc musl-dev
@@ -11,7 +11,7 @@ WORKDIR /migrate
 RUN git clone --depth 1 --branch v4.17.1 https://github.com/golang-migrate/migrate.git . && \
     make build
 
-FROM node:22-alpine
+FROM node:alpine
 
 # Install runtime dependencies
 RUN apk add --no-cache \
