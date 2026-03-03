@@ -1,14 +1,13 @@
 FROM oven/bun:1-alpine
 
-WORKDIR /app/frontend
+WORKDIR /app
 
-COPY frontend/package.json ./
-COPY frontend/bun.lock ./
-COPY frontend/drizzle.config.migration.ts ./
+# Copy config and schema files needed for migrations
+COPY frontend/drizzle.config.ts ./
 COPY frontend/auth-schema.ts ./
 COPY frontend/drizzle ./drizzle
-COPY frontend/src ./src
 
-RUN bun install --frozen-lockfile --ignore-scripts
+# Install only migration dependencies
+RUN bun add drizzle-kit drizzle-orm pg
 
-CMD ["sh", "-c", "DATABASE_URL=\"$DATABASE_URL\" bunx drizzle-kit migrate --config=./drizzle.config.migration.ts"]
+CMD ["sh", "-c", "DATABASE_URL=\"$DATABASE_URL\" bunx drizzle-kit migrate --config=./drizzle.config.ts"]
