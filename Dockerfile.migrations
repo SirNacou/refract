@@ -19,3 +19,5 @@ CMD [ \
     "migrate -path ./api/sql/schema -database \"${DATABASE_URL}?sslmode=disable\" up && \
     migrate -path ./api/clickhouse/schema -database \"clickhouse://$CLICKHOUSE_HOST:$CLICKHOUSE_PORT?username=$CLICKHOUSE_USER&password=$CLICKHOUSE_PASSWORD&database=refract\" up" \
     ]
+
+LABEL org.opencontainers.image.source=https://github.com/SirNacou/refract

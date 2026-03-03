@@ -11,3 +11,5 @@ COPY frontend/drizzle ./drizzle
 RUN bun add drizzle-kit drizzle-orm pg dotenv
 
 CMD ["sh", "-c", "DATABASE_URL=\"$DATABASE_URL\" bunx drizzle-kit migrate --config=./drizzle.config.ts"]
+
+LABEL org.opencontainers.image.source=https://github.com/SirNacou/refract

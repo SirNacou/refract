@@ -28,3 +28,5 @@ EXPOSE 3000
 ARG VITE_PORT
 
 CMD [ "sh", "-c", "PORT=${VITE_PORT:-3000} bun --bun run start" ]
+
+LABEL org.opencontainers.image.source=https://github.com/SirNacou/refract

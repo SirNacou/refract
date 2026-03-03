@@ -16,3 +16,5 @@ COPY --from=build-redirector /app/healthcheck .
 
 EXPOSE 8080
 CMD ["./main"]
+
+LABEL org.opencontainers.image.source=https://github.com/SirNacou/refract
