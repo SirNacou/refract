@@ -7,8 +7,12 @@ RUN go mod download
 FROM base AS build-api
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-api/main.go
 
 FROM scratch AS api
 WORKDIR /app
 COPY --from=build-api /app/main .
+COPY --from=build-api /app/healthcheck .
+
+EXPOSE 8080
 CMD ["./main"]

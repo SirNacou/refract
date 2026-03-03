@@ -1,0 +1,45 @@
+name: refract-build
+
+services:
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrations
+    image: ghcr.io/sirnacou/refract/migrations:latest
+
+  migrations-drizzle:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrations.drizzle
+    image: ghcr.io/sirnacou/refract/migrations-drizzle:latest
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_APP_TITLE: ${VITE_APP_TITLE:-Refract}
+        VITE_API_URL: ${VITE_API_URL:-/server/api}
+        VITE_PORT: ${VITE_PORT:-3000}
+    image: ghcr.io/sirnacou/refract/frontend:latest
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.api
+      target: api
+    image: ghcr.io/sirnacou/refract/api:latest
+
+  redirector:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.redirector
+      target: redirector
+    image: ghcr.io/sirnacou/refract/redirector:latest
+
+  worker:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.worker
+      target: worker
+    image: ghcr.io/sirnacou/refract/worker:latest

@@ -7,8 +7,12 @@ RUN go mod download
 FROM base AS build-worker
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/worker/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-worker/main.go
 
 FROM scratch AS worker
 WORKDIR /app
 COPY --from=build-worker /app/main .
+COPY --from=build-worker /app/healthcheck .
+
+EXPOSE 8080
 CMD ["./main"]

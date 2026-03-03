@@ -18,6 +18,9 @@
 go.work
 vendor/
 
+# JS
+node_modules
+
 # IDEs
 .idea/
 .vscode/

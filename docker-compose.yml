@@ -1,25 +1,29 @@
 name: refract
 
 services:
+  caddy:
+    container_name: refract-caddy
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   migrations:
     container_name: refract-migrations
-    build:
-      context: .
-      dockerfile: Dockerfile.migrations
+    image: ghcr.io/sirnacou/refract/migrations:latest
     env_file:
       - .env
-    environment:
-      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-refract}
-      CLICKHOUSE_HOST: ${CLICKHOUSE_HOST:-clickhouse}
-      CLICKHOUSE_PORT: ${CLICKHOUSE_PORT:-9000}
-      CLICKHOUSE_HTTP_PORT: ${CLICKHOUSE_HTTP_PORT:-8123}
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/refract}
     depends_on:
       postgres:
         condition: service_healthy
@@ -27,14 +31,21 @@ services:
         condition: service_healthy
     restart: on-failure
 
+  migrations-drizzle:
+    container_name: refract-migrations-drizzle
+    image: ghcr.io/sirnacou/refract/migrations-drizzle:latest
+    env_file:
+      - .env
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
   frontend:
     container_name: refract-frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
-        VITE_DEFAULT_REDIRECT_URL: ${VITE_DEFAULT_REDIRECT_URL:-http://localhost:4000}
+    image: ghcr.io/sirnacou/refract/frontend:latest
     ports:
       - "3000:3000"
     env_file:
@@ -44,91 +55,66 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
+      migrations-drizzle:
+        condition: service_completed_successfully
       api:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
 
   api:
     container_name: refract-api
-    build:
-      context: ./api
-      dockerfile: Dockerfile.api
-      target: api
+    image: ghcr.io/sirnacou/refract/api:latest
     ports:
       - "8080:8080"
     env_file:
       - .env
-    environment:
-      PORT: ${PORT:-8080}
-      REDIRECTOR_PORT: ${REDIRECTOR_PORT:-8080}
-      JWKS_URL: ${JWKS_URL:-http://frontend:3000/api/auth/jwks}
-      DEFAULT_BASE_URL: ${DEFAULT_BASE_URL:-localhost:4000}
-      VALKEY_HOST: ${VALKEY_HOST:-valkey}
-      VALKEY_PORT: ${VALKEY_PORT:-6379}
-      VALKEY_REDIRECT_KEY: ${VALKEY_REDIRECT_KEY:-redirect:{short_code}}
-      VALKEY_CLICKS_STREAM_KEY: ${VALKEY_CLICKS_STREAM_KEY:-stream:clicks}
-      VALKEY_READ_GROUP: ${VALKEY_READ_GROUP:-clicks_stream_group}
-      VALKEY_CONSUMER: ${VALKEY_CONSUMER:-clicks_stream_consumer_1}
     depends_on:
-      migrations:
-        condition: service_completed_successfully
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   redirector:
     container_name: refract-redirector
-    build:
-      context: ./api
-      dockerfile: Dockerfile.redirector
-      target: redirector
+    image: ghcr.io/sirnacou/refract/redirector:latest
     ports:
       - "4000:8080"
     env_file:
       - .env
-    environment:
-      PORT: ${PORT:-8080}
-      REDIRECTOR_PORT: ${REDIRECTOR_PORT:-8080}
-      JWKS_URL: ${JWKS_URL:-http://frontend:3000/api/auth/jwks}
-      DEFAULT_BASE_URL: ${DEFAULT_BASE_URL:-localhost:4000}
-      VALKEY_HOST: ${VALKEY_HOST:-valkey}
-      VALKEY_PORT: ${VALKEY_PORT:-6379}
-      VALKEY_REDIRECT_KEY: ${VALKEY_REDIRECT_KEY:-redirect:{short_code}}
-      VALKEY_CLICKS_STREAM_KEY: ${VALKEY_CLICKS_STREAM_KEY:-stream:clicks}
-      VALKEY_READ_GROUP: ${VALKEY_READ_GROUP:-clicks_stream_group}
-      VALKEY_CONSUMER: ${VALKEY_CONSUMER:-clicks_stream_consumer_1}
     depends_on:
-      migrations:
-        condition: service_completed_successfully
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   worker:
     container_name: refract-worker
-    build:
-      context: ./api
-      dockerfile: Dockerfile.worker
-      target: worker
+    image: ghcr.io/sirnacou/refract/worker:latest
     env_file:
       - .env
-    environment:
-      PORT: ${PORT:-8080}
-      REDIRECTOR_PORT: ${REDIRECTOR_PORT:-8080}
-      JWKS_URL: ${JWKS_URL:-http://frontend:3000/api/auth/jwks}
-      DEFAULT_BASE_URL: ${DEFAULT_BASE_URL:-localhost:4000}
-      VALKEY_HOST: ${VALKEY_HOST:-valkey}
-      VALKEY_PORT: ${VALKEY_PORT:-6379}
-      VALKEY_REDIRECT_KEY: ${VALKEY_REDIRECT_KEY:-redirect:{short_code}}
-      VALKEY_CLICKS_STREAM_KEY: ${VALKEY_CLICKS_STREAM_KEY:-stream:clicks}
-      VALKEY_READ_GROUP: ${VALKEY_READ_GROUP:-clicks_stream_group}
-      VALKEY_CONSUMER: ${VALKEY_CONSUMER:-clicks_stream_consumer_1}
     depends_on:
-      migrations:
-        condition: service_completed_successfully
       valkey:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
   postgres:
@@ -150,7 +136,6 @@ services:
     image: valkey/valkey-bundle:9-alpine
     environment:
       VALKEY_EXTRA_FLAGS: "--save 60 1 --loglevel warning"
-      # VALKEY_PASSWORD: "valkey"
     volumes:
       - valkeydata:/data
     restart: unless-stopped
@@ -165,11 +150,9 @@ services:
     container_name: refract-clickhouse-server
     env_file:
       - .env
-    environment:
-      - CLICKHOUSE_DB=${CLICKHOUSE_DATABASE_NAME:-refract}
     volumes:
-      - ch_data:/var/lib/clickhouse # Persistent data storage
-      - ch_logs:/var/log/clickhouse-server # Logs
+      - ch_data:/var/lib/clickhouse
+      - ch_logs:/var/log/clickhouse-server
     restart: unless-stopped
     ulimits:
       nofile:
@@ -186,3 +169,5 @@ volumes:
   valkeydata:
   ch_data:
   ch_logs:
+  caddy_data:
+  caddy_config:

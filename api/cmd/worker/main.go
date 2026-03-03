@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -43,6 +47,29 @@ func main() {
 		log.Fatalf("Failed to initialize Worker: %v", err)
 	}
 
+	// Start health server in a separate goroutine
+	healthServer := &http.Server{
+		Addr: fmt.Sprintf(":%v", cfg.Port),
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/health" {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+			} else {
+				http.NotFound(w, r)
+			}
+		}),
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		log.Println("Health server starting on :8080")
+		if err := healthServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Printf("Health server error: %v", err)
+		}
+	})
+
 	err = clicksWorker.Start(ctx)
 	if err != nil {
 		log.Fatalf("Failed to start Worker: %v", err)
@@ -50,10 +77,21 @@ func main() {
 
 	<-ctx.Done()
 
+	log.Println("Shutting down worker and health server...")
+
 	stopCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	if err := clicksWorker.Stop(stopCtx); err != nil {
 		log.Fatalf("Failed to stop Worker: %v", err)
 	}
+
+	// Shutdown health server
+	healthShutdownCtx, healthCancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer healthCancel()
+	if err := healthServer.Shutdown(healthShutdownCtx); err != nil {
+		log.Printf("Error shutting down health server: %v", err)
+	}
+
+	wg.Wait()
 }

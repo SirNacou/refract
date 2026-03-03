@@ -7,8 +7,12 @@ RUN go mod download
 FROM base AS build-redirector
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/redirector/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-redirector/main.go
 
 FROM scratch AS redirector
 WORKDIR /app
 COPY --from=build-redirector /app/main .
+COPY --from=build-redirector /app/healthcheck .
+
+EXPOSE 8080
 CMD ["./main"]

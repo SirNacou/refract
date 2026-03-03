@@ -1,6 +1,24 @@
 name: refract
 
 services:
+  caddy:
+    container_name: refract-caddy
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   migrations:
     container_name: refract-migrations
     build:
@@ -8,22 +26,24 @@ services:
       dockerfile: Dockerfile.migrations
     env_file:
       - .env
-    environment:
-      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-refract}
-      CLICKHOUSE_HOST: ${CLICKHOUSE_HOST:-clickhouse}
-      CLICKHOUSE_PORT: ${CLICKHOUSE_PORT:-9000}
-      CLICKHOUSE_HTTP_PORT: ${CLICKHOUSE_HTTP_PORT:-8123}
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/refract}
     depends_on:
       postgres:
         condition: service_healthy
       clickhouse:
+        condition: service_healthy
+    restart: on-failure
+
+  migrations-drizzle:
+    container_name: refract-migrations-drizzle
+    build:
+      context: .
+      dockerfile: Dockerfile.migrations.drizzle
+    env_file:
+      - .env
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      postgres:
         condition: service_healthy
     restart: on-failure
 
@@ -39,17 +59,14 @@ services:
     env_file:
       - .env
     environment:
-      # Required for many React dev servers to work inside a container
       WDS_SOCKET_PORT: "3000"
       WDS_SOCKET_HOST: "localhost"
       FAST_REFRESH: "true"
-      # Vite specific environment variable (if using Vite)
       VITE_HOST: "0.0.0.0"
       VITE_PORT: "3000"
       WATCHPACK_POLLING: true
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/refract
     develop:
       watch:
         - path: ./frontend
@@ -65,8 +82,15 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
+      migrations-drizzle:
+        condition: service_completed_successfully
       api:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   api:
     container_name: refract-api
@@ -81,11 +105,15 @@ services:
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/api:/app/cmd/api
+      - ./api/cmd/healthcheck-api:/app/cmd/healthcheck-api
     depends_on:
-      migrations:
-        condition: service_completed_successfully
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   redirector:
     container_name: refract-redirector
@@ -100,11 +128,15 @@ services:
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/redirector:/app/cmd/redirector
+      - ./api/cmd/healthcheck-redirector:/app/cmd/healthcheck-redirector
     depends_on:
-      migrations:
-        condition: service_completed_successfully
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   worker:
     container_name: refract-worker
@@ -117,13 +149,17 @@ services:
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/worker:/app/cmd/worker
+      - ./api/cmd/healthcheck-worker:/app/cmd/healthcheck-worker
     depends_on:
-      migrations:
-        condition: service_completed_successfully
       valkey:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   postgres:
     container_name: refract-postgres
@@ -148,7 +184,6 @@ services:
       - "6379:6379"
     environment:
       VALKEY_EXTRA_FLAGS: "--save 60 1 --loglevel warning"
-      # VALKEY_PASSWORD: "valkey"
     volumes:
       - valkeydata:/data
     healthcheck:
@@ -161,16 +196,16 @@ services:
     image: clickhouse/clickhouse-server:latest
     container_name: refract-clickhouse-server
     ports:
-      - "8123:8123" # HTTP Interface
-      - "9000:9000" # Native Client Interface
-      - "9009:9009" # Inter-server Replication
+      - "8123:8123"
+      - "9000:9000"
+      - "9009:9009"
     env_file:
       - .env
     environment:
       - CLICKHOUSE_DB=${CLICKHOUSE_DATABASE_NAME:-refract}
     volumes:
-      - ch_data:/var/lib/clickhouse # Persistent data storage
-      - ch_logs:/var/log/clickhouse-server # Logs
+      - ch_data:/var/lib/clickhouse
+      - ch_logs:/var/log/clickhouse-server
     ulimits:
       nofile:
         soft: 262144
@@ -186,3 +221,5 @@ volumes:
   valkeydata:
   ch_data:
   ch_logs:
+  caddy_data:
+  caddy_config:

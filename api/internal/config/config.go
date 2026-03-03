@@ -5,9 +5,9 @@ import "github.com/caarlos0/env/v11"
 type Config struct {
 	NodeID         int64  `env:"NODE_ID" envDefault:"0"`
 	DefaultBaseURL string `env:"DEFAULT_BASE_URL,required"`
-	Port           int    `env:"PORT,required"`
-	RedirectorPort int    `env:"REDIRECTOR_PORT,required"`
-	JwksURL        string `env:"JWKS_URL,required"`
+	Port           int    `env:"PORT,required" envDefault:"8080"`
+	RedirectorPort int    `env:"REDIRECTOR_PORT,required" envDefault:"8080"`
+	JwksURL        string `env:"JWKS_URL,required" envDefault:"http://frontend:3000/api/auth/jwks.json"`
 	DatabaseURL    string `env:"DATABASE_URL,required"`
 
 	Valkey ValkeyConfig `envPrefix:"VALKEY_"`

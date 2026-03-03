@@ -1,9 +1,11 @@
 FROM oven/bun:1-alpine AS builder
 
+ARG VITE_APP_TITLE
 ARG VITE_API_URL
-ARG VITE_DEFAULT_REDIRECT_URL
+ARG VITE_PORT
+ENV VITE_APP_TITLE=${VITE_APP_TITLE}
 ENV VITE_API_URL=${VITE_API_URL}
-ENV VITE_DEFAULT_REDIRECT_URL=${VITE_DEFAULT_REDIRECT_URL}
+ENV VITE_PORT=${VITE_PORT}
 
 WORKDIR /app
 
@@ -20,10 +22,9 @@ WORKDIR /app
 
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/package.json .
-COPY --from=builder /app/env.sh .
 
 EXPOSE 3000
 
-RUN chmod +x ./env.sh
+ARG VITE_PORT
 
-CMD ["sh", "-c", "sh env.sh && bun run start"]
+CMD [ "sh", "-c", "PORT=${VITE_PORT:-3000} bun --bun run start" ]

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -37,6 +38,7 @@ func NewRouter(cfg *config.Config) (*Router, error) {
 		cors.AllowAll().Handler,
 	)
 
+	router.Get("/health", handleHealth)
 	router.Get("/docs", handleDocs)
 
 	huma.DefaultArrayNullable = false
@@ -120,4 +122,10 @@ func handleDocs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Info("Failed to write docs response", slog.Any("error", err))
 	}
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -51,6 +52,7 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	r.Get("/health", handleHealth)
 	redirectHandler := redirect.NewRedirectHandler(valkey, repo, clicksPublisher, cfg)
 	r.Get("/{shortCode}", redirectHandler.Handle)
 
@@ -77,4 +79,10 @@ func main() {
 
 func fatal(name string, err error) {
 	log.Fatalf("Failed to initialize %v: %v", name, err)
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }

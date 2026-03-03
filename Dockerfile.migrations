@@ -1,49 +1,21 @@
-# Migrations Container - Runs all database migrations
-# Supports: PostgreSQL (golang-migrate), ClickHouse (golang-migrate), Frontend/BetterAuth (Drizzle)
+FROM alpine:3.19
 
-FROM golang:1-alpine AS migrate-builder
-
-# Install build dependencies
-RUN apk add --no-cache git make gcc musl-dev
-
-# Build golang-migrate with all drivers
-WORKDIR /migrate
-RUN git clone --depth 1 --branch v4.17.1 https://github.com/golang-migrate/migrate.git . && \
-    make build
-
-FROM node:alpine
-
-# Install runtime dependencies
 RUN apk add --no-cache \
-    postgresql-client \
     curl \
     bash \
     ca-certificates
 
-# Copy golang-migrate binary from builder
-COPY --from=migrate-builder /migrate/bin/migrate /usr/local/bin/migrate
+RUN curl -sL https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | \
+    tar xz -C /usr/local/bin && \
+    chmod +x /usr/local/bin/migrate
 
-# Set working directory
 WORKDIR /app
 
-# Copy migration files
 COPY api/sql/schema ./api/sql/schema
 COPY api/clickhouse/schema ./api/clickhouse/schema
-COPY frontend/drizzle ./frontend/drizzle
-COPY frontend/auth-schema.ts ./frontend/auth-schema.ts
-COPY frontend/drizzle.config.ts ./frontend/drizzle.config.ts
-COPY frontend/package.json ./frontend/package.json
-COPY frontend/package-lock.json ./frontend/package-lock.json
 
-# Copy migration orchestration script
-COPY scripts/migrate.sh /usr/local/bin/migrate.sh
-RUN chmod +x /usr/local/bin/migrate.sh
-
-# Install Drizzle dependencies
-WORKDIR /app/frontend
-RUN npm ci --ignore-scripts
-
-WORKDIR /app
-
-# Default command
-CMD ["/usr/local/bin/migrate.sh"]
+CMD [ \
+    "sh", "-c", \
+    "migrate -path ./api/sql/schema -database \"${DATABASE_URL}?sslmode=disable\" up && \
+    migrate -path ./api/clickhouse/schema -database \"clickhouse://$CLICKHOUSE_HOST:$CLICKHOUSE_PORT?username=$CLICKHOUSE_USER&password=$CLICKHOUSE_PASSWORD&database=refract\" up" \
+    ]
