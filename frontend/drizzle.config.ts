@@ -1,4 +1,3 @@
-import { env } from '@/env'
 import { config } from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
 
@@ -9,6 +8,6 @@ export default defineConfig({
   schema: ['./src/db/schema.ts', './auth-schema.ts'],
   dialect: 'postgresql',
   dbCredentials: {
-    url: env.DATABASE_URL
+    url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@postgres:5432/refract'
   },
 })

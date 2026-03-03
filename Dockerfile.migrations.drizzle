@@ -8,6 +8,6 @@ COPY frontend/auth-schema.ts ./
 COPY frontend/drizzle ./drizzle
 
 # Install only migration dependencies
-RUN bun add drizzle-kit drizzle-orm pg
+RUN bun add drizzle-kit drizzle-orm pg dotenv
 
 CMD ["sh", "-c", "DATABASE_URL=\"$DATABASE_URL\" bunx drizzle-kit migrate --config=./drizzle.config.ts"]

@@ -14,7 +14,7 @@ services:
       - caddy_config:/config
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/"]
+      test: ["CMD", "caddy", "version"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -46,8 +46,6 @@ services:
   frontend:
     container_name: refract-frontend
     image: ghcr.io/sirnacou/refract/frontend:latest
-    ports:
-      - "3000:3000"
     env_file:
       - .env
     environment:
