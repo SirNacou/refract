@@ -1,7 +1,7 @@
 name: refract
 
 services:
-  caddy:
+  refract-caddy:
     container_name: refract-caddy
     image: caddy:2-alpine
     ports:
@@ -14,7 +14,7 @@ services:
       - caddy_config:/config
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      test: ["CMD", "caddy", "version"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -27,9 +27,9 @@ services:
     env_file:
       - .env
     depends_on:
-      postgres:
+      refract-postgres:
         condition: service_healthy
-      clickhouse:
+      refract-clickhouse:
         condition: service_healthy
     restart: on-failure
 
@@ -43,19 +43,17 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
-      postgres:
+      refract-postgres:
         condition: service_healthy
     restart: on-failure
 
-  frontend:
+  refract-frontend:
     container_name: refract-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
       additional_contexts:
         root: .
-    ports:
-      - "3000:3000"
     env_file:
       - .env
     environment:
@@ -84,22 +82,20 @@ services:
         condition: service_completed_successfully
       migrations-drizzle:
         condition: service_completed_successfully
-      api:
+      refract-api:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  api:
+  refract-api:
     container_name: refract-api
     build:
       context: ./api
       dockerfile: Dockerfile.dev
       target: api
-    ports:
-      - "8080:8080"
     env_file:
       - .env
     volumes:
@@ -107,7 +103,7 @@ services:
       - ./api/cmd/api:/app/cmd/api
       - ./api/cmd/healthcheck-api:/app/cmd/healthcheck-api
     depends_on:
-      postgres:
+      refract-postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "/app/healthcheck"]
@@ -115,14 +111,12 @@ services:
       timeout: 5s
       retries: 3
 
-  redirector:
+  refract-redirector:
     container_name: refract-redirector
     build:
       context: ./api
       dockerfile: Dockerfile.dev
       target: redirector
-    ports:
-      - "4000:8080"
     env_file:
       - .env
     volumes:
@@ -130,7 +124,7 @@ services:
       - ./api/cmd/redirector:/app/cmd/redirector
       - ./api/cmd/healthcheck-redirector:/app/cmd/healthcheck-redirector
     depends_on:
-      postgres:
+      refract-postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "/app/healthcheck"]
@@ -138,7 +132,7 @@ services:
       timeout: 5s
       retries: 3
 
-  worker:
+  refract-worker:
     container_name: refract-worker
     build:
       context: ./api
@@ -151,9 +145,9 @@ services:
       - ./api/cmd/worker:/app/cmd/worker
       - ./api/cmd/healthcheck-worker:/app/cmd/healthcheck-worker
     depends_on:
-      valkey:
+      refract-valkey:
         condition: service_healthy
-      clickhouse:
+      refract-clickhouse:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "/app/healthcheck"]
@@ -161,13 +155,11 @@ services:
       timeout: 5s
       retries: 3
 
-  postgres:
+  refract-postgres:
     container_name: refract-postgres
     image: postgres:18-alpine
     env_file:
       - .env
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql
     restart: always
@@ -177,11 +169,9 @@ services:
       timeout: 5s
       retries: 5
 
-  valkey:
+  refract-valkey:
     container_name: refract-valkey
     image: valkey/valkey-bundle:9-alpine
-    ports:
-      - "6379:6379"
     environment:
       VALKEY_EXTRA_FLAGS: "--save 60 1 --loglevel warning"
     volumes:
@@ -192,13 +182,9 @@ services:
       timeout: 3s
       retries: 5
 
-  clickhouse:
+  refract-clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: refract-clickhouse-server
-    ports:
-      - "8123:8123"
-      - "9000:9000"
-      - "9009:9009"
     env_file:
       - .env
     environment:

@@ -10,29 +10,36 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	useSidebar,
-} from "@/components/ui/sidebar"
-import { cn } from "@/lib/utils"
-import { Link, type LinkOptions, useLocation } from "@tanstack/react-router"
-import LucideBarChart from "~icons/lucide/bar-chart-3"
-import LucideKey from "~icons/lucide/key"
-import LucideLink from "~icons/lucide/link"
-import LucideLink2 from "~icons/lucide/link-2"
-import LucideLogOut from "~icons/lucide/log-out"
-import LucideMousePointer2 from "~icons/lucide/mouse-pointer-2"
-import LucideSidebar from "~icons/lucide/sidebar"
-import LucideTrendingUp from "~icons/lucide/trending-up"
-import LucideUser from "~icons/lucide/user"
-import { Button } from "./ui/button"
+} from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
+import { UserAvatar } from "@daveyplate/better-auth-ui";
+import {
+	Link,
+	type LinkOptions,
+	useLocation,
+	useRouter,
+} from "@tanstack/react-router";
+import LucideBarChart from "~icons/lucide/bar-chart-3";
+import LucideKey from "~icons/lucide/key";
+import LucideLink from "~icons/lucide/link";
+import LucideLink2 from "~icons/lucide/link-2";
+import LucideLogOut from "~icons/lucide/log-out";
+import LucideMousePointer2 from "~icons/lucide/mouse-pointer-2";
+import LucideSidebar from "~icons/lucide/sidebar";
+import LucideTrendingUp from "~icons/lucide/trending-up";
+import LucideUser from "~icons/lucide/user";
+import { Button } from "./ui/button";
 
 type NavOptions = {
-	title: string
-	icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-} & LinkOptions
+	title: string;
+	icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+} & LinkOptions;
 
 type LinkGroup = {
-	title: string
-	items: NavOptions[]
-}
+	title: string;
+	items: NavOptions[];
+};
 
 const navGroups: LinkGroup[] = [
 	{
@@ -82,16 +89,12 @@ const navGroups: LinkGroup[] = [
 			},
 		],
 	},
-]
-
-const user = {
-	name: "John Doe",
-	email: "john@example.com",
-	avatar: "JD",
-}
+];
 
 export function AppSidebar() {
-	const location = useLocation()
+	const location = useLocation();
+	const route = useRouter();
+	const { data } = authClient.useSession();
 
 	return (
 		<Sidebar>
@@ -110,7 +113,7 @@ export function AppSidebar() {
 						<SidebarGroupContent>
 							<SidebarMenu>
 								{group.items.map((item) => {
-									const isActive = location.pathname === item.to
+									const isActive = location.pathname === item.to;
 									return (
 										<SidebarMenuItem key={item.title}>
 											<SidebarMenuButton
@@ -131,7 +134,7 @@ export function AppSidebar() {
 												</Link>
 											</SidebarMenuButton>
 										</SidebarMenuItem>
-									)
+									);
 								})}
 							</SidebarMenu>
 						</SidebarGroupContent>
@@ -141,25 +144,39 @@ export function AppSidebar() {
 			<SidebarFooter>
 				<div className="flex items-center gap-3 px-2 py-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
 					<div className="flex items-center justify-center size-9 rounded-full bg-muted text-sm font-medium">
-						{user.avatar}
+						<UserAvatar user={data?.user} />
 					</div>
 					<div className="flex-1 min-w-0">
-						<p className="text-sm font-medium truncate">{user.name}</p>
+						<p className="text-sm font-medium truncate">{data?.user?.name}</p>
 						<p className="text-xs text-muted-foreground truncate">
-							{user.email}
+							{data?.user?.email}
 						</p>
 					</div>
 					<Button
 						variant="ghost"
 						size="icon"
 						className="size-8 text-muted-foreground hover:text-foreground"
+						onClick={() =>
+							authClient.signOut({
+								fetchOptions: {
+									onSuccess: () => {
+										route.navigate({
+											to: "/auth/$authView",
+											params: {
+												authView: "login",
+											},
+										});
+									},
+								},
+							})
+						}
 					>
 						<LucideLogOut className="size-4" />
 					</Button>
 				</div>
 			</SidebarFooter>
 		</Sidebar>
-	)
+	);
 }
 
 export function CustomSidebarTrigger({
@@ -167,7 +184,7 @@ export function CustomSidebarTrigger({
 	onClick,
 	...props
 }: React.ComponentProps<typeof Button>) {
-	const { toggleSidebar } = useSidebar()
+	const { toggleSidebar } = useSidebar();
 
 	return (
 		<Button
@@ -177,13 +194,13 @@ export function CustomSidebarTrigger({
 			size="icon"
 			className={cn("size-10 md:size-12", className)}
 			onClick={(event) => {
-				onClick?.(event)
-				toggleSidebar()
+				onClick?.(event);
+				toggleSidebar();
 			}}
 			{...props}
 		>
 			<LucideSidebar className="w-5 h-5 md:w-6 md:h-6" />
 			<span className="sr-only">Toggle Sidebar</span>
 		</Button>
-	)
+	);
 }

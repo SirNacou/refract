@@ -10,15 +10,15 @@ RUN go mod download
 
 FROM base AS api
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-api/main.go && cp healthcheck /app/healthcheck
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-api/main.go
 CMD [ "air", "--build.cmd", "go build -o ./tmp/main ./cmd/api/main.go", "--build.entrypoint", "./tmp/main", "--build.poll", "true" ]
 
 FROM base AS redirector
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-redirector/main.go && cp healthcheck /app/healthcheck
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-redirector/main.go
 CMD [ "air", "--build.cmd", "go build -o ./tmp/main ./cmd/redirector/main.go", "--build.entrypoint", "./tmp/main", "--build.poll", "true" ]
 
 FROM base AS worker
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-worker/main.go && cp healthcheck /app/healthcheck
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o healthcheck ./cmd/healthcheck-worker/main.go
 CMD [ "air", "--build.cmd", "go build -o ./tmp/main ./cmd/worker/main.go", "--build.entrypoint", "./tmp/main", "--build.poll", "true" ]

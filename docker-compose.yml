@@ -1,7 +1,7 @@
 name: refract
 
 services:
-  caddy:
+  refract-caddy:
     container_name: refract-caddy
     image: caddy:2-alpine
     ports:
@@ -25,9 +25,9 @@ services:
     env_file:
       - .env
     depends_on:
-      postgres:
+      refract-postgres:
         condition: service_healthy
-      clickhouse:
+      refract-clickhouse:
         condition: service_healthy
     restart: on-failure
 
@@ -39,11 +39,11 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
-      postgres:
+      refract-postgres:
         condition: service_healthy
     restart: on-failure
 
-  frontend:
+  refract-frontend:
     container_name: refract-frontend
     image: ghcr.io/sirnacou/refract/frontend:latest
     env_file:
@@ -55,7 +55,7 @@ services:
         condition: service_completed_successfully
       migrations-drizzle:
         condition: service_completed_successfully
-      api:
+      refract-api:
         condition: service_started
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/"]
@@ -64,7 +64,7 @@ services:
       retries: 3
     restart: unless-stopped
 
-  api:
+  refract-api:
     container_name: refract-api
     image: ghcr.io/sirnacou/refract/api:latest
     ports:
@@ -72,7 +72,7 @@ services:
     env_file:
       - .env
     depends_on:
-      postgres:
+      refract-postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "/app/healthcheck"]
@@ -81,7 +81,7 @@ services:
       retries: 3
     restart: unless-stopped
 
-  redirector:
+  refract-redirector:
     container_name: refract-redirector
     image: ghcr.io/sirnacou/refract/redirector:latest
     ports:
@@ -89,7 +89,7 @@ services:
     env_file:
       - .env
     depends_on:
-      postgres:
+      refract-postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "/app/healthcheck"]
@@ -98,15 +98,15 @@ services:
       retries: 3
     restart: unless-stopped
 
-  worker:
+  refract-worker:
     container_name: refract-worker
     image: ghcr.io/sirnacou/refract/worker:latest
     env_file:
       - .env
     depends_on:
-      valkey:
+      refract-valkey:
         condition: service_healthy
-      clickhouse:
+      refract-clickhouse:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "/app/healthcheck"]
