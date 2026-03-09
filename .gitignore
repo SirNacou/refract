@@ -1,8 +1,12 @@
-# Environment variables (keep examples)
+# Environment variables (keep examples and non-secret config)
 .env
 .env.*
 !.env.example
 .env.local
+secrets.env
+!secrets.env.example
+!config.env
+!config.env.example
 
 #AI
 .opencode/

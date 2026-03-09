@@ -25,7 +25,8 @@ services:
       context: .
       dockerfile: Dockerfile.migrations
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     depends_on:
       refract-postgres:
         condition: service_healthy
@@ -39,7 +40,8 @@ services:
       context: .
       dockerfile: Dockerfile.migrations.drizzle
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -55,7 +57,8 @@ services:
       additional_contexts:
         root: .
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     environment:
       WDS_SOCKET_PORT: "3000"
       WDS_SOCKET_HOST: "localhost"
@@ -97,7 +100,8 @@ services:
       dockerfile: Dockerfile.dev
       target: api
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/api:/app/cmd/api
@@ -118,7 +122,8 @@ services:
       dockerfile: Dockerfile.dev
       target: redirector
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/redirector:/app/cmd/redirector
@@ -139,7 +144,8 @@ services:
       dockerfile: Dockerfile.dev
       target: worker
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     volumes:
       - ./api/internal:/app/internal
       - ./api/cmd/worker:/app/cmd/worker
@@ -159,7 +165,7 @@ services:
     container_name: refract-postgres
     image: postgres:18-alpine
     env_file:
-      - .env
+      - secrets.env
     volumes:
       - pgdata:/var/lib/postgresql
     restart: always
@@ -186,9 +192,8 @@ services:
     image: clickhouse/clickhouse-server:latest
     container_name: refract-clickhouse-server
     env_file:
-      - .env
-    environment:
-      - CLICKHOUSE_DB=${CLICKHOUSE_DATABASE_NAME:-refract}
+      - config.env
+      - secrets.env
     volumes:
       - ch_data:/var/lib/clickhouse
       - ch_logs:/var/log/clickhouse-server

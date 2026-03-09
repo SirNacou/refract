@@ -23,7 +23,8 @@ services:
     container_name: refract-migrations
     image: ghcr.io/sirnacou/refract/migrations:latest
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     depends_on:
       refract-postgres:
         condition: service_healthy
@@ -35,7 +36,8 @@ services:
     container_name: refract-migrations-drizzle
     image: ghcr.io/sirnacou/refract/migrations-drizzle:latest
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -47,7 +49,8 @@ services:
     container_name: refract-frontend
     image: ghcr.io/sirnacou/refract/frontend:latest
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     environment:
       PORT: 3000
     depends_on:
@@ -70,7 +73,8 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     depends_on:
       refract-postgres:
         condition: service_healthy
@@ -87,7 +91,8 @@ services:
     ports:
       - "4000:8080"
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     depends_on:
       refract-postgres:
         condition: service_healthy
@@ -102,7 +107,8 @@ services:
     container_name: refract-worker
     image: ghcr.io/sirnacou/refract/worker:latest
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     depends_on:
       refract-valkey:
         condition: service_healthy
@@ -119,7 +125,7 @@ services:
     container_name: refract-postgres
     image: postgres:18-alpine
     env_file:
-      - .env
+      - secrets.env
     volumes:
       - pgdata:/var/lib/postgresql
     restart: always
@@ -147,7 +153,8 @@ services:
     image: clickhouse/clickhouse-server:latest
     container_name: refract-clickhouse-server
     env_file:
-      - .env
+      - config.env
+      - secrets.env
     volumes:
       - ch_data:/var/lib/clickhouse
       - ch_logs:/var/log/clickhouse-server
